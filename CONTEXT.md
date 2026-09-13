@@ -1,6 +1,10 @@
-# Whisky
+# Whisky Finder
 
 A boutique whisky shop for the Bulgarian market: a short selected list, store-written tasting, and a Finder that recommends three Whiskies.
+
+**Whisky Finder**:
+The shop. Public site: whiskyfinder.bg. Contact: 0876473165, info@whiskyfinder.bg.
+_Avoid_: whisky (as the shop’s name), boutique (as the name)
 
 ## Catalogue
 
