@@ -43,7 +43,7 @@ test.describe("shell and home", () => {
     ).toBeVisible();
 
     await expect(
-      page.getByRole("heading", { name: "GlenAllachie 12" }),
+      page.getByRole("heading", { name: "GlenAllachie 12", level: 1 }),
     ).toBeVisible();
     await expect(page.getByText(/УИСКИ НА МЕСЕЦА/)).toBeVisible();
     await expect(
