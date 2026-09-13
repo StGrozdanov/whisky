@@ -1,0 +1,7 @@
+# Required for supabase CLI db push. Project ref comes from SUPABASE_PROJECT_ID in CI.
+
+project_id = "whisky"
+
+[db]
+port = 54322
+major_version = 15
