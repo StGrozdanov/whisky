@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Playfair_Display, Plus_Jakarta_Sans } from "next/font/google";
-import { AgeGate } from "@/shell/age-gate";
-import { SiteFooter } from "@/shell/site-footer";
-import { SiteHeader } from "@/shell/site-header";
+import { AgeGate } from "@/components/age-gate";
+import { SiteFooter } from "@/components/site-footer";
+import { SiteHeader } from "@/components/site-header";
 import "./globals.css";
 
 const playfair = Playfair_Display({

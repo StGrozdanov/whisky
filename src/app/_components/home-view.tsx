@@ -1,6 +1,6 @@
 import Image from "next/image";
-import { ORIGIN_LABELS } from "@/shop/origin-labels";
 import type { HomePage } from "@/shop/types";
+import { ORIGIN_LABELS } from "@/utils/origin-labels";
 
 type HomeViewProps = {
   home: HomePage;

@@ -3,11 +3,15 @@
 # Required GitHub Actions secrets (add before main can deploy):
 #   SUPABASE_ACCESS_TOKEN   — supabase CLI login
 #   SUPABASE_PROJECT_ID     — linked project ref
+#   SUPABASE_DB_PASSWORD    — database password (for supabase link)
 #   SUPABASE_URL            — project API URL (Next server)
 #   SUPABASE_SERVICE_ROLE_KEY — service role (Next server only; never NEXT_PUBLIC_)
 #   VERCEL_TOKEN
 #   VERCEL_ORG_ID
 #   VERCEL_PROJECT_ID
+#
+# Actions pinned to current majors (2026): checkout@v7, setup-node@v7, setup-cli@v3.
+# Vercel: install CLI → pull → build → deploy --prebuilt (official Actions pattern).
 
 name: CI
 
@@ -17,15 +21,19 @@ on:
   pull_request:
     branches: [main]
 
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
 jobs:
   check:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: "24"
           cache: npm
@@ -43,14 +51,18 @@ jobs:
         run: npm test
 
       - name: Install Supabase CLI
-        uses: supabase/setup-cli@v1
+        uses: supabase/setup-cli@v3
         with:
-          version: latest
+          version: 2.117.0
 
-      - name: Push database migrations
+      - name: Link and push database migrations
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-        run: supabase db push --project-ref "${{ secrets.SUPABASE_PROJECT_ID }}"
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+        run: |
+          supabase link --project-ref "$SUPABASE_PROJECT_ID"
+          supabase db push
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
@@ -75,36 +87,27 @@ jobs:
       preview_url: ${{ steps.deploy.outputs.preview-url }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: "24"
           cache: npm
 
-      - name: Install
-        run: npm ci
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
 
-      - name: Pull Vercel project
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-        run: npx vercel pull --yes --environment=preview --token="${{ secrets.VERCEL_TOKEN }}"
+      - name: Pull Vercel Environment Information
+        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
 
-      - name: Build preview
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-        run: npx vercel build --token="${{ secrets.VERCEL_TOKEN }}"
+      - name: Build Project Artifacts
+        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
 
-      - name: Deploy preview
+      - name: Deploy Project Artifacts to Vercel
         id: deploy
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: |
-          url=$(npx vercel deploy --prebuilt --token="${{ secrets.VERCEL_TOKEN }}")
+          url=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
           echo "preview-url=$url" >> "$GITHUB_OUTPUT"
 
   e2e:
@@ -112,10 +115,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: "24"
           cache: npm
@@ -136,31 +139,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: "24"
           cache: npm
 
-      - name: Install
-        run: npm ci
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
 
-      - name: Pull Vercel project
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-        run: npx vercel pull --yes --environment=production --token="${{ secrets.VERCEL_TOKEN }}"
+      - name: Pull Vercel Environment Information
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
 
-      - name: Build production
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-        run: npx vercel build --prod --token="${{ secrets.VERCEL_TOKEN }}"
+      - name: Build Project Artifacts
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
 
-      - name: Deploy production
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-        run: npx vercel deploy --prebuilt --prod --token="${{ secrets.VERCEL_TOKEN }}"
+      - name: Deploy Project Artifacts to Vercel
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}

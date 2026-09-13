@@ -1,4 +1,4 @@
-import type { Origin } from "./types";
+import type { Origin } from "@/shop/types";
 
 export const ORIGIN_LABELS: Record<Origin, string> = {
   Irish: "Ирландия",
