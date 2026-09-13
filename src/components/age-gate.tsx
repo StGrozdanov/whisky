@@ -44,9 +44,6 @@ export function AgeGate() {
       role="dialog"
     >
       <div className="w-full max-w-md rounded-xl border border-outline-variant/40 bg-surface-container-low p-space-xl text-center shadow-2xl">
-        <p className="mb-space-sm text-label-md font-bold tracking-widest text-secondary uppercase">
-          Whisky Finder
-        </p>
         <h2
           className="mb-space-md font-headline text-headline-md text-on-surface"
           id="age-gate-title"
