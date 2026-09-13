@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Whisky — бутик",
-  description: "Кратък избран списък уискита с дегустация от магазина",
+  title: "Whisky Finder",
+  description: "Специално подбран каталог от уискита",
 };
 
 export default function RootLayout({
