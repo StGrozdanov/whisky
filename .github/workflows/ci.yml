@@ -146,6 +146,15 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: npm run test:integration
 
+      - name: Upload Playwright integration report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report-integration
+          path: playwright-report/
+          if-no-files-found: ignore
+          retention-days: 14
+
   deploy_nonprod:
     name: Deploy Nonprod
     needs:
@@ -202,6 +211,15 @@ jobs:
         env:
           BASE_URL: ${{ needs.deploy_nonprod.outputs.preview_url }}
         run: npm run test:e2e
+
+      - name: Upload Playwright e2e report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report-e2e
+          path: playwright-report/
+          if-no-files-found: ignore
+          retention-days: 14
 
   deploy_prod:
     name: Deploy Prod
