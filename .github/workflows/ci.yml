@@ -1,68 +1,135 @@
-# CI for Whisky Finder first slice (shell + home).
-#
-# Required GitHub Actions secrets (add before main can deploy):
-#   SUPABASE_ACCESS_TOKEN   — supabase CLI login
-#   SUPABASE_PROJECT_ID     — linked project ref
-#   SUPABASE_DB_PASSWORD    — database password (for supabase link)
-#   SUPABASE_URL            — project API URL (Next server)
-#   SUPABASE_SERVICE_ROLE_KEY — service role (Next server only; never NEXT_PUBLIC_)
-#   VERCEL_TOKEN
-#   VERCEL_ORG_ID
-#   VERCEL_PROJECT_ID
-#
-# Actions pinned to current majors (2026): checkout@v7, setup-node@v7, setup-cli@v3.
-# Vercel: install CLI → pull → build → deploy --prebuilt (official Actions pattern).
-
-name: CI
+name: build
 
 on:
   push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
   VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
 jobs:
-  check:
+  install_app:
+    name: Install
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout repo
         uses: actions/checkout@v7
 
-      - name: Setup Node.js
+      - name: Setup node
         uses: actions/setup-node@v7
         with:
-          node-version: "24"
+          node-version: 24
           cache: npm
 
-      - name: Install
+      - name: Install dependencies
         run: npm ci
 
-      - name: Type-check
+  typecheck_app:
+    name: Typechecks
+    needs: [install_app]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v7
+
+      - name: Setup node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run type checks
         run: npm run type-check
 
-      - name: Biome check
-        run: npx biome check .
+  lint_app:
+    name: Linters
+    needs: [install_app]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v7
 
-      - name: Vitest
+      - name: Setup node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Linters
+        run: npm run ci-check
+
+  unit_test_app:
+    name: Unit Tests
+    needs: [install_app]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v7
+
+      - name: Setup node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
         run: npm test
 
-      - name: Install Supabase CLI
+  db_migrations:
+    name: DB Migrations
+    needs: [install_app]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v7
+
+      - name: Setup Supabase CLI
         uses: supabase/setup-cli@v3
         with:
           version: 2.117.0
 
-      - name: Link and push database migrations
+      - name: Link Supabase Project
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_ID }}
+
+      - name: Run Supabase Migrations
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
-          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
-        run: |
-          supabase link --project-ref "$SUPABASE_PROJECT_ID"
-          supabase db push
+        run: supabase db push
+
+  integration_test_app:
+    name: Integration Tests
+    needs: [install_app, db_migrations]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v7
+
+      - name: Setup node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
@@ -73,27 +140,28 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: npm run build
 
-      - name: Playwright integration
+      - name: Run Playwright integration
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: npm run test:integration
 
-  preview:
-    needs: check
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+  deploy_nonprod:
+    name: Deploy Nonprod
+    needs:
+      [
+        typecheck_app,
+        lint_app,
+        unit_test_app,
+        db_migrations,
+        integration_test_app,
+      ]
     runs-on: ubuntu-latest
     outputs:
       preview_url: ${{ steps.deploy.outputs.preview-url }}
     steps:
-      - name: Checkout
+      - name: Checkout repo
         uses: actions/checkout@v7
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version: "24"
-          cache: npm
 
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
@@ -107,45 +175,41 @@ jobs:
       - name: Deploy Project Artifacts to Vercel
         id: deploy
         run: |
-          url=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
+          url="$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})"
           echo "preview-url=$url" >> "$GITHUB_OUTPUT"
 
-  e2e:
-    needs: preview
+  e2e_test_app:
+    name: E2E Tests
+    needs: [deploy_nonprod]
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout repo
         uses: actions/checkout@v7
 
-      - name: Setup Node.js
+      - name: Setup node
         uses: actions/setup-node@v7
         with:
-          node-version: "24"
+          node-version: 24
           cache: npm
 
-      - name: Install
+      - name: Install dependencies
         run: npm ci
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
-      - name: Playwright e2e against preview
+      - name: Run Playwright e2e against nonprod
         env:
-          BASE_URL: ${{ needs.preview.outputs.preview_url }}
+          BASE_URL: ${{ needs.deploy_nonprod.outputs.preview_url }}
         run: npm run test:e2e
 
-  production:
-    needs: e2e
+  deploy_prod:
+    name: Deploy Prod
+    needs: [e2e_test_app]
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout repo
         uses: actions/checkout@v7
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version: "24"
-          cache: npm
 
       - name: Install Vercel CLI
         run: npm install --global vercel@latest

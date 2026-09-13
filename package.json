@@ -11,6 +11,7 @@
     "start": "next start",
     "format": "biome format --write .",
     "check": "biome check --write .",
+    "ci-check": "biome check .",
     "type-check": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
