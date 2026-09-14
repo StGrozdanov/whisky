@@ -93,9 +93,7 @@ test.describe("shell and home", () => {
       footer.getByRole("button", { name: "Instagram" }),
     ).toBeVisible();
     await expect(footer.getByRole("button", { name: "TikTok" })).toBeVisible();
-    await expect(
-      footer.getByRole("button", { name: "YouTube" }),
-    ).toBeVisible();
+    await expect(footer.getByRole("button", { name: "YouTube" })).toBeVisible();
     await expect(
       footer.getByText("Доставка със Спиди в цялата страна"),
     ).toBeVisible();
