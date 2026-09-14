@@ -3,6 +3,7 @@ import { Playfair_Display, Plus_Jakarta_Sans } from "next/font/google";
 import { AgeGate } from "@/components/age-gate";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import "@material-symbols/font-400/outlined.css";
 import "./globals.css";
 
 const playfair = Playfair_Display({
