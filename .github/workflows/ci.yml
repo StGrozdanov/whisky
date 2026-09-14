@@ -209,7 +209,7 @@ jobs:
 
       - name: Run Playwright e2e against nonprod
         env:
-          BASE_URL: ${{ needs.deploy_nonprod.outputs.preview_url }}
+          BASE_URL: https://whisky-finder-non-prod.vercel.app
         run: npm run test:e2e
 
       - name: Upload Playwright e2e report
