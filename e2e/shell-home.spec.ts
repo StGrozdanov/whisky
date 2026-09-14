@@ -14,7 +14,7 @@ test.describe("shell and home", () => {
       }),
     ).toBeVisible();
 
-    await page.getByRole("button", { name: "Над 18 съм" }).click();
+    await page.getByRole("button", { name: "Да" }).click();
     await expect(dialog).toBeHidden();
 
     await page.reload();
