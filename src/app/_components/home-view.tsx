@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { Icon } from "@/components/icon";
 import type { HomePage } from "@/shop/types";
 import { ORIGIN_LABELS } from "@/utils/origin-labels";
 
@@ -55,11 +56,11 @@ function HousePickSection({
 
           <div className="flex flex-col space-y-space-md lg:col-span-7">
             <div className="flex flex-wrap items-center gap-space-xs">
-              <span className="rounded-full bg-secondary px-space-sm py-1 text-label-sm font-bold tracking-wider text-on-secondary uppercase">
+              <span className="rounded-full bg-secondary px-space-sm py-1 text-label-sm text-on-secondary uppercase">
                 УИСКИ НА МЕСЕЦА
                 {housePick.monthLabel ? ` • ${housePick.monthLabel}` : ""}
               </span>
-              <span className="rounded-full bg-surface-container-high px-space-sm py-1 text-label-sm tracking-wider text-primary uppercase">
+              <span className="rounded-full bg-surface-container-high px-space-sm py-1 text-label-sm text-primary uppercase">
                 {originLabel}
               </span>
             </div>
@@ -98,23 +99,35 @@ function ClubTeaser() {
               Стани клубен член и отключи ексклузивни привилегии
             </h2>
             <div className="flex flex-wrap gap-2 pt-1">
-              <span className="rounded-lg bg-surface-container px-space-sm py-1 text-body-sm text-on-surface">
+              <span className="inline-flex items-center gap-1.5 rounded-lg bg-surface-container px-space-sm py-1 text-body-sm text-on-surface">
+                <Icon className="text-secondary" fontSize={16} name="percent" />
                 5% отстъпка
               </span>
-              <span className="rounded-lg bg-surface-container px-space-sm py-1 text-body-sm text-on-surface">
+              <span className="inline-flex items-center gap-1.5 rounded-lg bg-surface-container px-space-sm py-1 text-body-sm text-on-surface">
+                <Icon
+                  className="text-primary"
+                  fontSize={16}
+                  name="featured_seasonal_and_gifts"
+                />
                 Безплатна клубна бутилка уиски
               </span>
-              <span className="rounded-lg bg-surface-container px-space-sm py-1 text-body-sm text-on-surface">
+              <span className="inline-flex items-center gap-1.5 rounded-lg bg-surface-container px-space-sm py-1 text-body-sm text-on-surface">
+                <Icon
+                  className="text-secondary"
+                  fontSize={16}
+                  name="verified"
+                />
                 Преференциален ранен достъп до нови бутилки
               </span>
             </div>
           </div>
           <div className="flex justify-center lg:col-span-5">
             <button
-              className="w-full cursor-pointer rounded-lg bg-primary px-space-xl py-3.5 text-label-md font-bold tracking-wider text-on-primary uppercase shadow-sm transition-colors hover:bg-primary-fixed sm:w-auto"
+              className="flex w-full cursor-pointer items-center justify-center gap-space-xs rounded-lg bg-primary px-space-xl py-3.5 text-label-md font-bold text-on-primary uppercase shadow-sm transition-colors hover:bg-primary-fixed sm:w-auto"
               type="button"
             >
               Стани клубен член
+              <Icon fontSize={18} name="arrow_forward" />
             </button>
           </div>
         </div>
@@ -130,7 +143,7 @@ function WhiskyRail({ whiskies }: { whiskies: HomePage["whiskies"] }) {
       className="mx-auto max-w-[1440px] px-gutter-mobile py-space-xl md:px-gutter"
     >
       <div className="mb-space-lg">
-        <p className="text-label-sm font-bold tracking-widest text-primary uppercase">
+        <p className="text-label-sm text-primary uppercase">
           От нашата селекция
         </p>
         <h2
@@ -188,7 +201,7 @@ function FinderCta() {
             уискита.
           </p>
           <button
-            className="cursor-pointer rounded-xl bg-primary-container px-8 py-4 text-label-lg font-bold tracking-wider text-on-primary uppercase shadow-lg transition-all hover:scale-105 hover:bg-primary"
+            className="cursor-pointer rounded-xl bg-primary-container px-8 py-4 text-label-lg font-bold text-on-primary uppercase shadow-lg transition-all hover:scale-105 hover:bg-primary"
             type="button"
           >
             Открий своето идеално уиски

@@ -30,17 +30,25 @@ test.describe("shell and home", () => {
 
     await page.goto("/");
 
+    const banner = page.getByRole("banner");
+    await expect(banner.getByText("WHISKY FINDER")).toBeVisible();
     await expect(
-      page.getByRole("banner").getByText("WHISKY FINDER"),
+      banner.getByRole("link", { name: /0876473165/ }),
     ).toBeVisible();
     await expect(
-      page.getByRole("link", { name: /0876473165/ }).first(),
-    ).toBeVisible();
-    await expect(
-      page.getByText(
+      banner.getByText(
         "Безплатна доставка за цялата страна при поръчки над 50,00 €",
       ),
     ).toBeVisible();
+    await expect(
+      banner.getByRole("link", { name: "Запитване за наличност" }),
+    ).toHaveAttribute("href", "/contacts");
+    await expect(
+      banner.getByRole("searchbox", { name: "Търсене" }),
+    ).toBeVisible();
+    await expect(banner.getByRole("button", { name: "Любими" })).toBeVisible();
+    await expect(banner.getByRole("button", { name: "Количка" })).toBeVisible();
+    await expect(banner.getByRole("button", { name: "Акаунт" })).toBeVisible();
 
     await expect(
       page.getByRole("heading", { name: "GlenAllachie 12", level: 1 }),

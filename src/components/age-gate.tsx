@@ -82,14 +82,14 @@ export function AgeGate() {
         </p>
         <div className="flex items-center justify-center gap-space-md">
           <button
-            className="cursor-pointer rounded-lg bg-primary-container px-space-xl py-3.5 text-label-lg font-bold tracking-wider text-on-primary uppercase shadow-[0_4px_20px_rgba(217,119,6,0.35)] transition-colors hover:bg-primary"
+            className="cursor-pointer rounded-lg bg-primary-container px-space-xl py-3.5 text-label-lg font-bold text-on-primary uppercase shadow-[0_4px_20px_rgba(217,119,6,0.35)] transition-colors hover:bg-primary"
             onClick={confirmAge}
             type="button"
           >
             Да
           </button>
           <button
-            className="cursor-pointer rounded-lg border border-outline-variant/60 bg-transparent px-space-xl py-3.5 text-label-lg font-bold tracking-wider text-on-surface uppercase transition-colors hover:bg-surface-container-highest"
+            className="cursor-pointer rounded-lg border border-outline-variant/60 bg-transparent px-space-xl py-3.5 text-label-lg font-bold text-on-surface uppercase transition-colors hover:bg-surface-container-highest"
             onClick={denyAge}
             type="button"
           >

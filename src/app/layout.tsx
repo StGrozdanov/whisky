@@ -6,13 +6,14 @@ import { SiteHeader } from "@/components/site-header";
 import "./globals.css";
 
 const playfair = Playfair_Display({
-  subsets: ["latin"],
+  subsets: ["latin", "cyrillic", "latin-ext"],
+  style: ["normal", "italic"],
   variable: "--font-playfair",
   display: "swap",
 });
 
 const jakarta = Plus_Jakarta_Sans({
-  subsets: ["latin"],
+  subsets: ["latin", "latin-ext", "cyrillic-ext"],
   variable: "--font-jakarta",
   display: "swap",
 });

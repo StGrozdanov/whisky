@@ -35,7 +35,7 @@ export function SiteFooter() {
           </div>
 
           <div className="lg:col-span-4">
-            <h2 className="mb-space-md text-label-md font-bold tracking-widest text-secondary uppercase">
+            <h2 className="mb-space-md text-label-md text-secondary uppercase">
               Контакти
             </h2>
             <div className="space-y-space-sm text-body-sm">
@@ -44,10 +44,10 @@ export function SiteFooter() {
                   Телефон
                 </span>
                 <a
-                  className="mt-0.5 cursor-pointer font-semibold text-on-surface hover:text-primary"
-                  href="tel:0876473165"
+                  className="mt-0.5 cursor-pointer text-secondary font-semibold hover:text-primary"
+                  href="tel:0888888888"
                 >
-                  0876473165
+                  0888888888
                 </a>
               </div>
               <div className="flex flex-col">
@@ -63,7 +63,7 @@ export function SiteFooter() {
           </div>
 
           <div className="lg:col-span-4">
-            <h2 className="mb-space-md text-label-md font-bold tracking-widest text-secondary uppercase">
+            <h2 className="mb-space-md text-label-md text-secondary uppercase">
               Информация и Политики
             </h2>
             <ul className="space-y-2 text-body-sm">
