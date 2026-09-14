@@ -147,7 +147,7 @@ jobs:
         run: npm run test:integration
 
       - name: Upload Playwright integration report
-        if: always()
+        if: failure()
         uses: actions/upload-artifact@v7
         with:
           name: playwright-report-integration
@@ -213,7 +213,7 @@ jobs:
         run: npm run test:e2e
 
       - name: Upload Playwright e2e report
-        if: always()
+        if: failure()
         uses: actions/upload-artifact@v7
         with:
           name: playwright-report-e2e
