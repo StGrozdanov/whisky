@@ -4,9 +4,9 @@ import { Icon } from "@/components/icon";
 
 export function SiteHeader() {
   return (
-    <header className="fixed top-0 z-50 w-full bg-surface/90 shadow-[0_4px_24px_rgba(0,0,0,0.6)] backdrop-blur-xl">
-      <div className="mx-auto flex h-28 max-w-[1440px] flex-col justify-between px-gutter-mobile py-space-xs md:px-gutter">
-        <div className="flex items-center justify-between text-body-md text-on-surface-variant">
+    <header className="fixed top-0 z-50 w-full shadow-[0_4px_24px_rgba(0,0,0,0.6)]">
+      <div className="border-b border-secondary/25 bg-surface-container-lowest">
+        <div className="mx-auto flex max-w-[1440px] items-center justify-between gap-space-md px-gutter-mobile py-2.5 text-body-md text-on-surface-variant md:px-gutter">
           <div className="flex flex-wrap items-center gap-space-xs">
             <Icon
               className="text-secondary"
@@ -28,7 +28,7 @@ export function SiteHeader() {
             </span>
           </div>
           <Link
-            className="group flex cursor-pointer items-center gap-1 text-label-md transition-colors"
+            className="group flex shrink-0 cursor-pointer items-center gap-1 text-label-md transition-colors"
             href="/contacts"
           >
             <span className="inline-flex items-center gap-1 text-secondary group-hover:text-primary">
@@ -38,8 +38,10 @@ export function SiteHeader() {
             </span>
           </Link>
         </div>
+      </div>
 
-        <div className="flex items-center justify-between gap-space-md">
+      <div className="bg-surface/90 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-[1440px] items-center justify-between gap-space-md px-gutter-mobile py-space-sm md:px-gutter">
           <div className="flex items-center gap-space-md">
             <Link
               className="group flex cursor-pointer items-center gap-space-sm"
