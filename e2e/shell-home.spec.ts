@@ -33,8 +33,8 @@ test.describe("shell and home", () => {
     const banner = page.getByRole("banner");
     await expect(banner.getByText("WHISKY FINDER")).toBeVisible();
     await expect(
-      banner.getByRole("link", { name: /0876473165/ }),
-    ).toBeVisible();
+      banner.getByRole("link", { name: /0888888888/ }),
+    ).toHaveAttribute("href", "tel:0888888888");
     await expect(
       banner.getByText(
         "Безплатна доставка за цялата страна при поръчки над 50,00 €",
@@ -45,6 +45,9 @@ test.describe("shell and home", () => {
     ).toHaveAttribute("href", "/contacts");
     await expect(
       banner.getByRole("searchbox", { name: "Търсене" }),
+    ).toBeVisible();
+    await expect(
+      banner.getByPlaceholder("Търси дестилерия, нотка..."),
     ).toBeVisible();
     await expect(banner.getByRole("button", { name: "Любими" })).toBeVisible();
     await expect(banner.getByRole("button", { name: "Количка" })).toBeVisible();
@@ -79,7 +82,20 @@ test.describe("shell and home", () => {
     ).toBeVisible();
 
     const footer = page.getByRole("contentinfo");
+    await expect(
+      footer.getByRole("link", { name: /0888888888/ }),
+    ).toHaveAttribute("href", "tel:0888888888");
     await expect(footer.getByText("info@whiskyfinder.bg")).toBeVisible();
+    await expect(
+      footer.getByRole("button", { name: "Facebook" }),
+    ).toBeVisible();
+    await expect(
+      footer.getByRole("button", { name: "Instagram" }),
+    ).toBeVisible();
+    await expect(footer.getByRole("button", { name: "TikTok" })).toBeVisible();
+    await expect(
+      footer.getByRole("button", { name: "YouTube" }),
+    ).toBeVisible();
     await expect(
       footer.getByText("Доставка със Спиди в цялата страна"),
     ).toBeVisible();
