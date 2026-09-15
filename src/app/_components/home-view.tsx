@@ -214,6 +214,10 @@ function ClubTeaser() {
                 />
                 Преференциален ранен достъп до нови бутилки
               </span>
+              <span className="inline-flex items-center gap-1.5 rounded-lg bg-surface-container px-space-sm py-1 text-body-sm text-on-surface">
+                <Icon className="text-primary" fontSize={16} name="stars" />
+                Специални клубни оферти
+              </span>
             </div>
           </div>
           <div className="flex justify-center lg:col-span-5">

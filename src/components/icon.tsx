@@ -9,6 +9,7 @@ export type IconName =
   | "percent"
   | "featured_seasonal_and_gifts"
   | "verified"
+  | "stars"
   | "arrow_forward"
   | "chat"
   | "send"

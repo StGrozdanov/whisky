@@ -80,6 +80,14 @@ test.describe("shell and home", () => {
         name: "Стани клубен член и отключи ексклузивни привилегии",
       }),
     ).toBeVisible();
+    await expect(page.getByText("5% отстъпка")).toBeVisible();
+    await expect(
+      page.getByText("Безплатна клубна бутилка уиски"),
+    ).toBeVisible();
+    await expect(
+      page.getByText("Преференциален ранен достъп до нови бутилки"),
+    ).toBeVisible();
+    await expect(page.getByText("Специални клубни оферти")).toBeVisible();
     await expect(
       page.getByRole("button", { name: "Стани клубен член" }),
     ).toBeVisible();
