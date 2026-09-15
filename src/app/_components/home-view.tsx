@@ -1,4 +1,14 @@
-import Image from "next/image";
+import {
+  DiscoverySetCard,
+  NewArrivalCard,
+  OfferCard,
+} from "@/app/_components/home-rail-cards";
+import { HomeRailCarousel } from "@/app/_components/home-rail-carousel";
+import {
+  DISCOVERY_SETS,
+  NEW_ARRIVALS,
+  SPECIAL_OFFERS,
+} from "@/app/_components/home-rail-data";
 import { HousePickMedia } from "@/app/_components/house-pick-media";
 import { Icon } from "@/components/icon";
 import type { HomePage, HousePick, HousePickNote } from "@/shop/types";
@@ -18,9 +28,57 @@ export function HomeView({ home }: HomeViewProps) {
 
       <ClubTeaser />
 
-      {home.whiskies.length > 0 ? (
-        <WhiskyRail whiskies={home.whiskies} />
-      ) : null}
+      <div className="mx-auto flex max-w-[1440px] flex-col gap-space-xl px-gutter-mobile py-space-xl md:px-gutter">
+        <HomeRailCarousel
+          eyebrow={{
+            label: "Лимитирани Промоции",
+            icon: "local_offer",
+            className: "text-secondary",
+          }}
+          headingId="special-offers-heading"
+          nextLabel="Следващи оферти"
+          prevLabel="Предишни оферти"
+          slideBasis="quarter"
+          title="Специални Оферти"
+        >
+          {SPECIAL_OFFERS.map((offer) => (
+            <OfferCard card={offer} key={offer.name} />
+          ))}
+        </HomeRailCarousel>
+
+        <HomeRailCarousel
+          eyebrow={{
+            label: "Пресни Попълнения",
+            icon: "fiber_new",
+            className: "text-primary",
+          }}
+          headingId="new-arrivals-heading"
+          nextLabel="Следващи нови уискита"
+          prevLabel="Предишни нови уискита"
+          slideBasis="quarter"
+          title="Нови уискита"
+        >
+          {NEW_ARRIVALS.map((arrival) => (
+            <NewArrivalCard card={arrival} key={arrival.name} />
+          ))}
+        </HomeRailCarousel>
+      </div>
+
+      <div className="mx-auto max-w-[1440px] px-gutter-mobile py-space-xl md:px-gutter">
+        <div className="rounded-2xl bg-surface-container-low p-space-xl shadow-xl">
+          <HomeRailCarousel
+            headingId="discovery-sets-heading"
+            nextLabel="Следващи discovery сетове"
+            prevLabel="Предишни discovery сетове"
+            slideBasis="half"
+            title="50ml Discovery Сетове"
+          >
+            {DISCOVERY_SETS.map((set) => (
+              <DiscoverySetCard card={set} key={set.title} />
+            ))}
+          </HomeRailCarousel>
+        </div>
+      </div>
 
       <FinderCta />
     </div>
@@ -235,52 +293,6 @@ function ClubTeaser() {
   );
 }
 
-function WhiskyRail({ whiskies }: { whiskies: HomePage["whiskies"] }) {
-  return (
-    <section
-      aria-labelledby="whisky-rail-heading"
-      className="mx-auto max-w-[1440px] px-gutter-mobile py-space-xl md:px-gutter"
-    >
-      <div className="mb-space-lg">
-        <p className="text-label-sm text-primary uppercase">
-          От нашата селекция
-        </p>
-        <h2
-          className="font-headline text-headline-lg text-on-surface"
-          id="whisky-rail-heading"
-        >
-          Уискита в магазина
-        </h2>
-      </div>
-      <ul className="grid grid-cols-1 gap-space-md sm:grid-cols-2 lg:grid-cols-4">
-        {whiskies.map((whisky) => (
-          <li
-            className="flex flex-col rounded-xl bg-surface-container-low p-space-md transition-all hover:bg-surface-container"
-            key={whisky.name}
-          >
-            <div className="relative mb-space-sm flex aspect-[4/5] w-full items-center justify-center overflow-hidden rounded-lg bg-surface-container-lowest">
-              <Image
-                alt={whisky.name}
-                className="h-4/5 w-auto object-contain"
-                height={320}
-                src={whisky.photoUrl}
-                unoptimized
-                width={220}
-              />
-            </div>
-            <p className="mb-1 text-technical-data text-outline">
-              {ORIGIN_LABELS[whisky.origin]}
-            </p>
-            <h3 className="truncate font-headline text-headline-sm text-on-surface">
-              {whisky.name}
-            </h3>
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
-
 function FinderCta() {
   return (
     <section
@@ -288,22 +300,24 @@ function FinderCta() {
       className="mx-auto max-w-[1440px] px-gutter-mobile py-space-xl md:px-gutter"
     >
       <div className="relative overflow-hidden rounded-2xl border border-outline-variant/30 bg-surface-container-low p-space-lg shadow-2xl md:p-space-xl">
+        <div className="pointer-events-none absolute -top-20 -right-20 h-96 w-96 rounded-full bg-primary-container/10 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-20 -left-20 h-96 w-96 rounded-full bg-secondary/10 blur-3xl" />
         <div className="relative z-10 mx-auto flex max-w-4xl flex-col items-center text-center">
           <h2
             className="mb-space-xs font-headline text-headline-lg text-on-surface md:text-headline-hero"
             id="finder-cta-heading"
           >
-            Открий своето идеално уиски
+            Открий своето идеално уиски за под 60 секунди
           </h2>
           <p className="mb-space-xl max-w-2xl text-body-lg text-on-surface-variant">
-            Няколко кратки отговора за вкуса ти — Finder ще предложи до три
-            уискита.
+            Трябват ни 5 кратки въпроса, относно вкусовия ви профил
           </p>
           <button
-            className="cursor-pointer rounded-xl bg-primary-container px-8 py-4 text-label-lg font-bold text-on-primary uppercase shadow-lg transition-all hover:scale-105 hover:bg-primary"
+            className="flex cursor-pointer items-center gap-2 rounded-xl bg-primary-container px-8 py-4 text-label-lg font-bold text-on-primary uppercase tracking-wider shadow-lg transition-all hover:scale-105 hover:bg-primary"
             type="button"
           >
-            Открий своето идеално уиски
+            <span>открий вкусовия си профил</span>
+            <Icon fontSize={18} name="arrow_forward" />
           </button>
         </div>
       </div>

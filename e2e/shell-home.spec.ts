@@ -70,7 +70,11 @@ test.describe("shell and home", () => {
     ).toBeVisible();
     await expect(page.getByText("9.3 / 10")).toBeVisible();
     await expect(page.getByText("55.20 €")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Купи" })).toBeVisible();
+    await expect(
+      page
+        .getByRole("region", { name: "GlenAllachie 12" })
+        .getByRole("button", { name: "Купи" }),
+    ).toBeVisible();
     await expect(page.getByRole("button", { name: "Пусни видео" })).toHaveCount(
       0,
     );
@@ -93,12 +97,48 @@ test.describe("shell and home", () => {
     ).toBeVisible();
 
     await expect(
-      page.getByRole("heading", { name: "Уискита в магазина" }),
+      page.getByRole("heading", { name: "Специални Оферти" }),
     ).toBeVisible();
-    await expect(page.getByText("Redbreast 12")).toBeVisible();
+    await expect(page.getByText("Arran 10 Year Old")).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Предишни оферти" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Следващи оферти" }),
+    ).toBeVisible();
 
     await expect(
-      page.getByRole("button", { name: "Открий своето идеално уиски" }),
+      page.getByRole("heading", { name: "Нови уискита" }),
+    ).toBeVisible();
+    await expect(page.getByText("Springbank 10 Y.O. (2025)")).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Предишни нови уискита" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Следващи нови уискита" }),
+    ).toBeVisible();
+
+    await expect(
+      page.getByRole("heading", { name: "50ml Discovery Сетове" }),
+    ).toBeVisible();
+    await expect(page.getByText("Шери срещу Торф (3 x 50ml)")).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Предишни discovery сетове" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Следващи discovery сетове" }),
+    ).toBeVisible();
+
+    await expect(
+      page.getByRole("heading", {
+        name: "Открий своето идеално уиски за под 60 секунди",
+      }),
+    ).toBeVisible();
+    await expect(
+      page.getByText("Трябват ни 5 кратки въпроса, относно вкусовия ви профил"),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "открий вкусовия си профил" }),
     ).toBeVisible();
 
     const footer = page.getByRole("contentinfo");

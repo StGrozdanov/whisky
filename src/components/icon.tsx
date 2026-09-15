@@ -2,9 +2,12 @@ export type IconName =
   | "phone_in_talk"
   | "mail"
   | "chevron_right"
+  | "chevron_left"
   | "search"
   | "favorite"
+  | "favorite_border"
   | "shopping_bag"
+  | "add_shopping_cart"
   | "person"
   | "percent"
   | "featured_seasonal_and_gifts"
@@ -14,6 +17,8 @@ export type IconName =
   | "chat"
   | "send"
   | "local_shipping"
+  | "local_offer"
+  | "fiber_new"
   | "play_arrow"
   | "star";
 
