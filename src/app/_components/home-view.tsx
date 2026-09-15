@@ -1,6 +1,7 @@
 import Image from "next/image";
+import { HousePickMedia } from "@/app/_components/house-pick-media";
 import { Icon } from "@/components/icon";
-import type { HomePage } from "@/shop/types";
+import type { HomePage, HousePick, HousePickNote } from "@/shop/types";
 import { ORIGIN_LABELS } from "@/utils/origin-labels";
 
 type HomeViewProps = {
@@ -26,12 +27,9 @@ export function HomeView({ home }: HomeViewProps) {
   );
 }
 
-function HousePickSection({
-  housePick,
-}: {
-  housePick: NonNullable<HomePage["housePick"]>;
-}) {
+function HousePickSection({ housePick }: { housePick: HousePick }) {
   const originLabel = ORIGIN_LABELS[housePick.whisky.origin];
+  const techChip = technicalChipLabel(housePick.whisky);
 
   return (
     <section
@@ -42,45 +40,140 @@ function HousePickSection({
         <div className="pointer-events-none absolute -right-20 -bottom-20 h-96 w-96 rounded-full bg-primary-container/10 blur-3xl" />
         <div className="relative z-10 grid grid-cols-1 items-center gap-space-xl lg:grid-cols-12">
           <div className="flex flex-col items-center lg:col-span-5">
-            <div className="relative flex aspect-[4/5] w-full max-w-sm items-center justify-center overflow-hidden rounded-xl bg-surface-container-lowest shadow-xl">
-              <Image
-                alt={housePick.whisky.name}
-                className="h-4/5 w-auto object-contain"
-                height={480}
-                src={housePick.whisky.photoUrl}
-                unoptimized
-                width={320}
-              />
-            </div>
+            <HousePickMedia
+              name={housePick.whisky.name}
+              photoUrl={housePick.whisky.photoUrl}
+              youtubeUrl={housePick.youtubeUrl}
+            />
           </div>
 
           <div className="flex flex-col space-y-space-md lg:col-span-7">
             <div className="flex flex-wrap items-center gap-space-xs">
-              <span className="rounded-full bg-secondary px-space-sm py-1 text-label-sm text-on-secondary uppercase">
+              <span className="rounded-full bg-secondary px-space-sm py-1 text-label-sm font-bold text-on-secondary uppercase tracking-wider">
                 УИСКИ НА МЕСЕЦА
                 {housePick.monthLabel ? ` • ${housePick.monthLabel}` : ""}
               </span>
-              <span className="rounded-full bg-surface-container-high px-space-sm py-1 text-label-sm text-primary uppercase">
+              <span className="rounded-full bg-surface-container-high px-space-sm py-1 text-label-sm text-primary uppercase tracking-wider">
                 {originLabel}
               </span>
+              {techChip ? (
+                <span className="rounded-full bg-surface-container-high px-space-sm py-1 text-technical-data text-on-surface-variant">
+                  {techChip}
+                </span>
+              ) : null}
             </div>
 
             <div>
               <h1
-                className="font-headline text-headline-lg text-on-surface md:text-headline-hero"
+                className="font-headline text-headline-lg text-on-surface"
                 id="house-pick-heading"
               >
                 {housePick.whisky.name}
               </h1>
-              <p className="mt-space-sm font-headline text-headline-sm text-secondary italic">
+              <p className="font-headline text-headline-sm text-secondary italic">
                 {housePick.story}
               </p>
             </div>
+
+            {housePick.note ? (
+              <HousePickNoteCard note={housePick.note} />
+            ) : null}
+
+            {housePick.displayPriceEur !== undefined ? (
+              <div className="flex items-center gap-space-lg pt-space-sm">
+                <span className="font-headline text-headline-hero leading-none font-bold text-primary">
+                  {formatPriceEur(housePick.displayPriceEur)}
+                </span>
+                <button
+                  className="flex cursor-pointer items-center justify-center gap-space-xs rounded-lg bg-primary px-space-xl py-3.5 text-label-lg font-bold text-on-primary uppercase tracking-wider shadow-md transition-colors hover:bg-primary-fixed"
+                  type="button"
+                >
+                  <Icon fontSize={20} name="shopping_bag" />
+                  <span>Купи</span>
+                </button>
+              </div>
+            ) : null}
           </div>
         </div>
       </div>
     </section>
   );
+}
+
+function HousePickNoteCard({ note }: { note: HousePickNote }) {
+  return (
+    <div className="relative rounded-xl bg-surface-container p-space-md">
+      <div className="mb-space-xs flex items-start justify-between">
+        <div className="flex items-center gap-space-sm">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-container font-headline text-headline-sm font-bold text-on-primary-container">
+            {authorInitials(note.authorName)}
+          </div>
+          <div>
+            <h2 className="text-label-md font-bold text-on-surface">
+              {note.authorName}
+            </h2>
+            {note.authorRole ? (
+              <span className="text-technical-data text-on-surface-variant">
+                {note.authorRole}
+              </span>
+            ) : null}
+          </div>
+        </div>
+        {note.score !== undefined ? (
+          <div className="flex items-center gap-1 rounded-lg bg-surface-container-highest px-space-sm py-1">
+            <Icon className="text-secondary" fontSize={18} name="star" />
+            <span className="text-label-md font-bold text-on-surface">
+              {formatScore(note.score)} / 10
+            </span>
+          </div>
+        ) : null}
+      </div>
+      <p className="text-body-md text-on-surface-variant italic">
+        {note.quote}
+      </p>
+    </div>
+  );
+}
+
+function technicalChipLabel(whisky: HousePick["whisky"]): string | undefined {
+  const parts: string[] = [];
+
+  if (whisky.abv !== undefined) {
+    parts.push(`${formatAbv(whisky.abv)}% ABV`);
+  }
+
+  if (whisky.nonChillFiltered === true) {
+    parts.push("Нестудено филтрирано");
+  }
+
+  if (parts.length === 0) {
+    return undefined;
+  }
+
+  return parts.join(" • ");
+}
+
+function formatAbv(abv: number): string {
+  return abv.toFixed(1);
+}
+
+function formatScore(score: number): string {
+  return score.toFixed(1);
+}
+
+function formatPriceEur(price: number): string {
+  return `${price.toFixed(2)} €`;
+}
+
+function authorInitials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) {
+    return "";
+  }
+  if (parts.length === 1) {
+    return parts[0].slice(0, 2).toUpperCase();
+  }
+  return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
 }
 
 function ClubTeaser() {

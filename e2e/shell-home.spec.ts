@@ -62,6 +62,18 @@ test.describe("shell and home", () => {
         "Сърцето на възродената дестилерия от мастър-дистилър Били Уокър",
       ),
     ).toBeVisible();
+    await expect(
+      page.getByText("46.0% ABV • Нестудено филтрирано"),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Красимир Михайлов" }),
+    ).toBeVisible();
+    await expect(page.getByText("9.3 / 10")).toBeVisible();
+    await expect(page.getByText("55.20 €")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Купи" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Пусни видео" })).toHaveCount(
+      0,
+    );
 
     await expect(
       page.getByRole("heading", {

@@ -30,10 +30,92 @@ describe("Shop home", () => {
         name: "GlenAllachie 12",
         photoUrl: "/bottles/glenallachie-12.svg",
         origin: "Scotch",
+        abv: undefined,
+        nonChillFiltered: undefined,
       },
       story: "Сърцето на възродената дестилерия от мастър-дистилър Били Уокър",
       monthLabel: "Март 2025",
+      youtubeUrl: undefined,
+      note: undefined,
+      displayPriceEur: undefined,
     });
+  });
+
+  it("returns House pick spotlight fields for ABV, note, price, and YouTube", async () => {
+    const shop = createShop({
+      store: createInMemoryHomeStore({
+        whiskies: [
+          {
+            id: "glen",
+            name: "GlenAllachie 12",
+            photoUrl: "/bottles/glenallachie-12.svg",
+            origin: "Scotch",
+            abv: 46.0,
+            nonChillFiltered: true,
+          },
+        ],
+        housePick: {
+          whiskyId: "glen",
+          story:
+            "Сърцето на възродената дестилерия от мастър-дистилър Били Уокър",
+          monthLabel: "Октомври 2026",
+          youtubeUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+          noteAuthorName: "Красимир Михайлов",
+          noteAuthorRole: "Главен Уиски Сомелиер, whiskyfinder.bg",
+          noteScore: 9.3,
+          noteQuote:
+            "„Монументален шери профил. Истинско тържество на Pedro Ximénez и Oloroso бъчвите.“",
+          displayPriceEur: 55.2,
+        },
+      }),
+    });
+
+    const home = await shop.home();
+
+    expect(home.housePick).toEqual({
+      whisky: {
+        name: "GlenAllachie 12",
+        photoUrl: "/bottles/glenallachie-12.svg",
+        origin: "Scotch",
+        abv: 46.0,
+        nonChillFiltered: true,
+      },
+      story: "Сърцето на възродената дестилерия от мастър-дистилър Били Уокър",
+      monthLabel: "Октомври 2026",
+      youtubeUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      note: {
+        authorName: "Красимир Михайлов",
+        authorRole: "Главен Уиски Сомелиер, whiskyfinder.bg",
+        score: 9.3,
+        quote:
+          "„Монументален шери профил. Истинско тържество на Pedro Ximénez и Oloroso бъчвите.“",
+      },
+      displayPriceEur: 55.2,
+    });
+  });
+
+  it("omits the House pick note when author or quote is missing", async () => {
+    const shop = createShop({
+      store: createInMemoryHomeStore({
+        whiskies: [
+          {
+            id: "glen",
+            name: "GlenAllachie 12",
+            photoUrl: "/bottles/glenallachie-12.svg",
+            origin: "Scotch",
+          },
+        ],
+        housePick: {
+          whiskyId: "glen",
+          story: "House story",
+          monthLabel: undefined,
+          noteAuthorName: "Красимир Михайлов",
+          noteQuote: undefined,
+        },
+      }),
+    });
+
+    expect((await shop.home()).housePick?.note).toBeUndefined();
   });
 
   it("returns no House pick when none is set", async () => {
@@ -83,11 +165,15 @@ describe("Shop home", () => {
         name: "GlenAllachie 12",
         photoUrl: "/bottles/glenallachie-12.svg",
         origin: "Scotch",
+        abv: undefined,
+        nonChillFiltered: undefined,
       },
       {
         name: "Redbreast 12",
         photoUrl: "/bottles/redbreast-12.svg",
         origin: "Irish",
+        abv: undefined,
+        nonChillFiltered: undefined,
       },
     ]);
   });

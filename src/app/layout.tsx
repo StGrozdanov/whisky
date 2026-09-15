@@ -8,6 +8,7 @@ import "./globals.css";
 
 const playfair = Playfair_Display({
   subsets: ["latin", "cyrillic", "latin-ext"],
+  weight: ["400", "500", "600", "700"],
   style: ["normal", "italic"],
   variable: "--font-playfair",
   display: "swap",
@@ -15,6 +16,7 @@ const playfair = Playfair_Display({
 
 const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin", "latin-ext", "cyrillic-ext"],
+  weight: ["400", "500", "600", "700"],
   variable: "--font-jakarta",
   display: "swap",
 });
@@ -30,10 +32,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html className="dark" lang="bg">
-      <body
-        className={`${playfair.variable} ${jakarta.variable} bg-surface font-body text-body-md text-on-surface antialiased`}
-      >
+    <html className={`dark ${playfair.variable} ${jakarta.variable}`} lang="bg">
+      <body className="bg-surface font-body text-body-md text-on-surface antialiased">
         <AgeGate />
         <SiteHeader />
         <main className="min-h-[calc(100vh-112px)] w-full bg-surface pt-28">

@@ -12,9 +12,11 @@ export type IconName =
   | "arrow_forward"
   | "chat"
   | "send"
-  | "local_shipping";
+  | "local_shipping"
+  | "play_arrow"
+  | "star";
 
-export type IconFontSize = 14 | 16 | 18 | 20 | 22 | 24;
+export type IconFontSize = 14 | 16 | 18 | 20 | 22 | 24 | 32;
 
 type IconProps = {
   name: IconName;

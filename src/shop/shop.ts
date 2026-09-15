@@ -3,6 +3,8 @@ import type {
   HomeStore,
   HomeWhisky,
   HousePick,
+  HousePickNote,
+  StoredHousePick,
   StoredWhisky,
 } from "./types";
 
@@ -33,6 +35,9 @@ export function createShop(deps: ShopDeps) {
         whisky: toHomeWhisky(featured),
         story: storedPick.story,
         monthLabel: storedPick.monthLabel,
+        youtubeUrl: storedPick.youtubeUrl,
+        note: toHousePickNote(storedPick),
+        displayPriceEur: storedPick.displayPriceEur,
       };
 
       return { housePick, whiskies };
@@ -47,5 +52,20 @@ function toHomeWhisky(whisky: StoredWhisky): HomeWhisky {
     name: whisky.name,
     photoUrl: whisky.photoUrl,
     origin: whisky.origin,
+    abv: whisky.abv,
+    nonChillFiltered: whisky.nonChillFiltered,
+  };
+}
+
+function toHousePickNote(pick: StoredHousePick): HousePickNote | undefined {
+  if (!pick.noteAuthorName || !pick.noteQuote) {
+    return undefined;
+  }
+
+  return {
+    authorName: pick.noteAuthorName,
+    authorRole: pick.noteAuthorRole,
+    score: pick.noteScore,
+    quote: pick.noteQuote,
   };
 }

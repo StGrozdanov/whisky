@@ -26,9 +26,6 @@
   --color-tertiary-container: #bd8634;
   --color-on-tertiary-container: #3c2500;
 
-  --font-headline: var(--font-playfair), "Playfair Display", serif;
-  --font-body: var(--font-jakarta), "Plus Jakarta Sans", sans-serif;
-
   --spacing-gutter: 1.5rem;
   --spacing-gutter-mobile: 1rem;
   --spacing-margin: 3rem;
@@ -87,6 +84,13 @@
   --text-technical-data--font-weight: 500;
 }
 
+/* Resolve next/font CSS vars on the element (not :root, where they are unset). */
+@theme inline {
+  --font-headline: var(--font-playfair), "Playfair Display", Georgia, serif;
+  --font-body:
+    var(--font-jakarta), "Plus Jakarta Sans", ui-sans-serif, sans-serif;
+}
+
 @layer base {
   * {
     box-sizing: border-box;
@@ -102,7 +106,8 @@
   body {
     background: var(--color-surface);
     color: var(--color-on-surface);
-    font-family: var(--font-body);
+    font-family:
+      var(--font-jakarta), "Plus Jakarta Sans", ui-sans-serif, sans-serif;
     -webkit-font-smoothing: antialiased;
   }
 
