@@ -39,15 +39,19 @@ export type StoredWhisky = {
   nonChillFiltered: boolean | undefined;
 };
 
+export type StoredHousePickNote = {
+  authorName: string | undefined;
+  authorRole: string | undefined;
+  score: number | undefined;
+  quote: string | undefined;
+};
+
 export type StoredHousePick = {
   whiskyId: string;
   story: string;
   monthLabel: string | undefined;
   youtubeUrl: string | undefined;
-  noteAuthorName: string | undefined;
-  noteAuthorRole: string | undefined;
-  noteScore: number | undefined;
-  noteQuote: string | undefined;
+  note: StoredHousePickNote | undefined;
   displayPriceEur: number | undefined;
 };
 

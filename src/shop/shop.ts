@@ -36,7 +36,7 @@ export function createShop(deps: ShopDeps) {
         story: storedPick.story,
         monthLabel: storedPick.monthLabel,
         youtubeUrl: storedPick.youtubeUrl,
-        note: toHousePickNote(storedPick),
+        note: toHousePickNote(storedPick.note),
         displayPriceEur: storedPick.displayPriceEur,
       };
 
@@ -57,15 +57,17 @@ function toHomeWhisky(whisky: StoredWhisky): HomeWhisky {
   };
 }
 
-function toHousePickNote(pick: StoredHousePick): HousePickNote | undefined {
-  if (!pick.noteAuthorName || !pick.noteQuote) {
+function toHousePickNote(
+  note: StoredHousePick["note"],
+): HousePickNote | undefined {
+  if (!note?.authorName || !note.quote) {
     return undefined;
   }
 
   return {
-    authorName: pick.noteAuthorName,
-    authorRole: pick.noteAuthorRole,
-    score: pick.noteScore,
-    quote: pick.noteQuote,
+    authorName: note.authorName,
+    authorRole: note.authorRole,
+    score: note.score,
+    quote: note.quote,
   };
 }

@@ -73,10 +73,12 @@ export function createSupabaseHomeStore(client: SupabaseClient): HomeStore {
         story: row.story,
         monthLabel: row.month_label ? row.month_label : undefined,
         youtubeUrl: row.youtube_url ? row.youtube_url : undefined,
-        noteAuthorName: row.note_author_name ? row.note_author_name : undefined,
-        noteAuthorRole: row.note_author_role ? row.note_author_role : undefined,
-        noteScore: row.note_score === null ? undefined : Number(row.note_score),
-        noteQuote: row.note_quote ? row.note_quote : undefined,
+        note: {
+          authorName: row.note_author_name ? row.note_author_name : undefined,
+          authorRole: row.note_author_role ? row.note_author_role : undefined,
+          score: row.note_score === null ? undefined : Number(row.note_score),
+          quote: row.note_quote ? row.note_quote : undefined,
+        },
         displayPriceEur:
           row.display_price_eur === null
             ? undefined

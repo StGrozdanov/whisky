@@ -14,10 +14,7 @@ type SeedHousePick = {
   story: string;
   monthLabel?: string;
   youtubeUrl?: string;
-  noteAuthorName?: string;
-  noteAuthorRole?: string;
-  noteScore?: number;
-  noteQuote?: string;
+  note?: StoredHousePick["note"];
   displayPriceEur?: number;
 };
 
@@ -25,17 +22,26 @@ export function createInMemoryHomeStore(seed?: {
   whiskies?: SeedWhisky[];
   housePick?: SeedHousePick;
 }): HomeStore {
-  let whiskies: StoredWhisky[] = [];
-  let housePick: StoredHousePick | undefined;
-
-  if (seed) {
-    if (seed.whiskies) {
-      whiskies = seed.whiskies.map(normalizeWhisky);
-    }
-    if (seed.housePick) {
-      housePick = normalizeHousePick(seed.housePick);
-    }
-  }
+  const whiskies: StoredWhisky[] = seed?.whiskies
+    ? seed.whiskies.map((whisky) => ({
+        id: whisky.id,
+        name: whisky.name,
+        photoUrl: whisky.photoUrl,
+        origin: whisky.origin,
+        abv: whisky.abv,
+        nonChillFiltered: whisky.nonChillFiltered,
+      }))
+    : [];
+  const housePick: StoredHousePick | undefined = seed?.housePick
+    ? {
+        whiskyId: seed.housePick.whiskyId,
+        story: seed.housePick.story,
+        monthLabel: seed.housePick.monthLabel,
+        youtubeUrl: seed.housePick.youtubeUrl,
+        note: seed.housePick.note,
+        displayPriceEur: seed.housePick.displayPriceEur,
+      }
+    : undefined;
 
   return {
     async allWhiskies() {
@@ -44,30 +50,5 @@ export function createInMemoryHomeStore(seed?: {
     async currentHousePick() {
       return housePick;
     },
-  };
-}
-
-function normalizeWhisky(whisky: SeedWhisky): StoredWhisky {
-  return {
-    id: whisky.id,
-    name: whisky.name,
-    photoUrl: whisky.photoUrl,
-    origin: whisky.origin,
-    abv: whisky.abv,
-    nonChillFiltered: whisky.nonChillFiltered,
-  };
-}
-
-function normalizeHousePick(pick: SeedHousePick): StoredHousePick {
-  return {
-    whiskyId: pick.whiskyId,
-    story: pick.story,
-    monthLabel: pick.monthLabel,
-    youtubeUrl: pick.youtubeUrl,
-    noteAuthorName: pick.noteAuthorName,
-    noteAuthorRole: pick.noteAuthorRole,
-    noteScore: pick.noteScore,
-    noteQuote: pick.noteQuote,
-    displayPriceEur: pick.displayPriceEur,
   };
 }

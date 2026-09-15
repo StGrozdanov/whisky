@@ -60,11 +60,13 @@ describe("Shop home", () => {
             "Сърцето на възродената дестилерия от мастър-дистилър Били Уокър",
           monthLabel: "Октомври 2026",
           youtubeUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-          noteAuthorName: "Стоян Грозданов",
-          noteAuthorRole: "Главен Дегустатор, whiskyfinder.bg",
-          noteScore: 9.3,
-          noteQuote:
-            "„Монументален шери профил. Истинско тържество на Pedro Ximénez и Oloroso бъчвите.“",
+          note: {
+            authorName: "Стоян Грозданов",
+            authorRole: "Главен Дегустатор, whiskyfinder.bg",
+            score: 9.3,
+            quote:
+              "„Монументален шери профил. Истинско тържество на Pedro Ximénez и Oloroso бъчвите.“",
+          },
           displayPriceEur: 55.2,
         },
       }),
@@ -109,8 +111,12 @@ describe("Shop home", () => {
           whiskyId: "glen",
           story: "House story",
           monthLabel: undefined,
-          noteAuthorName: "Стоян Грозданов",
-          noteQuote: undefined,
+          note: {
+            authorName: "Стоян Грозданов",
+            authorRole: undefined,
+            score: undefined,
+            quote: undefined,
+          },
         },
       }),
     });

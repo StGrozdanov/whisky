@@ -29,7 +29,10 @@ export function HomeView({ home }: HomeViewProps) {
 
 function HousePickSection({ housePick }: { housePick: HousePick }) {
   const originLabel = ORIGIN_LABELS[housePick.whisky.origin];
-  const techChip = technicalChipLabel(housePick.whisky);
+  const techChip = technicalChipLabel(
+    housePick.whisky.abv,
+    housePick.whisky.nonChillFiltered,
+  );
 
   return (
     <section
@@ -123,7 +126,7 @@ function HousePickNoteCard({ note }: { note: HousePickNote }) {
           <div className="flex items-center gap-1 rounded-lg bg-surface-container-highest px-space-sm py-1">
             <Icon className="text-secondary" fontSize={18} name="star" />
             <span className="text-label-md font-bold text-on-surface">
-              {formatScore(note.score)} / 10
+              {formatOneDecimal(note.score)} / 10
             </span>
           </div>
         ) : null}
@@ -135,14 +138,17 @@ function HousePickNoteCard({ note }: { note: HousePickNote }) {
   );
 }
 
-function technicalChipLabel(whisky: HousePick["whisky"]): string | undefined {
+function technicalChipLabel(
+  abv: number | undefined,
+  nonChillFiltered: boolean | undefined,
+): string | undefined {
   const parts: string[] = [];
 
-  if (whisky.abv !== undefined) {
-    parts.push(`${formatAbv(whisky.abv)}% ABV`);
+  if (abv !== undefined) {
+    parts.push(`${formatOneDecimal(abv)}% ABV`);
   }
 
-  if (whisky.nonChillFiltered === true) {
+  if (nonChillFiltered === true) {
     parts.push("Нестудено филтрирано");
   }
 
@@ -153,12 +159,8 @@ function technicalChipLabel(whisky: HousePick["whisky"]): string | undefined {
   return parts.join(" • ");
 }
 
-function formatAbv(abv: number): string {
-  return abv.toFixed(1);
-}
-
-function formatScore(score: number): string {
-  return score.toFixed(1);
+function formatOneDecimal(value: number): string {
+  return value.toFixed(1);
 }
 
 function formatPriceEur(price: number): string {

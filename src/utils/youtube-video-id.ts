@@ -17,25 +17,19 @@ export function youtubeVideoId(url: string | undefined): string | undefined {
       return isYoutubeId(id) ? id : undefined;
     }
 
-    if (
-      host === "youtube.com" ||
-      host === "m.youtube.com" ||
-      host === "youtube-nocookie.com"
-    ) {
-      const fromQuery = parsed.searchParams.get("v");
-      if (isYoutubeId(fromQuery)) {
-        return fromQuery;
-      }
+    if (host !== "youtube.com") {
+      return undefined;
+    }
 
-      const parts = parsed.pathname.split("/").filter(Boolean);
-      if (
-        parts[0] === "embed" ||
-        parts[0] === "shorts" ||
-        parts[0] === "live"
-      ) {
-        const id = parts[1];
-        return isYoutubeId(id) ? id : undefined;
-      }
+    const fromQuery = parsed.searchParams.get("v");
+    if (isYoutubeId(fromQuery)) {
+      return fromQuery;
+    }
+
+    const parts = parsed.pathname.split("/").filter(Boolean);
+    if (parts[0] === "embed" || parts[0] === "shorts") {
+      const id = parts[1];
+      return isYoutubeId(id) ? id : undefined;
     }
 
     return undefined;

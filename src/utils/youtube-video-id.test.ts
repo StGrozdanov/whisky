@@ -28,5 +28,14 @@ describe("youtubeVideoId", () => {
     expect(youtubeVideoId("not-a-youtube-url")).toBeUndefined();
     expect(youtubeVideoId("https://example.com/watch?v=abc")).toBeUndefined();
     expect(youtubeVideoId(undefined)).toBeUndefined();
+    expect(
+      youtubeVideoId("https://m.youtube.com/watch?v=dQw4w9WgXcQ"),
+    ).toBeUndefined();
+    expect(
+      youtubeVideoId("https://www.youtube.com/live/dQw4w9WgXcQ"),
+    ).toBeUndefined();
+    expect(
+      youtubeVideoId("https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ"),
+    ).toBeUndefined();
   });
 });
