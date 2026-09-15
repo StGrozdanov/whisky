@@ -66,7 +66,7 @@ test.describe("shell and home", () => {
       page.getByText("46.0% ABV • Нестудено филтрирано"),
     ).toBeVisible();
     await expect(
-      page.getByRole("heading", { name: "Красимир Михайлов" }),
+      page.getByRole("heading", { name: "Стоян Грозданов" }),
     ).toBeVisible();
     await expect(page.getByText("9.3 / 10")).toBeVisible();
     await expect(page.getByText("55.20 €")).toBeVisible();
