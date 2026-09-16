@@ -1,14 +1,9 @@
 import {
-  DiscoverySetCard,
-  NewArrivalCard,
-  OfferCard,
+  DiscoveryPackCard,
+  NewWhiskyCard,
+  PromotionCard,
 } from "@/app/_components/home-rail-cards";
 import { HomeRailCarousel } from "@/app/_components/home-rail-carousel";
-import {
-  DISCOVERY_SETS,
-  NEW_ARRIVALS,
-  SPECIAL_OFFERS,
-} from "@/app/_components/home-rail-data";
 import { HousePickMedia } from "@/app/_components/house-pick-media";
 import { Icon } from "@/components/icon";
 import type { HomePage, HousePick, HousePickNote } from "@/shop/types";
@@ -19,6 +14,11 @@ type HomeViewProps = {
 };
 
 export function HomeView({ home }: HomeViewProps) {
+  const hasPromotions = home.promotions.length > 0;
+  const hasNewWhiskies = home.newWhiskies.length > 0;
+  const hasDiscoveryPacks = home.discoveryPacks.length > 0;
+  const hasPromotionOrNewRails = hasPromotions || hasNewWhiskies;
+
   return (
     <div className="relative w-full overflow-hidden">
       <div className="pointer-events-none absolute top-0 left-1/4 h-[700px] w-[700px] rounded-full bg-primary/5 blur-[140px]" />
@@ -28,57 +28,68 @@ export function HomeView({ home }: HomeViewProps) {
 
       <ClubTeaser />
 
-      <div className="mx-auto flex max-w-[1440px] flex-col gap-space-xl px-gutter-mobile py-space-xl md:px-gutter">
-        <HomeRailCarousel
-          eyebrow={{
-            label: "Лимитирани Промоции",
-            icon: "local_offer",
-            className: "text-secondary",
-          }}
-          headingId="special-offers-heading"
-          nextLabel="Следващи оферти"
-          prevLabel="Предишни оферти"
-          slideBasis="quarter"
-          title="Специални Оферти"
-        >
-          {SPECIAL_OFFERS.map((offer) => (
-            <OfferCard card={offer} key={offer.name} />
-          ))}
-        </HomeRailCarousel>
+      {hasPromotionOrNewRails ? (
+        <div className="mx-auto flex max-w-[1440px] flex-col gap-space-xl px-gutter-mobile py-space-xl md:px-gutter">
+          {hasPromotions ? (
+            <HomeRailCarousel
+              eyebrow={{
+                label: "Лимитирани Промоции",
+                icon: "local_offer",
+                className: "text-secondary",
+              }}
+              headingId="promotions-heading"
+              nextLabel="Следващи оферти"
+              prevLabel="Предишни оферти"
+              slideBasis="quarter"
+              title="Специални Оферти"
+            >
+              {home.promotions.map((promotion) => (
+                <PromotionCard
+                  key={promotion.whisky.name}
+                  promotion={promotion}
+                />
+              ))}
+            </HomeRailCarousel>
+          ) : null}
 
-        <HomeRailCarousel
-          eyebrow={{
-            label: "Пресни Попълнения",
-            icon: "fiber_new",
-            className: "text-primary",
-          }}
-          headingId="new-arrivals-heading"
-          nextLabel="Следващи нови уискита"
-          prevLabel="Предишни нови уискита"
-          slideBasis="quarter"
-          title="Нови уискита"
-        >
-          {NEW_ARRIVALS.map((arrival) => (
-            <NewArrivalCard card={arrival} key={arrival.name} />
-          ))}
-        </HomeRailCarousel>
-      </div>
-
-      <div className="mx-auto max-w-[1440px] px-gutter-mobile py-space-xl md:px-gutter">
-        <div className="rounded-2xl bg-surface-container-low p-space-xl shadow-xl">
-          <HomeRailCarousel
-            headingId="discovery-sets-heading"
-            nextLabel="Следващи discovery сетове"
-            prevLabel="Предишни discovery сетове"
-            slideBasis="half"
-            title="50ml Discovery Сетове"
-          >
-            {DISCOVERY_SETS.map((set) => (
-              <DiscoverySetCard card={set} key={set.title} />
-            ))}
-          </HomeRailCarousel>
+          {hasNewWhiskies ? (
+            <HomeRailCarousel
+              eyebrow={{
+                label: "Пресни Попълнения",
+                icon: "fiber_new",
+                className: "text-primary",
+              }}
+              headingId="new-whiskies-heading"
+              nextLabel="Следващи нови уискита"
+              prevLabel="Предишни нови уискита"
+              slideBasis="quarter"
+              title="Нови уискита"
+            >
+              {home.newWhiskies.map((entry) => (
+                <NewWhiskyCard entry={entry} key={entry.whisky.name} />
+              ))}
+            </HomeRailCarousel>
+          ) : null}
         </div>
-      </div>
+      ) : null}
+
+      {hasDiscoveryPacks ? (
+        <div className="mx-auto max-w-[1440px] px-gutter-mobile py-space-xl md:px-gutter">
+          <div className="rounded-2xl bg-surface-container-low p-space-xl shadow-xl">
+            <HomeRailCarousel
+              headingId="discovery-packs-heading"
+              nextLabel="Следващи discovery сетове"
+              prevLabel="Предишни discovery сетове"
+              slideBasis="half"
+              title="50ml Discovery Сетове"
+            >
+              {home.discoveryPacks.map((pack) => (
+                <DiscoveryPackCard key={pack.title} pack={pack} />
+              ))}
+            </HomeRailCarousel>
+          </div>
+        </div>
+      ) : null}
 
       <FinderCta />
     </div>

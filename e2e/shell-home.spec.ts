@@ -21,7 +21,7 @@ test.describe("shell and home", () => {
     await expect(page.getByRole("dialog")).toHaveCount(0);
   });
 
-  test("home renders inside the shell with House pick and Finder CTA", async ({
+  test("home renders inside the shell with live House pick and rails", async ({
     page,
   }) => {
     await page.addInitScript(() => {
@@ -96,10 +96,17 @@ test.describe("shell and home", () => {
       page.getByRole("button", { name: "Стани клубен член" }),
     ).toBeVisible();
 
+    const promotions = page.getByRole("region", { name: "Специални Оферти" });
     await expect(
-      page.getByRole("heading", { name: "Специални Оферти" }),
+      promotions.getByRole("heading", { name: "Специални Оферти" }),
     ).toBeVisible();
-    await expect(page.getByText("Arran 10 Year Old")).toBeVisible();
+    await expect(promotions.getByRole("heading", { level: 3 })).toHaveCount(5);
+    await expect(
+      promotions.getByRole("heading", { name: "Redbreast 12" }),
+    ).toBeVisible();
+    await expect(
+      promotions.getByRole("heading", { name: "Arran 10 Year Old" }),
+    ).toBeVisible();
     await expect(
       page.getByRole("button", { name: "Предишни оферти" }),
     ).toBeVisible();
@@ -107,10 +114,19 @@ test.describe("shell and home", () => {
       page.getByRole("button", { name: "Следващи оферти" }),
     ).toBeVisible();
 
+    const newWhiskies = page.getByRole("region", { name: "Нови уискита" });
     await expect(
-      page.getByRole("heading", { name: "Нови уискита" }),
+      newWhiskies.getByRole("heading", { name: "Нови уискита" }),
     ).toBeVisible();
-    await expect(page.getByText("Springbank 10 Y.O. (2025)")).toBeVisible();
+    await expect(newWhiskies.getByRole("heading", { level: 3 })).toHaveCount(5);
+    await expect(
+      newWhiskies.getByRole("heading", {
+        name: "Yamazaki Distiller's Reserve",
+      }),
+    ).toBeVisible();
+    await expect(
+      newWhiskies.getByRole("heading", { name: "Springbank 10 Y.O. (2025)" }),
+    ).toBeVisible();
     await expect(
       page.getByRole("button", { name: "Предишни нови уискита" }),
     ).toBeVisible();
@@ -118,10 +134,30 @@ test.describe("shell and home", () => {
       page.getByRole("button", { name: "Следващи нови уискита" }),
     ).toBeVisible();
 
+    const discoveryPacks = page.getByRole("region", {
+      name: "50ml Discovery Сетове",
+    });
     await expect(
-      page.getByRole("heading", { name: "50ml Discovery Сетове" }),
+      discoveryPacks.getByRole("heading", { name: "50ml Discovery Сетове" }),
     ).toBeVisible();
-    await expect(page.getByText("Шери срещу Торф (3 x 50ml)")).toBeVisible();
+    await expect(discoveryPacks.getByRole("heading", { level: 3 })).toHaveCount(
+      3,
+    );
+    await expect(
+      discoveryPacks.getByRole("heading", {
+        name: "Шери срещу Торф (3 x 50ml)",
+      }),
+    ).toBeVisible();
+    await expect(
+      discoveryPacks.getByRole("heading", {
+        name: "The Japanese Craft Trio (3 x 50ml)",
+      }),
+    ).toBeVisible();
+    await expect(
+      discoveryPacks.getByRole("heading", {
+        name: "Campbeltown & Islay (3 x 50ml)",
+      }),
+    ).toBeVisible();
     await expect(
       page.getByRole("button", { name: "Предишни discovery сетове" }),
     ).toBeVisible();

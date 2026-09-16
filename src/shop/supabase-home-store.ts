@@ -1,5 +1,13 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import type { HomeStore, Origin, StoredHousePick, StoredWhisky } from "./types";
+import type {
+  HomeStore,
+  Origin,
+  StoredDiscoveryPack,
+  StoredHomeNewWhisky,
+  StoredHomePromotion,
+  StoredHousePick,
+  StoredWhisky,
+} from "./types";
 
 type WhiskyRow = {
   id: string;
@@ -20,6 +28,38 @@ type HousePickRow = {
   note_score: number | null;
   note_quote: string | null;
   display_price_eur: number | null;
+};
+
+type PromotionRow = {
+  whisky_id: string;
+  discounted_price_eur: number;
+  prior_price_eur: number;
+  starts_at: string | null;
+  ends_at: string | null;
+  sort_order: number;
+};
+
+type NewWhiskyRow = {
+  whisky_id: string;
+  display_price_eur: number;
+  badge: string;
+  note: string;
+  sort_order: number;
+};
+
+type DiscoveryPackRow = {
+  id: string;
+  title: string;
+  photo_url: string;
+  price_eur: number;
+  sort_order: number;
+};
+
+type DiscoveryPackItemRow = {
+  pack_id: string;
+  name: string;
+  detail: string;
+  sort_order: number;
 };
 
 export function createSupabaseHomeStore(client: SupabaseClient): HomeStore {
@@ -84,6 +124,121 @@ export function createSupabaseHomeStore(client: SupabaseClient): HomeStore {
             ? undefined
             : Number(row.display_price_eur),
       };
+    },
+
+    async promotions(): Promise<StoredHomePromotion[]> {
+      const { data, error } = await client
+        .from("home_promotions")
+        .select(
+          "whisky_id, discounted_price_eur, prior_price_eur, starts_at, ends_at, sort_order",
+        )
+        .order("sort_order", { ascending: true });
+
+      if (error) {
+        throw new Error(`Failed to load Home promotions: ${error.message}`);
+      }
+
+      if (!data) {
+        return [];
+      }
+
+      const rows = data as PromotionRow[];
+      return rows.map((row) => ({
+        whiskyId: row.whisky_id,
+        discountedPriceEur: Number(row.discounted_price_eur),
+        priorPriceEur: Number(row.prior_price_eur),
+        startsAt: row.starts_at ? new Date(row.starts_at) : undefined,
+        endsAt: row.ends_at ? new Date(row.ends_at) : undefined,
+        sortOrder: row.sort_order,
+      }));
+    },
+
+    async newWhiskies(): Promise<StoredHomeNewWhisky[]> {
+      const { data, error } = await client
+        .from("home_new_whiskies")
+        .select("whisky_id, display_price_eur, badge, note, sort_order")
+        .order("sort_order", { ascending: true });
+
+      if (error) {
+        throw new Error(`Failed to load New Whiskies: ${error.message}`);
+      }
+
+      if (!data) {
+        return [];
+      }
+
+      const rows = data as NewWhiskyRow[];
+      return rows.map((row) => ({
+        whiskyId: row.whisky_id,
+        displayPriceEur: Number(row.display_price_eur),
+        badge: row.badge,
+        note: row.note,
+        sortOrder: row.sort_order,
+      }));
+    },
+
+    async discoveryPacks(): Promise<StoredDiscoveryPack[]> {
+      const { data: packsData, error: packsError } = await client
+        .from("discovery_packs")
+        .select("id, title, photo_url, price_eur, sort_order")
+        .order("sort_order", { ascending: true });
+
+      if (packsError) {
+        throw new Error(
+          `Failed to load Discovery Packs: ${packsError.message}`,
+        );
+      }
+
+      if (!packsData || packsData.length === 0) {
+        return [];
+      }
+
+      const packs = packsData as DiscoveryPackRow[];
+      const packIds = packs.map((pack) => pack.id);
+
+      const { data: itemsData, error: itemsError } = await client
+        .from("discovery_pack_items")
+        .select("pack_id, name, detail, sort_order")
+        .in("pack_id", packIds)
+        .order("sort_order", { ascending: true });
+
+      if (itemsError) {
+        throw new Error(
+          `Failed to load Discovery Pack items: ${itemsError.message}`,
+        );
+      }
+
+      const items = itemsData ? (itemsData as DiscoveryPackItemRow[]) : [];
+      const itemsByPack = new Map<string, DiscoveryPackItemRow[]>();
+
+      for (const item of items) {
+        const existing = itemsByPack.get(item.pack_id);
+        if (existing) {
+          existing.push(item);
+        } else {
+          itemsByPack.set(item.pack_id, [item]);
+        }
+      }
+
+      return packs.map((pack) => {
+        const packItems = itemsByPack.get(pack.id);
+        const lineup = packItems
+          ? packItems.map((item) => ({
+              name: item.name,
+              detail: item.detail,
+              sortOrder: item.sort_order,
+            }))
+          : [];
+
+        return {
+          id: pack.id,
+          title: pack.title,
+          photoUrl: pack.photo_url,
+          priceEur: Number(pack.price_eur),
+          sortOrder: pack.sort_order,
+          lineup,
+        };
+      });
     },
   };
 }

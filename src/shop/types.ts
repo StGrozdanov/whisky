@@ -25,9 +25,38 @@ export type HousePick = {
   displayPriceEur: number | undefined;
 };
 
+export type HomePromotion = {
+  whisky: HomeWhisky;
+  discountedPriceEur: number;
+  priorPriceEur: number;
+  savingsEur: number;
+  discountPercent: number;
+};
+
+export type HomeNewWhisky = {
+  whisky: HomeWhisky;
+  displayPriceEur: number;
+  badge: string;
+  note: string;
+};
+
+export type HomeDiscoveryPackLineupItem = {
+  name: string;
+  detail: string;
+};
+
+export type HomeDiscoveryPack = {
+  title: string;
+  photoUrl: string;
+  priceEur: number;
+  lineup: HomeDiscoveryPackLineupItem[];
+};
+
 export type HomePage = {
   housePick: HousePick | undefined;
-  whiskies: HomeWhisky[];
+  promotions: HomePromotion[];
+  newWhiskies: HomeNewWhisky[];
+  discoveryPacks: HomeDiscoveryPack[];
 };
 
 export type StoredWhisky = {
@@ -55,7 +84,46 @@ export type StoredHousePick = {
   displayPriceEur: number | undefined;
 };
 
+export type StoredHomePromotion = {
+  whiskyId: string;
+  discountedPriceEur: number;
+  priorPriceEur: number;
+  startsAt: Date | undefined;
+  endsAt: Date | undefined;
+  sortOrder: number;
+};
+
+export type StoredHomeNewWhisky = {
+  whiskyId: string;
+  displayPriceEur: number;
+  badge: string;
+  note: string;
+  sortOrder: number;
+};
+
+export type StoredDiscoveryPackItem = {
+  name: string;
+  detail: string;
+  sortOrder: number;
+};
+
+export type StoredDiscoveryPack = {
+  id: string;
+  title: string;
+  photoUrl: string;
+  priceEur: number;
+  sortOrder: number;
+  lineup: StoredDiscoveryPackItem[];
+};
+
 export type HomeStore = {
   allWhiskies(): Promise<StoredWhisky[]>;
   currentHousePick(): Promise<StoredHousePick | undefined>;
+  promotions(): Promise<StoredHomePromotion[]>;
+  newWhiskies(): Promise<StoredHomeNewWhisky[]>;
+  discoveryPacks(): Promise<StoredDiscoveryPack[]>;
+};
+
+export type Clock = {
+  now(): Date;
 };
