@@ -1,4 +1,4 @@
-export type BrandIconName = "facebook" | "instagram" | "tiktok" | "youtube";
+type BrandIconName = "facebook" | "instagram" | "tiktok" | "youtube";
 
 type BrandIconProps = {
   name: BrandIconName;

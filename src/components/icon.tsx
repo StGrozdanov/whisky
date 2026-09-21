@@ -22,7 +22,7 @@ export type IconName =
   | "play_arrow"
   | "star";
 
-export type IconFontSize = 14 | 16 | 18 | 20 | 22 | 24 | 32;
+type IconFontSize = 14 | 16 | 18 | 20 | 22 | 24 | 32;
 
 type IconProps = {
   name: IconName;

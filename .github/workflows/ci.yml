@@ -90,6 +90,45 @@ jobs:
       - name: Run tests
         run: npm test
 
+  unused_code_app:
+    name: Unused code
+    needs: [install_app]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v7
+
+      - name: Setup node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run knip
+        run: npm run knip
+
+  security_scan:
+    name: Security
+    needs: [install_app]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v7
+
+      - name: Run Trivy filesystem scan
+        uses: aquasecurity/trivy-action@v0.33.1
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,secret,misconfig
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: "1"
+          format: table
+
   db_migrations:
     name: DB Migrations
     needs: [install_app]
@@ -162,6 +201,8 @@ jobs:
         typecheck_app,
         lint_app,
         unit_test_app,
+        unused_code_app,
+        security_scan,
         db_migrations,
         integration_test_app,
       ]
