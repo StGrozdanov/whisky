@@ -1,5 +1,46 @@
-const ORIGINS = ["Irish", "Scotch", "Bourbon", "Japanese"] as const;
+export const ORIGINS = ["Irish", "Scotch", "Bourbon", "Japanese"] as const;
 export type Origin = (typeof ORIGINS)[number];
+
+export const PRICE_TIERS = ["ENTRY", "CORE", "SIGNATURE", "PREMIUM"] as const;
+export type PriceTier = (typeof PRICE_TIERS)[number];
+
+export const EXPERIENCE_LEVELS = ["beginner", "advanced"] as const;
+export type ExperienceLevel = (typeof EXPERIENCE_LEVELS)[number];
+
+type CatalogueAction = "buy" | "ask-us";
+
+export type CatalogueAgeFilter = "declared" | "nas";
+
+export type CatalogueQuery = {
+  origin?: Origin;
+  priceTier?: PriceTier;
+  age?: CatalogueAgeFilter;
+  minScore?: 9.0 | 9.3 | 9.5;
+  experience?: ExperienceLevel;
+  page?: number;
+};
+
+export type CatalogueCard = {
+  id: string;
+  name: string;
+  photoUrl: string;
+  origin: Origin;
+  abv: number | undefined;
+  ageYears: number | undefined;
+  experienceLevel: ExperienceLevel | undefined;
+  displayedScore: number | undefined;
+  tagline: string | undefined;
+  priceEur: number;
+  priceTier: PriceTier;
+  action: CatalogueAction;
+};
+
+export type CataloguePage = {
+  items: CatalogueCard[];
+  totalCount: number;
+  page: number;
+  pageCount: number;
+};
 
 export type HomeWhisky = {
   name: string;
@@ -66,6 +107,25 @@ export type StoredWhisky = {
   origin: Origin;
   abv: number | undefined;
   nonChillFiltered: boolean | undefined;
+  published: boolean;
+  distillery: string;
+  country: string;
+  region: string | undefined;
+  ageYears: number | undefined;
+  experienceLevel: ExperienceLevel | undefined;
+  houseScore: number | undefined;
+  tagline: string | undefined;
+};
+
+export type StoredPrimarySku = {
+  whiskyId: string;
+  priceEur: number;
+  quantity: number;
+};
+
+export type StoredCatalogueEntry = {
+  whisky: StoredWhisky;
+  primarySku: StoredPrimarySku;
 };
 
 type StoredHousePickNote = {
@@ -118,6 +178,7 @@ export type StoredDiscoveryPack = {
 
 export type HomeStore = {
   allWhiskies(): Promise<StoredWhisky[]>;
+  catalogueEntries(): Promise<StoredCatalogueEntry[]>;
   currentHousePick(): Promise<StoredHousePick | undefined>;
   promotions(): Promise<StoredHomePromotion[]>;
   newWhiskies(): Promise<StoredHomeNewWhisky[]>;

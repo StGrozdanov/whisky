@@ -1,7 +1,9 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type {
+  ExperienceLevel,
   HomeStore,
   Origin,
+  StoredCatalogueEntry,
   StoredDiscoveryPack,
   StoredHomeNewWhisky,
   StoredHomePromotion,
@@ -16,6 +18,20 @@ type WhiskyRow = {
   origin: Origin;
   abv: number | null;
   non_chill_filtered: boolean | null;
+  published: boolean;
+  distillery: string;
+  country: string;
+  region: string | null;
+  age_years: number | null;
+  experience_level: ExperienceLevel | null;
+  house_score: number | null;
+  tagline: string | null;
+};
+
+type SkuRow = {
+  whisky_id: string;
+  price_eur: number;
+  quantity: number;
 };
 
 type HousePickRow = {
@@ -62,12 +78,35 @@ type DiscoveryPackItemRow = {
   sort_order: number;
 };
 
+const WHISKY_SELECT =
+  "id, name, photo_url, origin, abv, non_chill_filtered, published, distillery, country, region, age_years, experience_level, house_score, tagline";
+
+function toStoredWhisky(row: WhiskyRow): StoredWhisky {
+  return {
+    id: row.id,
+    name: row.name,
+    photoUrl: row.photo_url,
+    origin: row.origin,
+    abv: row.abv === null ? undefined : Number(row.abv),
+    nonChillFiltered:
+      row.non_chill_filtered === null ? undefined : row.non_chill_filtered,
+    published: row.published,
+    distillery: row.distillery,
+    country: row.country,
+    region: row.region ? row.region : undefined,
+    ageYears: row.age_years === null ? undefined : row.age_years,
+    experienceLevel: row.experience_level ? row.experience_level : undefined,
+    houseScore: row.house_score === null ? undefined : Number(row.house_score),
+    tagline: row.tagline ? row.tagline : undefined,
+  };
+}
+
 export function createSupabaseHomeStore(client: SupabaseClient): HomeStore {
   return {
     async allWhiskies(): Promise<StoredWhisky[]> {
       const { data, error } = await client
         .from("whiskies")
-        .select("id, name, photo_url, origin, abv, non_chill_filtered")
+        .select(WHISKY_SELECT)
         .order("created_at", { ascending: true });
 
       if (error) {
@@ -78,16 +117,63 @@ export function createSupabaseHomeStore(client: SupabaseClient): HomeStore {
         return [];
       }
 
-      const rows = data as WhiskyRow[];
-      return rows.map((row) => ({
-        id: row.id,
-        name: row.name,
-        photoUrl: row.photo_url,
-        origin: row.origin,
-        abv: row.abv === null ? undefined : Number(row.abv),
-        nonChillFiltered:
-          row.non_chill_filtered === null ? undefined : row.non_chill_filtered,
-      }));
+      return (data as WhiskyRow[]).map(toStoredWhisky);
+    },
+
+    async catalogueEntries(): Promise<StoredCatalogueEntry[]> {
+      const { data: whiskyData, error: whiskyError } = await client
+        .from("whiskies")
+        .select(WHISKY_SELECT)
+        .eq("published", true)
+        .order("name", { ascending: true });
+
+      if (whiskyError) {
+        throw new Error(
+          `Failed to load Catalogue Whiskies: ${whiskyError.message}`,
+        );
+      }
+
+      if (!whiskyData || whiskyData.length === 0) {
+        return [];
+      }
+
+      const whiskies = (whiskyData as WhiskyRow[]).map(toStoredWhisky);
+      const whiskyIds = whiskies.map((whisky) => whisky.id);
+
+      const { data: skuData, error: skuError } = await client
+        .from("skus")
+        .select("whisky_id, price_eur, quantity")
+        .eq("is_primary", true)
+        .in("whisky_id", whiskyIds);
+
+      if (skuError) {
+        throw new Error(`Failed to load Primary SKUs: ${skuError.message}`);
+      }
+
+      const skuByWhiskyId = new Map<string, SkuRow>();
+      if (skuData) {
+        for (const row of skuData as SkuRow[]) {
+          skuByWhiskyId.set(row.whisky_id, row);
+        }
+      }
+
+      const entries: StoredCatalogueEntry[] = [];
+      for (const whisky of whiskies) {
+        const sku = skuByWhiskyId.get(whisky.id);
+        if (!sku) {
+          continue;
+        }
+        entries.push({
+          whisky,
+          primarySku: {
+            whiskyId: whisky.id,
+            priceEur: Number(sku.price_eur),
+            quantity: sku.quantity,
+          },
+        });
+      }
+
+      return entries;
     },
 
     async currentHousePick(): Promise<StoredHousePick | undefined> {

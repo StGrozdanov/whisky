@@ -1,4 +1,7 @@
 import type {
+  CatalogueCard,
+  CataloguePage,
+  CatalogueQuery,
   Clock,
   HomeDiscoveryPack,
   HomeNewWhisky,
@@ -8,6 +11,8 @@ import type {
   HomeWhisky,
   HousePick,
   HousePickNote,
+  PriceTier,
+  StoredCatalogueEntry,
   StoredDiscoveryPack,
   StoredHomeNewWhisky,
   StoredHomePromotion,
@@ -26,6 +31,8 @@ const wallClock: Clock = {
   },
 };
 
+const CATALOGUE_PAGE_SIZE = 24;
+
 export function createShop(deps: ShopDeps) {
   const clock = deps.clock ? deps.clock : wallClock;
 
@@ -33,7 +40,9 @@ export function createShop(deps: ShopDeps) {
     async home(): Promise<HomePage> {
       const storedWhiskies = await deps.store.allWhiskies();
       const whiskyById = new Map(
-        storedWhiskies.map((whisky) => [whisky.id, whisky]),
+        storedWhiskies
+          .filter((whisky) => whisky.published)
+          .map((whisky) => [whisky.id, whisky]),
       );
       const storedPick = await deps.store.currentHousePick();
       const now = clock.now();
@@ -49,10 +58,104 @@ export function createShop(deps: ShopDeps) {
         discoveryPacks: toDiscoveryPacks(await deps.store.discoveryPacks()),
       };
     },
+
+    async catalogue(query: CatalogueQuery): Promise<CataloguePage> {
+      const entries = await deps.store.catalogueEntries();
+      const filtered = entries.filter((entry) =>
+        matchesCatalogue(entry, query),
+      );
+      filtered.sort((a, b) => a.whisky.name.localeCompare(b.whisky.name, "en"));
+
+      const totalCount = filtered.length;
+      const pageCount =
+        totalCount === 0 ? 0 : Math.ceil(totalCount / CATALOGUE_PAGE_SIZE);
+      const requestedPage = query.page && query.page > 0 ? query.page : 1;
+      const page =
+        pageCount === 0
+          ? 1
+          : requestedPage > pageCount
+            ? pageCount
+            : requestedPage;
+      const start = (page - 1) * CATALOGUE_PAGE_SIZE;
+      const items = filtered
+        .slice(start, start + CATALOGUE_PAGE_SIZE)
+        .map(toCatalogueCard);
+
+      return { items, totalCount, page, pageCount };
+    },
   };
 }
 
 export type Shop = ReturnType<typeof createShop>;
+
+function matchesCatalogue(
+  entry: StoredCatalogueEntry,
+  query: CatalogueQuery,
+): boolean {
+  const { whisky, primarySku } = entry;
+
+  if (query.origin && whisky.origin !== query.origin) {
+    return false;
+  }
+
+  if (
+    query.priceTier &&
+    priceTierFor(primarySku.priceEur) !== query.priceTier
+  ) {
+    return false;
+  }
+
+  if (query.age === "declared" && whisky.ageYears === undefined) {
+    return false;
+  }
+  if (query.age === "nas" && whisky.ageYears !== undefined) {
+    return false;
+  }
+
+  if (query.minScore !== undefined) {
+    if (whisky.houseScore === undefined || whisky.houseScore < query.minScore) {
+      return false;
+    }
+  }
+
+  if (query.experience && whisky.experienceLevel !== query.experience) {
+    return false;
+  }
+
+  return true;
+}
+
+function toCatalogueCard(entry: StoredCatalogueEntry): CatalogueCard {
+  const { whisky, primarySku } = entry;
+
+  return {
+    id: whisky.id,
+    name: whisky.name,
+    photoUrl: whisky.photoUrl,
+    origin: whisky.origin,
+    abv: whisky.abv,
+    ageYears: whisky.ageYears,
+    experienceLevel: whisky.experienceLevel,
+    displayedScore: whisky.houseScore,
+    tagline: whisky.tagline,
+    priceEur: primarySku.priceEur,
+    priceTier: priceTierFor(primarySku.priceEur),
+    action: primarySku.quantity > 0 ? "buy" : "ask-us",
+  };
+}
+
+function priceTierFor(priceEur: number): PriceTier {
+  if (priceEur <= 50) {
+    return "ENTRY";
+  }
+  if (priceEur <= 90) {
+    return "CORE";
+  }
+  if (priceEur <= 140) {
+    return "SIGNATURE";
+  }
+  return "PREMIUM";
+}
 
 function toHousePick(
   storedPick: StoredHousePick | undefined,

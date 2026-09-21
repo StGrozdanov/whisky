@@ -1,8 +1,15 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Icon } from "@/components/icon";
 
 export function SiteHeader() {
+  const pathname = usePathname();
+  const catalogueCurrent =
+    pathname === "/catalogue" || pathname.startsWith("/catalogue/");
+
   return (
     <header className="fixed top-0 z-50 w-full shadow-[0_4px_24px_rgba(0,0,0,0.6)]">
       <div className="border-b border-secondary/25 bg-surface-container-lowest">
@@ -58,8 +65,22 @@ export function SiteHeader() {
                 WHISKY FINDER
               </span>
             </Link>
-            {/* Nav links omitted until Catalogue (#4) and later tickets exist */}
-            <nav aria-label="Основна навигация" className="hidden xl:block" />
+            <nav
+              aria-label="Основна навигация"
+              className="ml-space-md hidden items-center gap-space-md xl:flex"
+            >
+              <Link
+                aria-current={catalogueCurrent ? "page" : undefined}
+                className={
+                  catalogueCurrent
+                    ? "cursor-pointer text-label-md font-bold tracking-wider text-primary uppercase"
+                    : "cursor-pointer text-label-md tracking-wider text-on-surface-variant uppercase transition-colors hover:text-on-surface"
+                }
+                href="/catalogue"
+              >
+                Селекция
+              </Link>
+            </nav>
           </div>
 
           <div className="flex max-w-md flex-1 items-center justify-end gap-space-md">

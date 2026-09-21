@@ -1,11 +1,14 @@
 import type {
+  ExperienceLevel,
   HomeStore,
   Origin,
+  StoredCatalogueEntry,
   StoredDiscoveryPack,
   StoredDiscoveryPackItem,
   StoredHomeNewWhisky,
   StoredHomePromotion,
   StoredHousePick,
+  StoredPrimarySku,
   StoredWhisky,
 } from "./types";
 
@@ -16,6 +19,20 @@ type SeedWhisky = {
   origin: Origin;
   abv?: number;
   nonChillFiltered?: boolean;
+  published?: boolean;
+  distillery?: string;
+  country?: string;
+  region?: string;
+  ageYears?: number;
+  experienceLevel?: ExperienceLevel;
+  houseScore?: number;
+  tagline?: string;
+};
+
+type SeedPrimarySku = {
+  whiskyId: string;
+  priceEur: number;
+  quantity: number;
 };
 
 type SeedHousePick = {
@@ -61,6 +78,7 @@ type SeedDiscoveryPack = {
 
 export function createInMemoryHomeStore(seed?: {
   whiskies?: SeedWhisky[];
+  primarySkus?: SeedPrimarySku[];
   housePick?: SeedHousePick;
   promotions?: SeedPromotion[];
   newWhiskies?: SeedNewWhisky[];
@@ -74,8 +92,25 @@ export function createInMemoryHomeStore(seed?: {
         origin: whisky.origin,
         abv: whisky.abv,
         nonChillFiltered: whisky.nonChillFiltered,
+        published: whisky.published !== false,
+        distillery: whisky.distillery ? whisky.distillery : "",
+        country: whisky.country ? whisky.country : "",
+        region: whisky.region,
+        ageYears: whisky.ageYears,
+        experienceLevel: whisky.experienceLevel,
+        houseScore: whisky.houseScore,
+        tagline: whisky.tagline,
       }))
     : [];
+
+  const primarySkus: StoredPrimarySku[] = seed?.primarySkus
+    ? seed.primarySkus.map((sku) => ({
+        whiskyId: sku.whiskyId,
+        priceEur: sku.priceEur,
+        quantity: sku.quantity,
+      }))
+    : [];
+
   const housePick: StoredHousePick | undefined = seed?.housePick
     ? {
         whiskyId: seed.housePick.whiskyId,
@@ -125,6 +160,25 @@ export function createInMemoryHomeStore(seed?: {
   return {
     async allWhiskies() {
       return whiskies;
+    },
+    async catalogueEntries(): Promise<StoredCatalogueEntry[]> {
+      const skuByWhiskyId = new Map(
+        primarySkus.map((sku) => [sku.whiskyId, sku]),
+      );
+      const entries: StoredCatalogueEntry[] = [];
+
+      for (const whisky of whiskies) {
+        if (!whisky.published) {
+          continue;
+        }
+        const primarySku = skuByWhiskyId.get(whisky.id);
+        if (!primarySku) {
+          continue;
+        }
+        entries.push({ whisky, primarySku });
+      }
+
+      return entries;
     },
     async currentHousePick() {
       return housePick;
