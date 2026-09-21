@@ -20,7 +20,7 @@ npm install
 npm run dev
 ```
 
-Other useful scripts: `npm run type-check`, `npm run check` (Biome), `npm test` (Vitest), `npm run test:integration` / `npm run test:e2e` (Playwright).
+Other useful scripts: `npm run type-check`, `npm run check` (Biome), `npm test` (Vitest), `npm run knip` (unused code), `npm run test:integration` / `npm run test:e2e` (Playwright).
 
 ## Workflow
 
@@ -38,8 +38,22 @@ Issues and specs live in this repo's **GitHub Issues**, managed via the `gh` CLI
 
 ## CI/CD
 
+### Pull requests
+
+On every pull request to `main` ([.github/workflows/pr.yml](./.github/workflows/pr.yml)):
+
+install → typecheck / lint / unit tests / unused code (knip) / security (Trivy) (parallel) → deploy a unique Vercel preview URL → comment that URL on the PR.
+
+PR checks do **not** run Supabase migrations, e2e, or production deploy. Preview URLs are per-deployment and are **not** aliased to the shared nonprod host.
+
+### Main
+
 On every push to `main` ([.github/workflows/ci.yml](./.github/workflows/ci.yml)):
 
-install → typecheck / lint / unit tests (parallel) → Supabase DB migrations → Playwright integration tests → deploy to a nonprod Vercel alias → Playwright e2e against nonprod → deploy to prod Vercel alias.
+install → typecheck / lint / unit tests / unused code (knip) / security (Trivy) (parallel) → Supabase DB migrations → Playwright integration tests → deploy to the shared nonprod Vercel alias (`whisky-finder-non-prod.vercel.app`) → Playwright e2e against nonprod → deploy to the prod Vercel alias.
 
 Nothing reaches production without passing e2e against a live nonprod deployment first.
+
+### Dependency updates
+
+[Dependabot](./.github/dependabot.yml) opens weekly PRs for npm and GitHub Actions updates.

@@ -1,4 +1,4 @@
-export const ORIGINS = ["Irish", "Scotch", "Bourbon", "Japanese"] as const;
+const ORIGINS = ["Irish", "Scotch", "Bourbon", "Japanese"] as const;
 export type Origin = (typeof ORIGINS)[number];
 
 export type HomeWhisky = {
@@ -40,7 +40,7 @@ export type HomeNewWhisky = {
   note: string;
 };
 
-export type HomeDiscoveryPackLineupItem = {
+type HomeDiscoveryPackLineupItem = {
   name: string;
   detail: string;
 };
@@ -68,7 +68,7 @@ export type StoredWhisky = {
   nonChillFiltered: boolean | undefined;
 };
 
-export type StoredHousePickNote = {
+type StoredHousePickNote = {
   authorName: string | undefined;
   authorRole: string | undefined;
   score: number | undefined;

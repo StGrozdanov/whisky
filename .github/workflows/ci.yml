@@ -16,7 +16,7 @@ env:
 jobs:
   install_app:
     name: Install
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout repo
         uses: actions/checkout@v7
@@ -33,7 +33,7 @@ jobs:
   typecheck_app:
     name: Typechecks
     needs: [install_app]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout repo
         uses: actions/checkout@v7
@@ -53,7 +53,7 @@ jobs:
   lint_app:
     name: Linters
     needs: [install_app]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout repo
         uses: actions/checkout@v7
@@ -73,7 +73,7 @@ jobs:
   unit_test_app:
     name: Unit Tests
     needs: [install_app]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout repo
         uses: actions/checkout@v7
@@ -90,10 +90,60 @@ jobs:
       - name: Run tests
         run: npm test
 
+  unused_code_app:
+    name: Unused code
+    needs: [install_app]
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v7
+
+      - name: Setup node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run knip
+        run: npm run knip
+
+  security_scan:
+    name: Security
+    needs: [install_app]
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v7
+
+      - name: Run Trivy filesystem scan
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          version: v0.74.0
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,secret,misconfig
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: "1"
+          format: table
+          output: trivy-report.txt
+
+      - name: Upload Trivy report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: trivy-report
+          path: trivy-report.txt
+          if-no-files-found: ignore
+          retention-days: 14
+
   db_migrations:
     name: DB Migrations
     needs: [install_app]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout repo
         uses: actions/checkout@v7
@@ -117,7 +167,7 @@ jobs:
   integration_test_app:
     name: Integration Tests
     needs: [install_app, db_migrations]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout repo
         uses: actions/checkout@v7
@@ -162,10 +212,12 @@ jobs:
         typecheck_app,
         lint_app,
         unit_test_app,
+        unused_code_app,
+        security_scan,
         db_migrations,
         integration_test_app,
       ]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       preview_url: ${{ steps.deploy.outputs.preview-url }}
     steps:
@@ -190,7 +242,7 @@ jobs:
   e2e_test_app:
     name: E2E Tests
     needs: [deploy_nonprod]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout repo
         uses: actions/checkout@v7
@@ -224,7 +276,7 @@ jobs:
   deploy_prod:
     name: Deploy Prod
     needs: [e2e_test_app]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout repo
         uses: actions/checkout@v7

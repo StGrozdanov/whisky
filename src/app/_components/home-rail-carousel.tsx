@@ -4,9 +4,9 @@ import useEmblaCarousel from "embla-carousel-react";
 import { Children, isValidElement, type ReactNode, useCallback } from "react";
 import { Icon, type IconName } from "@/components/icon";
 
-export type HomeRailSlideBasis = "quarter" | "half";
+type HomeRailSlideBasis = "quarter" | "half";
 
-export type HomeRailEyebrow = {
+type HomeRailEyebrow = {
   label: string;
   icon: IconName;
   className: string;
