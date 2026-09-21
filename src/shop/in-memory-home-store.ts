@@ -1,14 +1,14 @@
 import type {
   ExperienceLevel,
-  HomeStore,
   Origin,
+  ShopStore,
   StoredCatalogueEntry,
   StoredDiscoveryPack,
   StoredDiscoveryPackItem,
   StoredHomeNewWhisky,
   StoredHomePromotion,
   StoredHousePick,
-  StoredPrimarySku,
+  StoredSku,
   StoredWhisky,
 } from "./types";
 
@@ -26,13 +26,16 @@ type SeedWhisky = {
   ageYears?: number;
   experienceLevel?: ExperienceLevel;
   houseScore?: number;
+  tastingAverage?: number;
   tagline?: string;
+  photoUrls?: string[];
 };
 
-type SeedPrimarySku = {
+type SeedSku = {
   whiskyId: string;
   priceEur: number;
   quantity: number;
+  isPrimary?: boolean;
 };
 
 type SeedHousePick = {
@@ -78,12 +81,13 @@ type SeedDiscoveryPack = {
 
 export function createInMemoryHomeStore(seed?: {
   whiskies?: SeedWhisky[];
-  primarySkus?: SeedPrimarySku[];
+  primarySkus?: SeedSku[];
+  skus?: SeedSku[];
   housePick?: SeedHousePick;
   promotions?: SeedPromotion[];
   newWhiskies?: SeedNewWhisky[];
   discoveryPacks?: SeedDiscoveryPack[];
-}): HomeStore {
+}): ShopStore {
   const whiskies: StoredWhisky[] = seed?.whiskies
     ? seed.whiskies.map((whisky) => ({
         id: whisky.id,
@@ -99,17 +103,33 @@ export function createInMemoryHomeStore(seed?: {
         ageYears: whisky.ageYears,
         experienceLevel: whisky.experienceLevel,
         houseScore: whisky.houseScore,
+        tastingAverage: whisky.tastingAverage,
         tagline: whisky.tagline,
+        photoUrls:
+          whisky.photoUrls && whisky.photoUrls.length > 0
+            ? whisky.photoUrls
+            : [whisky.photoUrl],
       }))
     : [];
 
-  const primarySkus: StoredPrimarySku[] = seed?.primarySkus
-    ? seed.primarySkus.map((sku) => ({
-        whiskyId: sku.whiskyId,
-        priceEur: sku.priceEur,
-        quantity: sku.quantity,
-      }))
-    : [];
+  const skus: StoredSku[] = [
+    ...(seed?.primarySkus
+      ? seed.primarySkus.map((sku) => ({
+          whiskyId: sku.whiskyId,
+          priceEur: sku.priceEur,
+          quantity: sku.quantity,
+          isPrimary: sku.isPrimary !== false,
+        }))
+      : []),
+    ...(seed?.skus
+      ? seed.skus.map((sku) => ({
+          whiskyId: sku.whiskyId,
+          priceEur: sku.priceEur,
+          quantity: sku.quantity,
+          isPrimary: sku.isPrimary === true,
+        }))
+      : []),
+  ];
 
   const housePick: StoredHousePick | undefined = seed?.housePick
     ? {
@@ -162,20 +182,18 @@ export function createInMemoryHomeStore(seed?: {
       return whiskies;
     },
     async catalogueEntries(): Promise<StoredCatalogueEntry[]> {
-      const skuByWhiskyId = new Map(
-        primarySkus.map((sku) => [sku.whiskyId, sku]),
-      );
       const entries: StoredCatalogueEntry[] = [];
 
       for (const whisky of whiskies) {
         if (!whisky.published) {
           continue;
         }
-        const primarySku = skuByWhiskyId.get(whisky.id);
-        if (!primarySku) {
+        const whiskySkus = skus.filter((sku) => sku.whiskyId === whisky.id);
+        const hasPrimary = whiskySkus.some((sku) => sku.isPrimary);
+        if (!hasPrimary) {
           continue;
         }
-        entries.push({ whisky, primarySku });
+        entries.push({ whisky, skus: whiskySkus });
       }
 
       return entries;

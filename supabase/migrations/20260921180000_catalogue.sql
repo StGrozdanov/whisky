@@ -387,3 +387,14 @@ insert into skus (whisky_id, price_eur, quantity, is_primary) values
   ('1a1a1a1a-1a1a-1a1a-1a1a-1a1a1a1a1a1a', 46.00, 7, true),
   ('1b1b1b1b-1b1b-1b1b-1b1b-1b1b1b1b1b1b', 98.00, 3, true);
 -- Draft Speyside Reserve has no SKU / is unpublished.
+
+-- Ordered photos. The first URL is the Catalogue image.
+alter table whiskies add column photo_urls text[];
+
+update whiskies
+set photo_urls = array[photo_url]
+where photo_urls is null;
+
+alter table whiskies
+  alter column photo_urls set not null,
+  add constraint whiskies_photo_urls_not_empty check (cardinality(photo_urls) > 0);

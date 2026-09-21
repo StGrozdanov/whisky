@@ -1,17 +1,14 @@
 import Image from "next/image";
 import { Icon } from "@/components/icon";
 import type { CatalogueCard } from "@/shop/types";
+import { formatPriceEur } from "@/utils/format-price-eur";
 import { ORIGIN_LABELS } from "@/utils/origin-labels";
-
-function formatPriceEur(price: number): string {
-  return `${price.toFixed(2)} €`;
-}
 
 function formatScore(score: number): string {
   return `${score.toFixed(1)}/10`;
 }
 
-function ageLabel(ageYears: number | undefined): string | undefined {
+function ageLabel(ageYears: number | undefined): string {
   if (ageYears === undefined) {
     return "NAS";
   }
@@ -77,11 +74,9 @@ export function CatalogueWhiskyCard({ card }: CatalogueWhiskyCardProps) {
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5">
-          {age ? (
-            <span className="rounded-full bg-surface-container px-2 py-0.5 text-label-sm text-outline">
-              {age}
-            </span>
-          ) : null}
+          <span className="rounded-full bg-surface-container px-2 py-0.5 text-label-sm text-outline">
+            {age}
+          </span>
           {experience ? (
             <span className="rounded-full bg-primary/10 px-2 py-0.5 text-label-sm text-primary">
               {experience}
@@ -103,7 +98,7 @@ export function CatalogueWhiskyCard({ card }: CatalogueWhiskyCardProps) {
 
       <div className="mt-space-md space-y-space-sm border-t border-surface-container-highest/40 pt-space-sm">
         <div className="flex items-baseline justify-between gap-2">
-          <span className="text-technical-data text-outline">Цена бутилка</span>
+          <span className="text-technical-data text-outline">Цена</span>
           <span className="font-headline text-headline-md font-bold text-primary">
             {formatPriceEur(card.priceEur)}
           </span>

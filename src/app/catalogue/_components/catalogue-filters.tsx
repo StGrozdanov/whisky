@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ChangeEvent } from "react";
 import { Icon } from "@/components/icon";
-import type { CatalogueQuery } from "@/shop/types";
+import { type CatalogueQuery, ORIGINS } from "@/shop/types";
 import { ORIGIN_LABELS } from "@/utils/origin-labels";
 import {
   buildCatalogueHref,
@@ -20,6 +20,9 @@ type Chip = {
   label: string;
   clear: Partial<CatalogueQuery>;
 };
+
+const FILTER_SELECT_CLASS =
+  "cursor-pointer rounded-lg border border-outline-variant/40 bg-surface-container-lowest px-space-sm py-2 text-body-sm text-on-surface focus:ring-1 focus:ring-primary focus:outline-none";
 
 function scoreLabel(score: number): string {
   return `Оценка: Над ${score.toFixed(1)}/10`;
@@ -114,29 +117,32 @@ export function CatalogueFilters({ query }: CatalogueFiltersProps) {
         <label className="flex flex-col gap-1 text-label-sm text-outline uppercase tracking-wider">
           Произход
           <select
-            className="cursor-pointer rounded-lg border border-outline-variant/40 bg-surface-container-lowest px-space-sm py-2 text-body-sm text-on-surface focus:ring-1 focus:ring-primary focus:outline-none"
+            className={FILTER_SELECT_CLASS}
             onChange={(event) => onSelectChange(event, "origin")}
             value={query.origin ? query.origin : ""}
           >
             <option value="">Всички</option>
-            <option value="Scotch">Шотландия</option>
-            <option value="Irish">Ирландия</option>
-            <option value="Bourbon">САЩ</option>
-            <option value="Japanese">Япония</option>
+            {ORIGINS.map((origin) => (
+              <option key={origin} value={origin}>
+                {ORIGIN_LABELS[origin]}
+              </option>
+            ))}
           </select>
         </label>
 
         <label className="flex flex-col gap-1 text-label-sm text-outline uppercase tracking-wider">
           Ценови клас
           <select
-            className="cursor-pointer rounded-lg border border-outline-variant/40 bg-surface-container-lowest px-space-sm py-2 text-body-sm text-on-surface focus:ring-1 focus:ring-primary focus:outline-none"
+            className={FILTER_SELECT_CLASS}
             onChange={(event) => onSelectChange(event, "priceTier")}
             value={query.priceTier ? query.priceTier : ""}
           >
             <option value="">Всички</option>
             <option value="ENTRY">ENTRY (до 50.00 €)</option>
-            <option value="CORE">CORE (50.00 € — 90.00 €)</option>
-            <option value="SIGNATURE">SIGNATURE (90.00 € — 140.00 €)</option>
+            <option value="CORE">CORE (над 50.00 € до 90.00 €)</option>
+            <option value="SIGNATURE">
+              SIGNATURE (над 90.00 € до 140.00 €)
+            </option>
             <option value="PREMIUM">PREMIUM (над 140.00 €)</option>
           </select>
         </label>
@@ -144,7 +150,7 @@ export function CatalogueFilters({ query }: CatalogueFiltersProps) {
         <label className="flex flex-col gap-1 text-label-sm text-outline uppercase tracking-wider">
           Възраст
           <select
-            className="cursor-pointer rounded-lg border border-outline-variant/40 bg-surface-container-lowest px-space-sm py-2 text-body-sm text-on-surface focus:ring-1 focus:ring-primary focus:outline-none"
+            className={FILTER_SELECT_CLASS}
             onChange={(event) => onSelectChange(event, "age")}
             value={query.age ? query.age : ""}
           >
@@ -157,7 +163,7 @@ export function CatalogueFilters({ query }: CatalogueFiltersProps) {
         <label className="flex flex-col gap-1 text-label-sm text-outline uppercase tracking-wider">
           Оценка сомелиер
           <select
-            className="cursor-pointer rounded-lg border border-outline-variant/40 bg-surface-container-lowest px-space-sm py-2 text-body-sm text-on-surface focus:ring-1 focus:ring-primary focus:outline-none"
+            className={FILTER_SELECT_CLASS}
             onChange={(event) => onSelectChange(event, "minScore")}
             value={query.minScore !== undefined ? String(query.minScore) : ""}
           >
@@ -171,7 +177,7 @@ export function CatalogueFilters({ query }: CatalogueFiltersProps) {
         <label className="flex flex-col gap-1 text-label-sm text-outline uppercase tracking-wider">
           Ниво опит
           <select
-            className="cursor-pointer rounded-lg border border-outline-variant/40 bg-surface-container-lowest px-space-sm py-2 text-body-sm text-on-surface focus:ring-1 focus:ring-primary focus:outline-none"
+            className={FILTER_SELECT_CLASS}
             onChange={(event) => onSelectChange(event, "experience")}
             value={query.experience ? query.experience : ""}
           >

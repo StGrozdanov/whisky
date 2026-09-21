@@ -36,7 +36,7 @@ export type CatalogueCard = {
 };
 
 export type CataloguePage = {
-  items: CatalogueCard[];
+  whiskies: CatalogueCard[];
   totalCount: number;
   page: number;
   pageCount: number;
@@ -114,18 +114,21 @@ export type StoredWhisky = {
   ageYears: number | undefined;
   experienceLevel: ExperienceLevel | undefined;
   houseScore: number | undefined;
+  tastingAverage: number | undefined;
   tagline: string | undefined;
+  photoUrls: string[];
 };
 
-export type StoredPrimarySku = {
+export type StoredSku = {
   whiskyId: string;
   priceEur: number;
   quantity: number;
+  isPrimary: boolean;
 };
 
 export type StoredCatalogueEntry = {
   whisky: StoredWhisky;
-  primarySku: StoredPrimarySku;
+  skus: StoredSku[];
 };
 
 type StoredHousePickNote = {
@@ -176,7 +179,7 @@ export type StoredDiscoveryPack = {
   lineup: StoredDiscoveryPackItem[];
 };
 
-export type HomeStore = {
+export type ShopStore = {
   allWhiskies(): Promise<StoredWhisky[]>;
   catalogueEntries(): Promise<StoredCatalogueEntry[]>;
   currentHousePick(): Promise<StoredHousePick | undefined>;

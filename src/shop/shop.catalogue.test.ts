@@ -44,7 +44,7 @@ describe("Shop catalogue", () => {
     const catalogue = await shop.catalogue({});
 
     expect(catalogue.totalCount).toBe(2);
-    expect(catalogue.items.map((item) => item.name)).toEqual([
+    expect(catalogue.whiskies.map((item) => item.name)).toEqual([
       "Aberlour 12",
       "Buffalo Trace",
     ]);
@@ -78,13 +78,13 @@ describe("Shop catalogue", () => {
     expect(page1.totalCount).toBe(26);
     expect(page1.page).toBe(1);
     expect(page1.pageCount).toBe(2);
-    expect(page1.items).toHaveLength(24);
-    expect(page1.items[0]?.name).toBe("Whisky 01");
-    expect(page1.items[23]?.name).toBe("Whisky 24");
+    expect(page1.whiskies).toHaveLength(24);
+    expect(page1.whiskies[0]?.name).toBe("Whisky 01");
+    expect(page1.whiskies[23]?.name).toBe("Whisky 24");
 
     expect(page2.page).toBe(2);
-    expect(page2.items).toHaveLength(2);
-    expect(page2.items[0]?.name).toBe("Whisky 25");
+    expect(page2.whiskies).toHaveLength(2);
+    expect(page2.whiskies[0]?.name).toBe("Whisky 25");
   });
 
   it("filters by Origin, Price tier, Age, min House score, and Experience with AND", async () => {
@@ -178,7 +178,7 @@ describe("Shop catalogue", () => {
     });
 
     expect(catalogue.totalCount).toBe(1);
-    expect(catalogue.items[0]?.name).toBe("Match Scotch");
+    expect(catalogue.whiskies[0]?.name).toBe("Match Scotch");
   });
 
   it("sets price and Price tier from the Primary SKU and Ask us when quantity is zero", async () => {
@@ -203,7 +203,7 @@ describe("Shop catalogue", () => {
           },
           {
             id: "entry",
-            name: "Entry Bottle",
+            name: "Entry Whisky",
             photoUrl: "/bottles/buffalo-trace.svg",
             origin: "Bourbon",
             distillery: "Entry",
@@ -211,7 +211,7 @@ describe("Shop catalogue", () => {
           },
           {
             id: "signature",
-            name: "Signature Bottle",
+            name: "Signature Whisky",
             photoUrl: "/bottles/yamazaki-reserve.svg",
             origin: "Japanese",
             distillery: "Signature",
@@ -219,7 +219,7 @@ describe("Shop catalogue", () => {
           },
           {
             id: "premium",
-            name: "Premium Bottle",
+            name: "Premium Whisky",
             photoUrl: "/bottles/yamazaki-reserve.svg",
             origin: "Japanese",
             distillery: "Premium",
@@ -237,7 +237,7 @@ describe("Shop catalogue", () => {
     });
 
     const catalogue = await shop.catalogue({});
-    const byName = new Map(catalogue.items.map((item) => [item.name, item]));
+    const byName = new Map(catalogue.whiskies.map((item) => [item.name, item]));
 
     expect(byName.get("Buy Me")).toMatchObject({
       priceEur: 55.2,
@@ -249,9 +249,9 @@ describe("Shop catalogue", () => {
       priceTier: "CORE",
       action: "ask-us",
     });
-    expect(byName.get("Entry Bottle")?.priceTier).toBe("ENTRY");
-    expect(byName.get("Signature Bottle")?.priceTier).toBe("SIGNATURE");
-    expect(byName.get("Premium Bottle")?.priceTier).toBe("PREMIUM");
+    expect(byName.get("Entry Whisky")?.priceTier).toBe("ENTRY");
+    expect(byName.get("Signature Whisky")?.priceTier).toBe("SIGNATURE");
+    expect(byName.get("Premium Whisky")?.priceTier).toBe("PREMIUM");
   });
 
   it("returns an empty published catalogue and an empty filtered result separately", async () => {
@@ -274,7 +274,7 @@ describe("Shop catalogue", () => {
 
     const empty = await emptyShop.catalogue({});
     expect(empty.totalCount).toBe(0);
-    expect(empty.items).toEqual([]);
+    expect(empty.whiskies).toEqual([]);
     expect(empty.pageCount).toBe(0);
 
     const filteredShop = createShop({
@@ -295,7 +295,7 @@ describe("Shop catalogue", () => {
 
     const noMatches = await filteredShop.catalogue({ origin: "Japanese" });
     expect(noMatches.totalCount).toBe(0);
-    expect(noMatches.items).toEqual([]);
+    expect(noMatches.whiskies).toEqual([]);
   });
 
   it("omits unpublished Whiskies from Home rails", async () => {
@@ -342,5 +342,109 @@ describe("Shop catalogue", () => {
     expect(home.housePick).toBeUndefined();
     expect(home.promotions).toHaveLength(1);
     expect(home.promotions[0]?.whisky.name).toBe("Live Whisky");
+  });
+
+  it("shows an in-stock SKU price when the Primary SKU is Ask us, and keeps the Primary tier", async () => {
+    const shop = createShop({
+      store: createInMemoryHomeStore({
+        whiskies: [
+          {
+            id: "split",
+            name: "Split Availability",
+            photoUrl: "/bottles/glenallachie-12.svg",
+            origin: "Scotch",
+            distillery: "Split",
+            country: "Шотландия",
+          },
+        ],
+        primarySkus: [{ whiskyId: "split", priceEur: 100, quantity: 0 }],
+        skus: [{ whiskyId: "split", priceEur: 18, quantity: 4 }],
+      }),
+    });
+
+    const catalogue = await shop.catalogue({});
+
+    expect(catalogue.whiskies[0]).toMatchObject({
+      priceEur: 18,
+      priceTier: "SIGNATURE",
+      action: "buy",
+    });
+  });
+
+  it("uses House score for Displayed score, otherwise the Tasting average", async () => {
+    const shop = createShop({
+      store: createInMemoryHomeStore({
+        whiskies: [
+          {
+            id: "house",
+            name: "House Wins",
+            photoUrl: "/bottles/glenallachie-12.svg",
+            origin: "Scotch",
+            distillery: "House",
+            country: "Шотландия",
+            houseScore: 8.0,
+            tastingAverage: 9.6,
+          },
+          {
+            id: "tastings",
+            name: "Tasting Average",
+            photoUrl: "/bottles/redbreast-12.svg",
+            origin: "Irish",
+            distillery: "Tasting",
+            country: "Ирландия",
+            tastingAverage: 9.4,
+          },
+          {
+            id: "none",
+            name: "No Score",
+            photoUrl: "/bottles/buffalo-trace.svg",
+            origin: "Bourbon",
+            distillery: "None",
+            country: "САЩ",
+          },
+        ],
+        primarySkus: [
+          { whiskyId: "house", priceEur: 55, quantity: 1 },
+          { whiskyId: "tastings", priceEur: 55, quantity: 1 },
+          { whiskyId: "none", priceEur: 55, quantity: 1 },
+        ],
+      }),
+    });
+
+    const all = await shop.catalogue({});
+    const byName = new Map(all.whiskies.map((whisky) => [whisky.name, whisky]));
+    expect(byName.get("House Wins")?.displayedScore).toBe(8.0);
+    expect(byName.get("Tasting Average")?.displayedScore).toBe(9.4);
+    expect(byName.get("No Score")?.displayedScore).toBeUndefined();
+
+    const filtered = await shop.catalogue({ minScore: 9.3 });
+    expect(filtered.whiskies.map((whisky) => whisky.name)).toEqual([
+      "Tasting Average",
+    ]);
+  });
+
+  it("uses the first photo as the Catalogue image", async () => {
+    const shop = createShop({
+      store: createInMemoryHomeStore({
+        whiskies: [
+          {
+            id: "photos",
+            name: "Ordered Photos",
+            photoUrl: "/bottles/glenallachie-12.svg",
+            photoUrls: [
+              "/bottles/laphroaig-10.svg",
+              "/bottles/redbreast-12.svg",
+            ],
+            origin: "Scotch",
+            distillery: "Photos",
+            country: "Шотландия",
+          },
+        ],
+        primarySkus: [{ whiskyId: "photos", priceEur: 55, quantity: 1 }],
+      }),
+    });
+
+    const catalogue = await shop.catalogue({});
+    expect(catalogue.whiskies[0]?.photoUrl).toBe("/bottles/laphroaig-10.svg");
   });
 });

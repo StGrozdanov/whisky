@@ -7,11 +7,11 @@ import type {
   HomeNewWhisky,
   HomePage,
   HomePromotion,
-  HomeStore,
   HomeWhisky,
   HousePick,
   HousePickNote,
   PriceTier,
+  ShopStore,
   StoredCatalogueEntry,
   StoredDiscoveryPack,
   StoredHomeNewWhisky,
@@ -21,7 +21,7 @@ import type {
 } from "./types";
 
 type ShopDeps = {
-  store: HomeStore;
+  store: ShopStore;
   clock?: Clock;
 };
 
@@ -77,11 +77,11 @@ export function createShop(deps: ShopDeps) {
             ? pageCount
             : requestedPage;
       const start = (page - 1) * CATALOGUE_PAGE_SIZE;
-      const items = filtered
+      const whiskies = filtered
         .slice(start, start + CATALOGUE_PAGE_SIZE)
         .map(toCatalogueCard);
 
-      return { items, totalCount, page, pageCount };
+      return { whiskies, totalCount, page, pageCount };
     },
   };
 }
@@ -92,16 +92,14 @@ function matchesCatalogue(
   entry: StoredCatalogueEntry,
   query: CatalogueQuery,
 ): boolean {
-  const { whisky, primarySku } = entry;
+  const whisky = entry.whisky;
+  const primary = primarySku(entry);
 
   if (query.origin && whisky.origin !== query.origin) {
     return false;
   }
 
-  if (
-    query.priceTier &&
-    priceTierFor(primarySku.priceEur) !== query.priceTier
-  ) {
+  if (query.priceTier && priceTierFor(primary.priceEur) !== query.priceTier) {
     return false;
   }
 
@@ -113,7 +111,8 @@ function matchesCatalogue(
   }
 
   if (query.minScore !== undefined) {
-    if (whisky.houseScore === undefined || whisky.houseScore < query.minScore) {
+    const score = displayedScore(whisky);
+    if (score === undefined || score < query.minScore) {
       return false;
     }
   }
@@ -126,22 +125,60 @@ function matchesCatalogue(
 }
 
 function toCatalogueCard(entry: StoredCatalogueEntry): CatalogueCard {
-  const { whisky, primarySku } = entry;
+  const whisky = entry.whisky;
+  const primary = primarySku(entry);
+  const offer = catalogueOffer(entry);
 
   return {
     id: whisky.id,
     name: whisky.name,
-    photoUrl: whisky.photoUrl,
+    photoUrl: cataloguePhoto(whisky),
     origin: whisky.origin,
     abv: whisky.abv,
     ageYears: whisky.ageYears,
     experienceLevel: whisky.experienceLevel,
-    displayedScore: whisky.houseScore,
+    displayedScore: displayedScore(whisky),
     tagline: whisky.tagline,
-    priceEur: primarySku.priceEur,
-    priceTier: priceTierFor(primarySku.priceEur),
-    action: primarySku.quantity > 0 ? "buy" : "ask-us",
+    priceEur: offer.priceEur,
+    priceTier: priceTierFor(primary.priceEur),
+    action: offer.action,
   };
+}
+
+function primarySku(entry: StoredCatalogueEntry) {
+  const primary = entry.skus.find((sku) => sku.isPrimary);
+  if (!primary) {
+    return entry.skus[0];
+  }
+  return primary;
+}
+
+function catalogueOffer(entry: StoredCatalogueEntry): {
+  priceEur: number;
+  action: CatalogueCard["action"];
+} {
+  const inStock = entry.skus.filter((sku) => sku.quantity > 0);
+  if (inStock.length > 0) {
+    const primaryInStock = inStock.find((sku) => sku.isPrimary);
+    const chosen = primaryInStock ? primaryInStock : inStock[0];
+    return { priceEur: chosen.priceEur, action: "buy" };
+  }
+
+  return { priceEur: primarySku(entry).priceEur, action: "ask-us" };
+}
+
+function displayedScore(whisky: StoredWhisky): number | undefined {
+  if (whisky.houseScore !== undefined) {
+    return whisky.houseScore;
+  }
+  return whisky.tastingAverage;
+}
+
+function cataloguePhoto(whisky: StoredWhisky): string {
+  if (whisky.photoUrls.length > 0) {
+    return whisky.photoUrls[0];
+  }
+  return whisky.photoUrl;
 }
 
 function priceTierFor(priceEur: number): PriceTier {

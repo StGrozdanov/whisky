@@ -65,7 +65,7 @@ export function CatalogueView({ catalogue, query }: CatalogueViewProps) {
         ) : (
           <>
             <div className="mt-space-lg grid grid-cols-1 gap-space-md sm:grid-cols-2 lg:grid-cols-4">
-              {catalogue.items.map((card) => (
+              {catalogue.whiskies.map((card) => (
                 <CatalogueWhiskyCard card={card} key={card.id} />
               ))}
             </div>
@@ -107,24 +107,14 @@ function CatalogueEmptyState({ hasFilters }: { hasFilters: boolean }) {
         В момента каталогът се обновява
       </h2>
       <p className="max-w-lg text-body-md text-on-surface-variant">
-        Скоро тук ще се появят нови уискита. Можете да се върнете към началото
-        или да се обадите на магазина.
+        Скоро тук ще се появят нови уискита.
       </p>
-      <div className="flex flex-wrap items-center justify-center gap-space-sm">
-        <Link
-          className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-primary px-space-xl py-3 text-label-md font-bold text-on-primary uppercase tracking-wider transition-colors hover:bg-primary-fixed"
-          href="/"
-        >
-          Към началото
-        </Link>
-        <a
-          className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-outline-variant px-space-xl py-3 text-label-md font-bold text-on-surface uppercase tracking-wider transition-colors hover:border-secondary"
-          href="tel:0888888888"
-        >
-          <Icon fontSize={18} name="phone" />
-          Обадете се
-        </a>
-      </div>
+      <Link
+        className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-primary px-space-xl py-3 text-label-md font-bold text-on-primary uppercase tracking-wider transition-colors hover:bg-primary-fixed"
+        href="/"
+      >
+        Към началото
+      </Link>
     </div>
   );
 }

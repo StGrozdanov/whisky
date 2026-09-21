@@ -7,6 +7,7 @@ import { HomeRailCarousel } from "@/app/_components/home-rail-carousel";
 import { HousePickMedia } from "@/app/_components/house-pick-media";
 import { Icon } from "@/components/icon";
 import type { HomePage, HousePick, HousePickNote } from "@/shop/types";
+import { formatPriceEur } from "@/utils/format-price-eur";
 import { ORIGIN_LABELS } from "@/utils/origin-labels";
 
 type HomeViewProps = {
@@ -230,10 +231,6 @@ function technicalChipLabel(
 
 function formatOneDecimal(value: number): string {
   return value.toFixed(1);
-}
-
-function formatPriceEur(price: number): string {
-  return `${price.toFixed(2)} €`;
 }
 
 function authorInitials(name: string): string {
