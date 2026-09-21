@@ -1,0 +1,15 @@
+# https://docs.coderabbit.ai/configuration/auto-review
+language: en-US
+reviews:
+  profile: chill
+  request_changes_workflow: false
+  high_level_summary: true
+  review_status: true
+  auto_review:
+    enabled: true
+    drafts: false
+    auto_incremental_review: true
+    # Review PRs targeting any branch (not only the repo default).
+    # Each entry is a regex; ".*" matches all base/target branches.
+    base_branches:
+      - ".*"
