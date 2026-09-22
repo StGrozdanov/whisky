@@ -12,7 +12,7 @@ test.describe("catalogue fixtures", () => {
     await page.goto("/catalogue");
 
     await expect(
-      page.getByRole("heading", { name: "Селекция", level: 1 }),
+      page.getByRole("navigation", { name: "Пътека" }).getByText("Селекция"),
     ).toBeVisible();
     await expect(
       page.getByRole("heading", {

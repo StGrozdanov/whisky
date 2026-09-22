@@ -18,7 +18,7 @@ test.describe("catalogue", () => {
 
     await expect(page).toHaveURL(/\/catalogue/);
     await expect(
-      page.getByRole("heading", { name: "Селекция", level: 1 }),
+      page.getByRole("navigation", { name: "Пътека" }).getByText("Селекция"),
     ).toBeVisible();
     await expect(
       page.getByText("Подредени по азбучен ред (A — Z)"),
@@ -45,7 +45,7 @@ test.describe("catalogue", () => {
     await expect(page).not.toHaveURL(/page=/);
 
     await expect(
-      page.getByRole("heading", { name: "Селекция", level: 1 }),
+      page.getByRole("navigation", { name: "Пътека" }).getByText("Селекция"),
     ).toBeVisible();
   });
 });

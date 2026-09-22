@@ -45,14 +45,14 @@ export function CatalogueWhiskyCard({ card }: CatalogueWhiskyCardProps) {
   const isAskUs = card.action === "ask-us";
 
   return (
-    <article className="group flex h-full flex-col justify-between rounded-xl border border-surface-container-highest/40 bg-surface-container-low p-space-md transition-all hover:border-outline-variant/50 hover:bg-surface-container">
+    <article className="group flex h-full flex-col justify-between rounded-xl border border-surface-container-highest/40 bg-surface-container-lowest p-space-md shadow-xl transition-all duration-300 hover:shadow-[0_12px_32px_-8px_rgba(0,0,0,0.8),0_0_20px_rgba(217,119,6,0.15)]">
       <div className="flex flex-col gap-space-sm">
-        <div className="flex items-start justify-between gap-space-xs">
-          <span className="rounded bg-surface-container-highest px-2 py-0.5 text-label-sm font-bold tracking-wider text-on-surface-variant uppercase">
+        <div className="flex items-center justify-between gap-1">
+          <span className="rounded bg-surface-container-high px-2 py-0.5 text-label-sm tracking-wider text-on-surface uppercase">
             {card.priceTier} TIER
           </span>
           {card.displayedScore !== undefined ? (
-            <span className="inline-flex items-center gap-0.5 text-label-md font-bold text-secondary">
+            <span className="inline-flex items-center gap-0.5 rounded bg-surface-container px-2 py-0.5 text-technical-data font-bold text-secondary">
               <Icon fontSize={14} name="star" />
               {formatScore(card.displayedScore)}
             </span>
@@ -62,29 +62,28 @@ export function CatalogueWhiskyCard({ card }: CatalogueWhiskyCardProps) {
         <div className="relative flex h-44 w-full items-center justify-center overflow-hidden rounded-lg bg-gradient-to-b from-surface-container-low to-surface-container-lowest">
           <Image
             alt={card.name}
-            className="z-10 h-36 w-auto object-contain drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)] transition-transform duration-300 group-hover:scale-105"
+            className="h-36 w-auto object-contain drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)] transition-transform duration-300 group-hover:scale-105"
             height={160}
             src={card.photoUrl}
             unoptimized
             width={120}
           />
-          <span className="absolute bottom-2 left-2 rounded bg-surface-container-lowest/80 px-2 py-0.5 text-label-sm text-on-surface-variant backdrop-blur-md">
+          <span className="absolute bottom-2 left-2 z-20 rounded bg-surface-container-lowest/80 px-2 py-0.5 font-mono text-label-sm text-on-surface-variant backdrop-blur-md">
             {metaLine(card)}
           </span>
         </div>
 
-        <div className="flex flex-wrap items-center gap-1.5">
-          <span className="rounded-full bg-surface-container px-2 py-0.5 text-label-sm text-outline">
-            {age}
-          </span>
-          {experience ? (
-            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-label-sm text-primary">
-              {experience}
-            </span>
-          ) : null}
-        </div>
-
         <div className="space-y-1">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="rounded-full bg-surface-container px-2 py-0.5 text-label-sm text-outline">
+              {age}
+            </span>
+            {experience ? (
+              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-label-sm text-primary">
+                {experience}
+              </span>
+            ) : null}
+          </div>
           <h2 className="font-headline text-headline-sm text-on-surface transition-colors group-hover:text-primary">
             {card.name}
           </h2>
