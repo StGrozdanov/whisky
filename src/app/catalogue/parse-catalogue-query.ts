@@ -4,6 +4,7 @@ import type {
   ExperienceLevel,
   Origin,
   PriceTier,
+  SearchHit,
 } from "@/shop/types";
 import { EXPERIENCE_LEVELS, ORIGINS, PRICE_TIERS } from "@/shop/types";
 
@@ -13,6 +14,11 @@ export type CatalogueSearchParams = {
   age?: string | string[];
   score?: string | string[];
   experience?: string | string[];
+  name?: string | string[];
+  distillery?: string | string[];
+  country?: string | string[];
+  region?: string | string[];
+  q?: string | string[];
   page?: string | string[];
 };
 
@@ -21,6 +27,18 @@ function singleValue(value: string | string[] | undefined): string | undefined {
     return value[0];
   }
   return value;
+}
+
+function textFilter(value: string | string[] | undefined): string | undefined {
+  const raw = singleValue(value);
+  if (!raw) {
+    return undefined;
+  }
+  const trimmed = raw.trim();
+  if (trimmed.length === 0) {
+    return undefined;
+  }
+  return trimmed;
 }
 
 function isOrigin(value: string): value is Origin {
@@ -79,6 +97,27 @@ export function parseCatalogueQuery(
     query.experience = experience;
   }
 
+  const name = textFilter(params.name);
+  if (name) {
+    query.name = name;
+  }
+  const distillery = textFilter(params.distillery);
+  if (distillery) {
+    query.distillery = distillery;
+  }
+  const country = textFilter(params.country);
+  if (country) {
+    query.country = country;
+  }
+  const region = textFilter(params.region);
+  if (region) {
+    query.region = region;
+  }
+  const q = textFilter(params.q);
+  if (q) {
+    query.q = q;
+  }
+
   const pageRaw = singleValue(params.page);
   if (pageRaw) {
     const page = Number.parseInt(pageRaw, 10);
@@ -96,8 +135,26 @@ export function catalogueHasActiveFilters(query: CatalogueQuery): boolean {
       query.priceTier ||
       query.age ||
       query.minScore !== undefined ||
-      query.experience,
+      query.experience ||
+      query.name ||
+      query.distillery ||
+      query.country ||
+      query.region ||
+      query.q,
   );
+}
+
+export function searchHitHref(hit: SearchHit): string {
+  if (hit.kind === "whisky") {
+    return buildCatalogueHref({}, { name: hit.name });
+  }
+  if (hit.kind === "distillery") {
+    return buildCatalogueHref({}, { distillery: hit.name });
+  }
+  if (hit.kind === "country") {
+    return buildCatalogueHref({}, { country: hit.name });
+  }
+  return buildCatalogueHref({}, { region: hit.name });
 }
 
 export function buildCatalogueHref(
@@ -111,6 +168,12 @@ export function buildCatalogueHref(
     minScore: "minScore" in overrides ? overrides.minScore : query.minScore,
     experience:
       "experience" in overrides ? overrides.experience : query.experience,
+    name: "name" in overrides ? overrides.name : query.name,
+    distillery:
+      "distillery" in overrides ? overrides.distillery : query.distillery,
+    country: "country" in overrides ? overrides.country : query.country,
+    region: "region" in overrides ? overrides.region : query.region,
+    q: "q" in overrides ? overrides.q : query.q,
     page: "page" in overrides ? overrides.page : query.page,
   };
 
@@ -130,6 +193,21 @@ export function buildCatalogueHref(
   }
   if (next.experience) {
     params.set("experience", next.experience);
+  }
+  if (next.name) {
+    params.set("name", next.name);
+  }
+  if (next.distillery) {
+    params.set("distillery", next.distillery);
+  }
+  if (next.country) {
+    params.set("country", next.country);
+  }
+  if (next.region) {
+    params.set("region", next.region);
+  }
+  if (next.q) {
+    params.set("q", next.q);
   }
   if (next.page && next.page > 1) {
     params.set("page", String(next.page));

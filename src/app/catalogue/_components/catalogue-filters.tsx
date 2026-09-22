@@ -80,6 +80,41 @@ function chipsFor(query: CatalogueQuery): Chip[] {
       clear: { experience: undefined, page: 1 },
     });
   }
+  if (query.name) {
+    chips.push({
+      key: "name",
+      label: `Уиски: ${query.name}`,
+      clear: { name: undefined, page: 1 },
+    });
+  }
+  if (query.distillery) {
+    chips.push({
+      key: "distillery",
+      label: `Дестилерия: ${query.distillery}`,
+      clear: { distillery: undefined, page: 1 },
+    });
+  }
+  if (query.country) {
+    chips.push({
+      key: "country",
+      label: `Държава: ${query.country}`,
+      clear: { country: undefined, page: 1 },
+    });
+  }
+  if (query.region) {
+    chips.push({
+      key: "region",
+      label: `Регион: ${query.region}`,
+      clear: { region: undefined, page: 1 },
+    });
+  }
+  if (query.q) {
+    chips.push({
+      key: "q",
+      label: `Търсене: ${query.q}`,
+      clear: { q: undefined, page: 1 },
+    });
+  }
 
   return chips;
 }

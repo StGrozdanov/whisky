@@ -31,6 +31,11 @@ function catalogueSuspenseKey(query: CatalogueQuery): string {
     query.age ? query.age : "",
     query.minScore !== undefined ? String(query.minScore) : "",
     query.experience ? query.experience : "",
+    query.name ? query.name : "",
+    query.distillery ? query.distillery : "",
+    query.country ? query.country : "",
+    query.region ? query.region : "",
+    query.q ? query.q : "",
     query.page !== undefined ? String(query.page) : "1",
   ].join("|");
 }

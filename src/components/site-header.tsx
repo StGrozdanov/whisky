@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Icon } from "@/components/icon";
+import { SiteSearch } from "@/components/site-search";
 
 export function SiteHeader() {
   const pathname = usePathname();
@@ -84,19 +85,8 @@ export function SiteHeader() {
           </div>
 
           <div className="flex max-w-md flex-1 items-center justify-end gap-space-md">
-            <div className="relative hidden w-full max-w-xs lg:block">
-              <Icon
-                className="pointer-events-none absolute top-1/2 left-space-sm -translate-y-1/2 text-outline"
-                fontSize={22}
-                name="search"
-              />
-              <input
-                aria-label="Търсене"
-                className="w-full rounded-lg bg-surface-container-lowest py-1.5 pr-space-sm pl-9 text-technical-data text-on-surface shadow-inner placeholder:text-on-surface-variant/50 focus:ring-1 focus:ring-primary focus:outline-none"
-                placeholder="Търси дестилерия, нотка..."
-                readOnly
-                type="search"
-              />
+            <div className="hidden w-full max-w-xs lg:block">
+              <SiteSearch />
             </div>
 
             <div className="flex items-center gap-space-sm">

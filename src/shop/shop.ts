@@ -11,6 +11,7 @@ import type {
   HousePick,
   HousePickNote,
   PriceTier,
+  SearchHit,
   ShopStore,
   StoredCatalogueEntry,
   StoredDiscoveryPack,
@@ -90,10 +91,57 @@ export function createShop(deps: ShopDeps) {
 
       return { whiskies, totalCount, page, pageCount };
     },
+
+    async search(query: string): Promise<SearchHit[]> {
+      const trimmed = query.trim();
+      if (trimmed.length === 0) {
+        return [];
+      }
+
+      const entries = await deps.store.catalogueEntries();
+      const whiskies: SearchHit[] = [];
+      const distilleries = new Set<string>();
+      const countries = new Set<string>();
+      const regions = new Set<string>();
+
+      for (const entry of entries) {
+        const whisky = entry.whisky;
+        if (includesLabel(whisky.name, trimmed)) {
+          whiskies.push({ kind: "whisky", name: whisky.name });
+        }
+        if (whisky.distillery && includesLabel(whisky.distillery, trimmed)) {
+          distilleries.add(whisky.distillery);
+        }
+        if (whisky.country && includesLabel(whisky.country, trimmed)) {
+          countries.add(whisky.country);
+        }
+        if (whisky.region && includesLabel(whisky.region, trimmed)) {
+          regions.add(whisky.region);
+        }
+      }
+
+      whiskies.sort((left, right) => left.name.localeCompare(right.name, "bg"));
+      return [
+        ...whiskies,
+        ...namedHits("distillery", distilleries),
+        ...namedHits("country", countries),
+        ...namedHits("region", regions),
+      ];
+    },
   };
 }
 
 export type Shop = ReturnType<typeof createShop>;
+
+function namedHits(kind: SearchHit["kind"], names: Set<string>): SearchHit[] {
+  return [...names]
+    .sort((left, right) => left.localeCompare(right, "bg"))
+    .map((name) => ({ kind, name }));
+}
+
+function includesLabel(value: string, query: string): boolean {
+  return value.toLocaleLowerCase("bg").includes(query.toLocaleLowerCase("bg"));
+}
 
 function matchesCatalogue(
   entry: StoredCatalogueEntry,
@@ -128,7 +176,49 @@ function matchesCatalogue(
     return false;
   }
 
+  if (query.name && !sameLabel(whisky.name, query.name)) {
+    return false;
+  }
+
+  if (query.distillery && !sameLabel(whisky.distillery, query.distillery)) {
+    return false;
+  }
+
+  if (query.country && !sameLabel(whisky.country, query.country)) {
+    return false;
+  }
+
+  if (query.region) {
+    if (!whisky.region || !sameLabel(whisky.region, query.region)) {
+      return false;
+    }
+  }
+
+  if (query.q && !matchesSearchText(whisky, query.q)) {
+    return false;
+  }
+
   return true;
+}
+
+function matchesSearchText(whisky: StoredWhisky, query: string): boolean {
+  if (includesLabel(whisky.name, query)) {
+    return true;
+  }
+  if (whisky.distillery && includesLabel(whisky.distillery, query)) {
+    return true;
+  }
+  if (whisky.country && includesLabel(whisky.country, query)) {
+    return true;
+  }
+  if (whisky.region && includesLabel(whisky.region, query)) {
+    return true;
+  }
+  return false;
+}
+
+function sameLabel(left: string, right: string): boolean {
+  return left.toLocaleLowerCase("bg") === right.toLocaleLowerCase("bg");
 }
 
 function toCatalogueCard(entry: StoredCatalogueEntry): CatalogueCard {
