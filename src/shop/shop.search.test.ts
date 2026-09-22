@@ -67,6 +67,8 @@ describe("Shop search", () => {
     ).toEqual(["GlenAllachie 12", "GlenAllachie 18"]);
     expect(await shop.search("sweet")).toEqual([]);
     expect(await shop.search("Scotch")).toEqual([]);
+    expect(await shop.search("g")).toEqual([]);
+    expect(await shop.search(" ")).toEqual([]);
   });
 
   it("matches Distillery, Country, and Region names once each", async () => {

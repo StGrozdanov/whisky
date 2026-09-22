@@ -34,6 +34,7 @@ const wallClock: Clock = {
 };
 
 const CATALOGUE_PAGE_SIZE = 24;
+const SEARCH_MIN_QUERY_LENGTH = 2;
 
 export function createShop(deps: ShopDeps) {
   const clock = deps.clock ? deps.clock : wallClock;
@@ -95,7 +96,7 @@ export function createShop(deps: ShopDeps) {
 
     async search(query: string): Promise<SearchHit[]> {
       const trimmed = query.trim();
-      if (trimmed.length === 0) {
+      if (trimmed.length < SEARCH_MIN_QUERY_LENGTH) {
         return [];
       }
 

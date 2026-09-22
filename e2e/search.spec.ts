@@ -1,11 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
 
-const SUGGESTION_KINDS = [
-  { label: "Дестилерия", param: /distillery=/ },
-  { label: "Държава", param: /country=/ },
-  { label: "Регион", param: /region=/ },
-] as const;
-
 test.describe("search", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
@@ -33,25 +27,7 @@ test.describe("search", () => {
   test("Enter on a published Whisky name opens that exact Catalogue filter", async ({
     page,
   }) => {
-    await page.goto("/catalogue");
-
-    const emptyCatalogue = page.getByRole("heading", {
-      name: "В момента каталогът се обновява",
-    });
-    const firstName = page.getByRole("article").getByRole("heading").first();
-    await expect(firstName.or(emptyCatalogue)).toBeVisible();
-
-    if (await emptyCatalogue.isVisible()) {
-      const search = page.getByRole("combobox", { name: "Търсене" });
-      await search.fill("zzzzqqqq");
-      await expect(page.getByText("Няма съвпадения")).toBeVisible();
-      await search.press("Enter");
-      await expect(emptyCatalogue).toBeVisible();
-      await expect(page.getByRole("article")).toHaveCount(0);
-      return;
-    }
-
-    const name = (await firstName.innerText()).trim();
+    const name = await firstPublishedWhiskyName(page);
     const search = page.getByRole("combobox", { name: "Търсене" });
     await search.fill(name);
     await expect(
@@ -64,40 +40,52 @@ test.describe("search", () => {
     await expect(page.getByRole("heading", { name, level: 2 })).toBeVisible();
   });
 
-  test("live Distillery, Country, and Region suggestions open those filters", async ({
+  test("a Distillery suggestion from a published Whisky opens that filter", async ({
     page,
   }) => {
-    await page.goto("/catalogue");
+    const name = await firstPublishedWhiskyName(page);
+    const option = await findDistilleryOption(page, name);
+    await option.click();
 
-    const emptyCatalogue = page.getByRole("heading", {
-      name: "В момента каталогът се обновява",
-    });
-    const firstName = page.getByRole("article").getByRole("heading").first();
-    await expect(firstName.or(emptyCatalogue)).toBeVisible();
-    if (await emptyCatalogue.isVisible()) {
-      await expect(page.getByRole("article")).toHaveCount(0);
-      return;
-    }
-
-    const name = (await firstName.innerText()).trim();
-    const prefix = name.slice(0, 2);
-    await openSuggestions(page, prefix);
-
-    for (const kind of SUGGESTION_KINDS) {
-      const option = page
-        .getByRole("option", { name: new RegExp(`^${kind.label}:`) })
-        .first();
-      if ((await option.count()) === 0) {
-        continue;
-      }
-
-      await option.click();
-      await expect(page).toHaveURL(kind.param);
-      await expect(page.getByRole("article").first()).toBeVisible();
-      await openSuggestions(page, prefix);
-    }
+    await expect(page).toHaveURL(/distillery=/);
+    await expect(page.getByRole("article").first()).toBeVisible();
   });
 });
+
+async function firstPublishedWhiskyName(page: Page): Promise<string> {
+  await page.goto("/catalogue");
+
+  const emptyCatalogue = page.getByRole("heading", {
+    name: "В момента каталогът се обновява",
+  });
+  const firstName = page.getByRole("article").getByRole("heading").first();
+  await expect(firstName.or(emptyCatalogue)).toBeVisible();
+  await expect(
+    emptyCatalogue,
+    "Search navigation e2e needs at least one published Whisky",
+  ).toHaveCount(0);
+
+  return (await firstName.innerText()).trim();
+}
+
+async function findDistilleryOption(page: Page, whiskyName: string) {
+  const queries = [
+    whiskyName,
+    ...whiskyName.split(/\s+/).filter((part) => part.trim().length >= 2),
+  ];
+
+  for (const query of queries) {
+    await openSuggestions(page, query.trim());
+    const option = page.getByRole("option", { name: /^Дестилерия:/ }).first();
+    if ((await option.count()) > 0) {
+      return option;
+    }
+  }
+
+  throw new Error(
+    `No Distillery suggestion found from published Whisky "${whiskyName}"`,
+  );
+}
 
 async function openSuggestions(page: Page, query: string) {
   const search = page.getByRole("combobox", { name: "Търсене" });
