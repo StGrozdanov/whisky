@@ -13,3 +13,5 @@ reviews:
     # Each entry is a regex; ".*" matches all base/target branches.
     base_branches:
       - ".*"
+    ignore_usernames:
+      - "dependabot[bot]"
