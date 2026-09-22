@@ -11,6 +11,7 @@ import type {
   HousePick,
   HousePickNote,
   PriceTier,
+  SearchHit,
   ShopStore,
   StoredCatalogueEntry,
   StoredDiscoveryPack,
@@ -19,6 +20,7 @@ import type {
   StoredHousePick,
   StoredWhisky,
 } from "./types";
+import { SEARCH_HIT_FILTER, SEARCH_HIT_KINDS } from "./types";
 
 type ShopDeps = {
   store: ShopStore;
@@ -32,6 +34,7 @@ const wallClock: Clock = {
 };
 
 const CATALOGUE_PAGE_SIZE = 24;
+const SEARCH_MIN_QUERY_LENGTH = 2;
 
 export function createShop(deps: ShopDeps) {
   const clock = deps.clock ? deps.clock : wallClock;
@@ -90,10 +93,51 @@ export function createShop(deps: ShopDeps) {
 
       return { whiskies, totalCount, page, pageCount };
     },
+
+    async search(query: string): Promise<SearchHit[]> {
+      const trimmed = query.trim();
+      if (trimmed.length < SEARCH_MIN_QUERY_LENGTH) {
+        return [];
+      }
+
+      const entries = await deps.store.catalogueEntries();
+      const namesByKind = new Map<SearchHit["kind"], Set<string>>();
+      for (const kind of SEARCH_HIT_KINDS) {
+        namesByKind.set(kind, new Set());
+      }
+
+      for (const entry of entries) {
+        for (const kind of SEARCH_HIT_KINDS) {
+          const label = whiskyLabel(entry.whisky, kind);
+          const names = namesByKind.get(kind);
+          if (label && names && includesLabel(label, trimmed)) {
+            names.add(label);
+          }
+        }
+      }
+
+      return SEARCH_HIT_KINDS.flatMap((kind) => {
+        const names = namesByKind.get(kind);
+        if (!names) {
+          return [];
+        }
+        return namedHits(kind, names);
+      });
+    },
   };
 }
 
 export type Shop = ReturnType<typeof createShop>;
+
+function namedHits(kind: SearchHit["kind"], names: Set<string>): SearchHit[] {
+  return [...names]
+    .sort((left, right) => left.localeCompare(right, "bg"))
+    .map((name) => ({ kind, name }));
+}
+
+function includesLabel(value: string, query: string): boolean {
+  return value.toLocaleLowerCase("bg").includes(query.toLocaleLowerCase("bg"));
+}
 
 function matchesCatalogue(
   entry: StoredCatalogueEntry,
@@ -128,7 +172,33 @@ function matchesCatalogue(
     return false;
   }
 
+  for (const kind of SEARCH_HIT_KINDS) {
+    const expected = query[SEARCH_HIT_FILTER[kind]];
+    if (!expected) {
+      continue;
+    }
+    const label = whiskyLabel(whisky, kind);
+    if (!label || !sameLabel(label, expected)) {
+      return false;
+    }
+  }
+
   return true;
+}
+
+function whiskyLabel(
+  whisky: StoredWhisky,
+  kind: SearchHit["kind"],
+): string | undefined {
+  const value = whisky[SEARCH_HIT_FILTER[kind]];
+  if (!value) {
+    return undefined;
+  }
+  return value;
+}
+
+function sameLabel(left: string, right: string): boolean {
+  return left.toLocaleLowerCase("bg") === right.toLocaleLowerCase("bg");
 }
 
 function toCatalogueCard(entry: StoredCatalogueEntry): CatalogueCard {

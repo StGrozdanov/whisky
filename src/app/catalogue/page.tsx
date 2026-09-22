@@ -1,6 +1,7 @@
 import { cache, Suspense } from "react";
 import { getShop } from "@/shop/get-shop";
 import type { CatalogueQuery } from "@/shop/types";
+import { SEARCH_HIT_FILTER, SEARCH_HIT_KINDS } from "@/shop/types";
 import {
   CatalogueCount,
   CatalogueCountFallback,
@@ -31,6 +32,13 @@ function catalogueSuspenseKey(query: CatalogueQuery): string {
     query.age ? query.age : "",
     query.minScore !== undefined ? String(query.minScore) : "",
     query.experience ? query.experience : "",
+    ...SEARCH_HIT_KINDS.map((kind) => {
+      const value = query[SEARCH_HIT_FILTER[kind]];
+      if (value) {
+        return value;
+      }
+      return "";
+    }),
     query.page !== undefined ? String(query.page) : "1",
   ].join("|");
 }

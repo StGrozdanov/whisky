@@ -4,7 +4,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ChangeEvent } from "react";
 import { Icon } from "@/components/icon";
-import { type CatalogueQuery, ORIGINS } from "@/shop/types";
+import { SEARCH_HIT_LABELS } from "@/components/search-hit-labels";
+import {
+  type CatalogueQuery,
+  ORIGINS,
+  SEARCH_HIT_FILTER,
+  SEARCH_HIT_KINDS,
+} from "@/shop/types";
 import { ORIGIN_LABELS } from "@/utils/origin-labels";
 import {
   buildCatalogueHref,
@@ -78,6 +84,20 @@ function chipsFor(query: CatalogueQuery): Chip[] {
       key: "experience",
       label: "Опит: За напреднали",
       clear: { experience: undefined, page: 1 },
+    });
+  }
+  for (const kind of SEARCH_HIT_KINDS) {
+    const key = SEARCH_HIT_FILTER[kind];
+    const value = query[key];
+    if (!value) {
+      continue;
+    }
+    const clear: Partial<CatalogueQuery> = { page: 1 };
+    clear[key] = undefined;
+    chips.push({
+      key,
+      label: `${SEARCH_HIT_LABELS[kind]}: ${value}`,
+      clear,
     });
   }
 

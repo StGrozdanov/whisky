@@ -17,6 +17,10 @@ export type CatalogueQuery = {
   age?: CatalogueAgeFilter;
   minScore?: 9.0 | 9.3 | 9.5;
   experience?: ExperienceLevel;
+  name?: string;
+  distillery?: string;
+  country?: string;
+  region?: string;
   page?: number;
 };
 
@@ -41,6 +45,29 @@ export type CataloguePage = {
   page: number;
   pageCount: number;
 };
+
+export const SEARCH_HIT_KINDS = [
+  "whisky",
+  "distillery",
+  "country",
+  "region",
+] as const;
+export type SearchHitKind = (typeof SEARCH_HIT_KINDS)[number];
+
+export type SearchHit = {
+  kind: SearchHitKind;
+  name: string;
+};
+
+export const SEARCH_HIT_FILTER = {
+  whisky: "name",
+  distillery: "distillery",
+  country: "country",
+  region: "region",
+} as const satisfies Record<
+  SearchHitKind,
+  "name" | "distillery" | "country" | "region"
+>;
 
 export type HomeWhisky = {
   name: string;

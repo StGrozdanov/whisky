@@ -4,8 +4,15 @@ import type {
   ExperienceLevel,
   Origin,
   PriceTier,
+  SearchHit,
 } from "@/shop/types";
-import { EXPERIENCE_LEVELS, ORIGINS, PRICE_TIERS } from "@/shop/types";
+import {
+  EXPERIENCE_LEVELS,
+  ORIGINS,
+  PRICE_TIERS,
+  SEARCH_HIT_FILTER,
+  SEARCH_HIT_KINDS,
+} from "@/shop/types";
 
 export type CatalogueSearchParams = {
   origin?: string | string[];
@@ -13,6 +20,10 @@ export type CatalogueSearchParams = {
   age?: string | string[];
   score?: string | string[];
   experience?: string | string[];
+  name?: string | string[];
+  distillery?: string | string[];
+  country?: string | string[];
+  region?: string | string[];
   page?: string | string[];
 };
 
@@ -21,6 +32,18 @@ function singleValue(value: string | string[] | undefined): string | undefined {
     return value[0];
   }
   return value;
+}
+
+function textFilter(value: string | string[] | undefined): string | undefined {
+  const raw = singleValue(value);
+  if (!raw) {
+    return undefined;
+  }
+  const trimmed = raw.trim();
+  if (trimmed.length === 0) {
+    return undefined;
+  }
+  return trimmed;
 }
 
 function isOrigin(value: string): value is Origin {
@@ -79,6 +102,14 @@ export function parseCatalogueQuery(
     query.experience = experience;
   }
 
+  for (const kind of SEARCH_HIT_KINDS) {
+    const key = SEARCH_HIT_FILTER[kind];
+    const value = textFilter(params[key]);
+    if (value) {
+      query[key] = value;
+    }
+  }
+
   const pageRaw = singleValue(params.page);
   if (pageRaw) {
     const page = Number.parseInt(pageRaw, 10);
@@ -96,8 +127,23 @@ export function catalogueHasActiveFilters(query: CatalogueQuery): boolean {
       query.priceTier ||
       query.age ||
       query.minScore !== undefined ||
-      query.experience,
+      query.experience ||
+      searchFilterActive(query),
   );
+}
+
+function searchFilterActive(query: CatalogueQuery): boolean {
+  for (const kind of SEARCH_HIT_KINDS) {
+    if (query[SEARCH_HIT_FILTER[kind]]) {
+      return true;
+    }
+  }
+  return false;
+}
+
+export function searchHitHref(hit: SearchHit): string {
+  const key = SEARCH_HIT_FILTER[hit.kind];
+  return buildCatalogueHref({}, { [key]: hit.name });
 }
 
 export function buildCatalogueHref(
@@ -113,6 +159,11 @@ export function buildCatalogueHref(
       "experience" in overrides ? overrides.experience : query.experience,
     page: "page" in overrides ? overrides.page : query.page,
   };
+
+  for (const kind of SEARCH_HIT_KINDS) {
+    const key = SEARCH_HIT_FILTER[kind];
+    next[key] = key in overrides ? overrides[key] : query[key];
+  }
 
   const params = new URLSearchParams();
 
@@ -130,6 +181,13 @@ export function buildCatalogueHref(
   }
   if (next.experience) {
     params.set("experience", next.experience);
+  }
+  for (const kind of SEARCH_HIT_KINDS) {
+    const key = SEARCH_HIT_FILTER[kind];
+    const value = next[key];
+    if (value) {
+      params.set(key, value);
+    }
   }
   if (next.page && next.page > 1) {
     params.set("page", String(next.page));

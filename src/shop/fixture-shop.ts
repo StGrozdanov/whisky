@@ -71,6 +71,7 @@ function createMixedStore(): ShopStore {
         origin: "Scotch",
         distillery: "Buy Distillery",
         country: "Шотландия",
+        region: "Speyside",
       },
       {
         id: "ask",

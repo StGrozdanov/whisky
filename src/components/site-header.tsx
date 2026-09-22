@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Icon } from "@/components/icon";
+import { SiteSearch } from "@/components/site-search";
 
 export function SiteHeader() {
   const pathname = usePathname();
@@ -48,7 +49,7 @@ export function SiteHeader() {
       </div>
 
       <div className="bg-surface/90 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-[1440px] items-center justify-between gap-space-md px-gutter-mobile py-space-sm md:px-gutter">
+        <div className="mx-auto flex max-w-[1440px] flex-wrap items-center justify-between gap-space-sm px-gutter-mobile py-space-sm md:gap-space-md md:px-gutter">
           <div className="flex items-center gap-space-md">
             <Link
               className="group flex cursor-pointer items-center gap-space-sm"
@@ -83,20 +84,9 @@ export function SiteHeader() {
             </nav>
           </div>
 
-          <div className="flex max-w-md flex-1 items-center justify-end gap-space-md">
-            <div className="relative hidden w-full max-w-xs lg:block">
-              <Icon
-                className="pointer-events-none absolute top-1/2 left-space-sm -translate-y-1/2 text-outline"
-                fontSize={22}
-                name="search"
-              />
-              <input
-                aria-label="Търсене"
-                className="w-full rounded-lg bg-surface-container-lowest py-1.5 pr-space-sm pl-9 text-technical-data text-on-surface shadow-inner placeholder:text-on-surface-variant/50 focus:ring-1 focus:ring-primary focus:outline-none"
-                placeholder="Търси дестилерия, нотка..."
-                readOnly
-                type="search"
-              />
+          <div className="flex w-full min-w-0 flex-1 items-center justify-end gap-space-sm sm:w-auto sm:max-w-md sm:gap-space-md">
+            <div className="w-full min-w-0 max-w-xs">
+              <SiteSearch />
             </div>
 
             <div className="flex items-center gap-space-sm">

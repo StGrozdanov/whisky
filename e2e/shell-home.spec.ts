@@ -44,10 +44,10 @@ test.describe("shell and home", () => {
       banner.getByRole("link", { name: "Запитване за наличност" }),
     ).toHaveAttribute("href", "/contacts");
     await expect(
-      banner.getByRole("searchbox", { name: "Търсене" }),
+      banner.getByRole("combobox", { name: "Търсене" }),
     ).toBeVisible();
     await expect(
-      banner.getByPlaceholder("Търси дестилерия, нотка..."),
+      banner.getByPlaceholder("Търси уиски, дестилерия, държава..."),
     ).toBeVisible();
     await expect(banner.getByRole("button", { name: "Любими" })).toBeVisible();
     await expect(banner.getByRole("button", { name: "Количка" })).toBeVisible();
