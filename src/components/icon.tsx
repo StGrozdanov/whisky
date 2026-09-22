@@ -20,7 +20,15 @@ export type IconName =
   | "local_offer"
   | "fiber_new"
   | "play_arrow"
-  | "star";
+  | "star"
+  | "close"
+  | "sort_by_alpha"
+  | "filter_alt_off"
+  | "restart_alt"
+  | "inventory_2"
+  | "phone"
+  | "cloud_off"
+  | "refresh";
 
 type IconFontSize = 14 | 16 | 18 | 20 | 22 | 24 | 32;
 

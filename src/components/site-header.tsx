@@ -1,8 +1,15 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Icon } from "@/components/icon";
 
 export function SiteHeader() {
+  const pathname = usePathname();
+  const catalogueCurrent =
+    pathname === "/catalogue" || pathname.startsWith("/catalogue/");
+
   return (
     <header className="fixed top-0 z-50 w-full shadow-[0_4px_24px_rgba(0,0,0,0.6)]">
       <div className="border-b border-secondary/25 bg-surface-container-lowest">
@@ -54,12 +61,26 @@ export function SiteHeader() {
                 src="/brand/emblem.png"
                 width={48}
               />
-              <span className="font-headline text-label-lg font-bold tracking-widest text-primary uppercase transition-colors group-hover:text-secondary">
+              <span className="hidden font-headline text-label-lg font-bold tracking-widest text-primary uppercase transition-colors group-hover:text-secondary sm:inline">
                 WHISKY FINDER
               </span>
             </Link>
-            {/* Nav links omitted until Catalogue (#4) and later tickets exist */}
-            <nav aria-label="Основна навигация" className="hidden xl:block" />
+            <nav
+              aria-label="Основна навигация"
+              className="ml-space-sm flex items-center gap-space-md sm:ml-space-md"
+            >
+              <Link
+                aria-current={catalogueCurrent ? "page" : undefined}
+                className={
+                  catalogueCurrent
+                    ? "cursor-pointer text-label-md font-bold tracking-wider text-primary uppercase"
+                    : "cursor-pointer text-label-md tracking-wider text-on-surface-variant uppercase transition-colors hover:text-on-surface"
+                }
+                href="/catalogue"
+              >
+                Селекция
+              </Link>
+            </nav>
           </div>
 
           <div className="flex max-w-md flex-1 items-center justify-end gap-space-md">

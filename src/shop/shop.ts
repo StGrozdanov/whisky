@@ -1,13 +1,18 @@
 import type {
+  CatalogueCard,
+  CataloguePage,
+  CatalogueQuery,
   Clock,
   HomeDiscoveryPack,
   HomeNewWhisky,
   HomePage,
   HomePromotion,
-  HomeStore,
   HomeWhisky,
   HousePick,
   HousePickNote,
+  PriceTier,
+  ShopStore,
+  StoredCatalogueEntry,
   StoredDiscoveryPack,
   StoredHomeNewWhisky,
   StoredHomePromotion,
@@ -16,7 +21,7 @@ import type {
 } from "./types";
 
 type ShopDeps = {
-  store: HomeStore;
+  store: ShopStore;
   clock?: Clock;
 };
 
@@ -26,6 +31,8 @@ const wallClock: Clock = {
   },
 };
 
+const CATALOGUE_PAGE_SIZE = 24;
+
 export function createShop(deps: ShopDeps) {
   const clock = deps.clock ? deps.clock : wallClock;
 
@@ -33,7 +40,9 @@ export function createShop(deps: ShopDeps) {
     async home(): Promise<HomePage> {
       const storedWhiskies = await deps.store.allWhiskies();
       const whiskyById = new Map(
-        storedWhiskies.map((whisky) => [whisky.id, whisky]),
+        storedWhiskies
+          .filter((whisky) => whisky.published)
+          .map((whisky) => [whisky.id, whisky]),
       );
       const storedPick = await deps.store.currentHousePick();
       const now = clock.now();
@@ -49,10 +58,143 @@ export function createShop(deps: ShopDeps) {
         discoveryPacks: toDiscoveryPacks(await deps.store.discoveryPacks()),
       };
     },
+
+    async catalogue(query: CatalogueQuery): Promise<CataloguePage> {
+      const entries = await deps.store.catalogueEntries();
+      const filtered = entries.filter((entry) =>
+        matchesCatalogue(entry, query),
+      );
+      filtered.sort((a, b) => a.whisky.name.localeCompare(b.whisky.name, "en"));
+
+      const totalCount = filtered.length;
+      const pageCount =
+        totalCount === 0 ? 0 : Math.ceil(totalCount / CATALOGUE_PAGE_SIZE);
+      const requestedPage = query.page && query.page > 0 ? query.page : 1;
+      const page =
+        pageCount === 0
+          ? 1
+          : requestedPage > pageCount
+            ? pageCount
+            : requestedPage;
+      const start = (page - 1) * CATALOGUE_PAGE_SIZE;
+      const whiskies = filtered
+        .slice(start, start + CATALOGUE_PAGE_SIZE)
+        .map(toCatalogueCard);
+
+      return { whiskies, totalCount, page, pageCount };
+    },
   };
 }
 
 export type Shop = ReturnType<typeof createShop>;
+
+function matchesCatalogue(
+  entry: StoredCatalogueEntry,
+  query: CatalogueQuery,
+): boolean {
+  const whisky = entry.whisky;
+  const primary = primarySku(entry);
+
+  if (query.origin && whisky.origin !== query.origin) {
+    return false;
+  }
+
+  if (query.priceTier && priceTierFor(primary.priceEur) !== query.priceTier) {
+    return false;
+  }
+
+  if (query.age === "declared" && whisky.ageYears === undefined) {
+    return false;
+  }
+  if (query.age === "nas" && whisky.ageYears !== undefined) {
+    return false;
+  }
+
+  if (query.minScore !== undefined) {
+    const score = displayedScore(whisky);
+    if (score === undefined || score < query.minScore) {
+      return false;
+    }
+  }
+
+  if (query.experience && whisky.experienceLevel !== query.experience) {
+    return false;
+  }
+
+  return true;
+}
+
+function toCatalogueCard(entry: StoredCatalogueEntry): CatalogueCard {
+  const whisky = entry.whisky;
+  const primary = primarySku(entry);
+  const offer = catalogueOffer(entry);
+
+  return {
+    id: whisky.id,
+    name: whisky.name,
+    photoUrl: cataloguePhoto(whisky),
+    origin: whisky.origin,
+    abv: whisky.abv,
+    ageYears: whisky.ageYears,
+    experienceLevel: whisky.experienceLevel,
+    displayedScore: displayedScore(whisky),
+    tagline: whisky.tagline,
+    priceEur: offer.priceEur,
+    priceTier: priceTierFor(primary.priceEur),
+    action: offer.action,
+  };
+}
+
+function primarySku(entry: StoredCatalogueEntry) {
+  const primary = entry.skus.find((sku) => sku.isPrimary);
+  if (!primary) {
+    return entry.skus[0];
+  }
+  return primary;
+}
+
+function catalogueOffer(entry: StoredCatalogueEntry): {
+  priceEur: number;
+  action: CatalogueCard["action"];
+} {
+  const inStock = entry.skus
+    .filter((sku) => sku.quantity > 0)
+    .sort((left, right) => left.id.localeCompare(right.id));
+  if (inStock.length > 0) {
+    const primaryInStock = inStock.find((sku) => sku.isPrimary);
+    const chosen = primaryInStock ? primaryInStock : inStock[0];
+    return { priceEur: chosen.priceEur, action: "buy" };
+  }
+
+  return { priceEur: primarySku(entry).priceEur, action: "ask-us" };
+}
+
+function displayedScore(whisky: StoredWhisky): number | undefined {
+  if (whisky.houseScore !== undefined) {
+    return whisky.houseScore;
+  }
+  return whisky.tastingAverage;
+}
+
+function cataloguePhoto(whisky: StoredWhisky): string {
+  if (whisky.photoUrls.length > 0) {
+    return whisky.photoUrls[0];
+  }
+  return whisky.photoUrl;
+}
+
+function priceTierFor(priceEur: number): PriceTier {
+  if (priceEur <= 50) {
+    return "ENTRY";
+  }
+  if (priceEur <= 90) {
+    return "CORE";
+  }
+  if (priceEur <= 140) {
+    return "SIGNATURE";
+  }
+  return "PREMIUM";
+}
 
 function toHousePick(
   storedPick: StoredHousePick | undefined,

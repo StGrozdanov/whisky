@@ -4,6 +4,7 @@ import { HomeView } from "./_components/home-view";
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const home = await getShop().home();
+  const shop = await getShop();
+  const home = await shop.home();
   return <HomeView home={home} />;
 }

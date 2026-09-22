@@ -7,11 +7,8 @@ import type {
   HomePromotion,
   HomeWhisky,
 } from "@/shop/types";
+import { formatPriceEur } from "@/utils/format-price-eur";
 import { ORIGIN_LABELS } from "@/utils/origin-labels";
-
-function formatPriceEur(price: number): string {
-  return `${price.toFixed(2)} €`;
-}
 
 function whiskyMeta(whisky: HomeWhisky): string {
   const originLabel = ORIGIN_LABELS[whisky.origin];
