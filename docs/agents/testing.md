@@ -11,7 +11,7 @@ Three layers, three data sources. Do not leak concerns across them.
 
 ## Integration — Playwright (`integration/`)
 
-- **Runner:** `npm run test:integration` (CI job “Integration Tests”, before nonprod deploy).
+- **Runner:** `npm run test:integration` (CI job “Integration Tests”, before nonprod deploy). Locally Playwright starts `next dev`, so a clean checkout needs no prior build. In CI the workflow builds first and Playwright starts `next start`.
 - **Scope:** Every catalogue (and similar) edge case that needs a rendered page: empty catalogue, no filter matches, Buy and Ask us, pagination, drafts hidden, retryable error page.
 - **Data:** In-memory fixtures only. Never Supabase. The Next server starts with `SHOP_FIXTURE` set; `getShop` serves a fixture store. Per-test override via request header `x-shop-fixture` (`empty` | `mixed` | `error`) when fixtures are enabled.
 - **Config:** `playwright.integration.config.ts` — `testDir: ./integration`.
