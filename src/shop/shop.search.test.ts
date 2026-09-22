@@ -111,26 +111,4 @@ describe("Shop search", () => {
       "GlenAllachie 18",
     ]);
   });
-
-  it("treats a typed query as a name match across Whisky, Distillery, Country, and Region", async () => {
-    const shop = shopWithSearchCatalogue();
-
-    const catalogue = await shop.catalogue({ q: "glen" });
-
-    expect(catalogue.whiskies.map((item) => item.name)).toEqual([
-      "GlenAllachie 12",
-      "GlenAllachie 18",
-    ]);
-    expect(catalogue.totalCount).toBe(2);
-
-    const byRegion = await shop.catalogue({ q: "Kentucky" });
-    expect(byRegion.whiskies.map((item) => item.name)).toEqual([
-      "Buffalo Trace",
-    ]);
-
-    const byCountry = await shop.catalogue({ q: "сащ" });
-    expect(byCountry.whiskies.map((item) => item.name)).toEqual([
-      "Buffalo Trace",
-    ]);
-  });
 });

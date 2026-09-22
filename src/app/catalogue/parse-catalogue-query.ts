@@ -6,7 +6,13 @@ import type {
   PriceTier,
   SearchHit,
 } from "@/shop/types";
-import { EXPERIENCE_LEVELS, ORIGINS, PRICE_TIERS } from "@/shop/types";
+import {
+  EXPERIENCE_LEVELS,
+  ORIGINS,
+  PRICE_TIERS,
+  SEARCH_HIT_FILTER,
+  SEARCH_HIT_KINDS,
+} from "@/shop/types";
 
 export type CatalogueSearchParams = {
   origin?: string | string[];
@@ -18,7 +24,6 @@ export type CatalogueSearchParams = {
   distillery?: string | string[];
   country?: string | string[];
   region?: string | string[];
-  q?: string | string[];
   page?: string | string[];
 };
 
@@ -97,25 +102,12 @@ export function parseCatalogueQuery(
     query.experience = experience;
   }
 
-  const name = textFilter(params.name);
-  if (name) {
-    query.name = name;
-  }
-  const distillery = textFilter(params.distillery);
-  if (distillery) {
-    query.distillery = distillery;
-  }
-  const country = textFilter(params.country);
-  if (country) {
-    query.country = country;
-  }
-  const region = textFilter(params.region);
-  if (region) {
-    query.region = region;
-  }
-  const q = textFilter(params.q);
-  if (q) {
-    query.q = q;
+  for (const kind of SEARCH_HIT_KINDS) {
+    const key = SEARCH_HIT_FILTER[kind];
+    const value = textFilter(params[key]);
+    if (value) {
+      query[key] = value;
+    }
   }
 
   const pageRaw = singleValue(params.page);
@@ -136,25 +128,22 @@ export function catalogueHasActiveFilters(query: CatalogueQuery): boolean {
       query.age ||
       query.minScore !== undefined ||
       query.experience ||
-      query.name ||
-      query.distillery ||
-      query.country ||
-      query.region ||
-      query.q,
+      searchFilterActive(query),
   );
 }
 
+function searchFilterActive(query: CatalogueQuery): boolean {
+  for (const kind of SEARCH_HIT_KINDS) {
+    if (query[SEARCH_HIT_FILTER[kind]]) {
+      return true;
+    }
+  }
+  return false;
+}
+
 export function searchHitHref(hit: SearchHit): string {
-  if (hit.kind === "whisky") {
-    return buildCatalogueHref({}, { name: hit.name });
-  }
-  if (hit.kind === "distillery") {
-    return buildCatalogueHref({}, { distillery: hit.name });
-  }
-  if (hit.kind === "country") {
-    return buildCatalogueHref({}, { country: hit.name });
-  }
-  return buildCatalogueHref({}, { region: hit.name });
+  const key = SEARCH_HIT_FILTER[hit.kind];
+  return buildCatalogueHref({}, { [key]: hit.name });
 }
 
 export function buildCatalogueHref(
@@ -168,14 +157,13 @@ export function buildCatalogueHref(
     minScore: "minScore" in overrides ? overrides.minScore : query.minScore,
     experience:
       "experience" in overrides ? overrides.experience : query.experience,
-    name: "name" in overrides ? overrides.name : query.name,
-    distillery:
-      "distillery" in overrides ? overrides.distillery : query.distillery,
-    country: "country" in overrides ? overrides.country : query.country,
-    region: "region" in overrides ? overrides.region : query.region,
-    q: "q" in overrides ? overrides.q : query.q,
     page: "page" in overrides ? overrides.page : query.page,
   };
+
+  for (const kind of SEARCH_HIT_KINDS) {
+    const key = SEARCH_HIT_FILTER[kind];
+    next[key] = key in overrides ? overrides[key] : query[key];
+  }
 
   const params = new URLSearchParams();
 
@@ -194,20 +182,12 @@ export function buildCatalogueHref(
   if (next.experience) {
     params.set("experience", next.experience);
   }
-  if (next.name) {
-    params.set("name", next.name);
-  }
-  if (next.distillery) {
-    params.set("distillery", next.distillery);
-  }
-  if (next.country) {
-    params.set("country", next.country);
-  }
-  if (next.region) {
-    params.set("region", next.region);
-  }
-  if (next.q) {
-    params.set("q", next.q);
+  for (const kind of SEARCH_HIT_KINDS) {
+    const key = SEARCH_HIT_FILTER[kind];
+    const value = next[key];
+    if (value) {
+      params.set(key, value);
+    }
   }
   if (next.page && next.page > 1) {
     params.set("page", String(next.page));

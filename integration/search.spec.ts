@@ -89,14 +89,46 @@ test.describe("search", () => {
 
     await search.press("Enter");
 
-    await expect(page).toHaveURL(/q=zzzzqqqq/);
+    await expect(page).not.toHaveURL(/catalogue/);
+    await expect(page.getByText("Няма съвпадения")).toBeVisible();
+    await expect(page.getByRole("option")).toHaveCount(0);
+    await expect(page.getByRole("article")).toHaveCount(0);
+  });
+
+  test("Enter on a full Whisky name opens that exact Catalogue filter", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    const search = page.getByRole("combobox", { name: "Търсене" });
+    await search.fill("Fixture Buy Bottle");
     await expect(
-      page.getByRole("heading", {
-        name: "Няма открити уискита с избраните филтри",
-      }),
+      page.getByRole("option", { name: "Уиски: Fixture Buy Bottle" }),
     ).toBeVisible();
+
+    await search.press("Enter");
+
+    await expect(page).toHaveURL(/name=Fixture(\+|%20)Buy(\+|%20)Bottle/);
+    await expect(page).not.toHaveURL(/[?&]q=/);
     await expect(
       page.getByRole("heading", { name: "Fixture Buy Bottle", level: 2 }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Fixture Ask Bottle", level: 2 }),
     ).toHaveCount(0);
+  });
+
+  test("search stays available on a narrow screen", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/");
+
+    const search = page.getByRole("combobox", { name: "Търсене" });
+    await expect(search).toBeVisible();
+    await search.fill("Шот");
+    await page.getByRole("option", { name: "Държава: Шотландия" }).click();
+
+    await expect(page).toHaveURL(/country=/);
+    await expect(
+      page.getByRole("heading", { name: "Fixture Buy Bottle", level: 2 }),
+    ).toBeVisible();
   });
 });

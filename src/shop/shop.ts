@@ -20,6 +20,7 @@ import type {
   StoredHousePick,
   StoredWhisky,
 } from "./types";
+import { SEARCH_HIT_FILTER, SEARCH_HIT_KINDS } from "./types";
 
 type ShopDeps = {
   store: ShopStore;
@@ -99,34 +100,28 @@ export function createShop(deps: ShopDeps) {
       }
 
       const entries = await deps.store.catalogueEntries();
-      const whiskies: SearchHit[] = [];
-      const distilleries = new Set<string>();
-      const countries = new Set<string>();
-      const regions = new Set<string>();
+      const namesByKind = new Map<SearchHit["kind"], Set<string>>();
+      for (const kind of SEARCH_HIT_KINDS) {
+        namesByKind.set(kind, new Set());
+      }
 
       for (const entry of entries) {
-        const whisky = entry.whisky;
-        if (includesLabel(whisky.name, trimmed)) {
-          whiskies.push({ kind: "whisky", name: whisky.name });
-        }
-        if (whisky.distillery && includesLabel(whisky.distillery, trimmed)) {
-          distilleries.add(whisky.distillery);
-        }
-        if (whisky.country && includesLabel(whisky.country, trimmed)) {
-          countries.add(whisky.country);
-        }
-        if (whisky.region && includesLabel(whisky.region, trimmed)) {
-          regions.add(whisky.region);
+        for (const kind of SEARCH_HIT_KINDS) {
+          const label = whiskyLabel(entry.whisky, kind);
+          const names = namesByKind.get(kind);
+          if (label && names && includesLabel(label, trimmed)) {
+            names.add(label);
+          }
         }
       }
 
-      whiskies.sort((left, right) => left.name.localeCompare(right.name, "bg"));
-      return [
-        ...whiskies,
-        ...namedHits("distillery", distilleries),
-        ...namedHits("country", countries),
-        ...namedHits("region", regions),
-      ];
+      return SEARCH_HIT_KINDS.flatMap((kind) => {
+        const names = namesByKind.get(kind);
+        if (!names) {
+          return [];
+        }
+        return namedHits(kind, names);
+      });
     },
   };
 }
@@ -176,45 +171,29 @@ function matchesCatalogue(
     return false;
   }
 
-  if (query.name && !sameLabel(whisky.name, query.name)) {
-    return false;
-  }
-
-  if (query.distillery && !sameLabel(whisky.distillery, query.distillery)) {
-    return false;
-  }
-
-  if (query.country && !sameLabel(whisky.country, query.country)) {
-    return false;
-  }
-
-  if (query.region) {
-    if (!whisky.region || !sameLabel(whisky.region, query.region)) {
+  for (const kind of SEARCH_HIT_KINDS) {
+    const expected = query[SEARCH_HIT_FILTER[kind]];
+    if (!expected) {
+      continue;
+    }
+    const label = whiskyLabel(whisky, kind);
+    if (!label || !sameLabel(label, expected)) {
       return false;
     }
-  }
-
-  if (query.q && !matchesSearchText(whisky, query.q)) {
-    return false;
   }
 
   return true;
 }
 
-function matchesSearchText(whisky: StoredWhisky, query: string): boolean {
-  if (includesLabel(whisky.name, query)) {
-    return true;
+function whiskyLabel(
+  whisky: StoredWhisky,
+  kind: SearchHit["kind"],
+): string | undefined {
+  const value = whisky[SEARCH_HIT_FILTER[kind]];
+  if (!value) {
+    return undefined;
   }
-  if (whisky.distillery && includesLabel(whisky.distillery, query)) {
-    return true;
-  }
-  if (whisky.country && includesLabel(whisky.country, query)) {
-    return true;
-  }
-  if (whisky.region && includesLabel(whisky.region, query)) {
-    return true;
-  }
-  return false;
+  return value;
 }
 
 function sameLabel(left: string, right: string): boolean {

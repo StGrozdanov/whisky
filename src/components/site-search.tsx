@@ -10,27 +10,27 @@ import {
   useRef,
   useState,
 } from "react";
-import {
-  buildCatalogueHref,
-  searchHitHref,
-} from "@/app/catalogue/parse-catalogue-query";
+import { searchHitHref } from "@/app/catalogue/parse-catalogue-query";
 import { searchCatalogue } from "@/app/search-catalogue";
 import { Icon } from "@/components/icon";
-import {
-  SEARCH_HIT_KINDS,
-  type SearchHit,
-  type SearchHitKind,
-} from "@/shop/types";
+import { SEARCH_HIT_LABELS } from "@/components/search-hit-labels";
+import { SEARCH_HIT_KINDS, type SearchHit } from "@/shop/types";
 
 const MIN_QUERY_LENGTH = 2;
 const DEBOUNCE_MS = 300;
 
-const KIND_LABELS: Record<SearchHitKind, string> = {
-  whisky: "Уиски",
-  distillery: "Дестилерия",
-  country: "Държава",
-  region: "Регион",
-};
+function exactHit(query: string, hits: SearchHit[]): SearchHit | undefined {
+  const typed = query.trim().toLocaleLowerCase("bg");
+  for (const kind of SEARCH_HIT_KINDS) {
+    const hit = hits.find((item) => {
+      return item.kind === kind && item.name.toLocaleLowerCase("bg") === typed;
+    });
+    if (hit) {
+      return hit;
+    }
+  }
+  return undefined;
+}
 
 export function SiteSearch() {
   const router = useRouter();
@@ -39,7 +39,6 @@ export function SiteSearch() {
   const [query, setQuery] = useState("");
   const [hits, setHits] = useState<SearchHit[] | undefined>(undefined);
   const [open, setOpen] = useState(false);
-  const [failed, setFailed] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
 
   useEffect(() => {
@@ -47,7 +46,6 @@ export function SiteSearch() {
     if (trimmed.length < MIN_QUERY_LENGTH) {
       setHits(undefined);
       setOpen(false);
-      setFailed(false);
       setActiveIndex(-1);
       return;
     }
@@ -55,7 +53,6 @@ export function SiteSearch() {
     let cancelled = false;
     setHits(undefined);
     setOpen(false);
-    setFailed(false);
     setActiveIndex(-1);
 
     const timer = window.setTimeout(() => {
@@ -65,16 +62,14 @@ export function SiteSearch() {
             return;
           }
           setHits(next);
-          setFailed(false);
           setOpen(true);
         })
         .catch(() => {
           if (cancelled) {
             return;
           }
-          setHits([]);
-          setFailed(true);
-          setOpen(true);
+          setHits(undefined);
+          setOpen(false);
         });
     }, DEBOUNCE_MS);
 
@@ -109,13 +104,17 @@ export function SiteSearch() {
       return;
     }
 
+    let chosen: SearchHit | undefined;
     if (hits && activeIndex >= 0 && activeIndex < hits.length) {
-      router.push(searchHitHref(hits[activeIndex]));
-      setOpen(false);
+      chosen = hits[activeIndex];
+    } else if (hits) {
+      chosen = exactHit(trimmed, hits);
+    }
+    if (!chosen) {
       return;
     }
 
-    router.push(buildCatalogueHref({}, { q: trimmed }));
+    router.push(searchHitHref(chosen));
     setOpen(false);
   }
 
@@ -193,12 +192,7 @@ export function SiteSearch() {
           role="listbox"
           aria-label="Предложения"
         >
-          {failed ? (
-            <p className="px-3 py-2 text-body-sm text-on-surface" role="alert">
-              Търсенето не успя. Опитайте отново.
-            </p>
-          ) : null}
-          {!failed && groups.length === 0 ? (
+          {groups.length === 0 ? (
             <p className="px-3 py-2 text-body-sm text-on-surface-variant">
               Няма съвпадения
             </p>
@@ -206,13 +200,13 @@ export function SiteSearch() {
           {groups.map((group) => (
             <div key={group.kind}>
               <p className="px-3 pt-2 pb-1 text-technical-data text-outline uppercase">
-                {KIND_LABELS[group.kind]}
+                {SEARCH_HIT_LABELS[group.kind]}
               </p>
               {group.hits.map((item) => {
                 const selected = item.index === activeIndex;
                 return (
                   <Link
-                    aria-label={`${KIND_LABELS[item.hit.kind]}: ${item.hit.name}`}
+                    aria-label={`${SEARCH_HIT_LABELS[item.hit.kind]}: ${item.hit.name}`}
                     aria-selected={selected}
                     className={
                       selected

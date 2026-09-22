@@ -21,7 +21,6 @@ export type CatalogueQuery = {
   distillery?: string;
   country?: string;
   region?: string;
-  q?: string;
   page?: number;
 };
 
@@ -59,6 +58,16 @@ export type SearchHit = {
   kind: SearchHitKind;
   name: string;
 };
+
+export const SEARCH_HIT_FILTER = {
+  whisky: "name",
+  distillery: "distillery",
+  country: "country",
+  region: "region",
+} as const satisfies Record<
+  SearchHitKind,
+  "name" | "distillery" | "country" | "region"
+>;
 
 export type HomeWhisky = {
   name: string;

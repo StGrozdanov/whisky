@@ -7,13 +7,12 @@ import {
 } from "./parse-catalogue-query";
 
 describe("catalogue search query", () => {
-  it("keeps Whisky, Distillery, Country, Region, and typed query in the URL", () => {
+  it("keeps Whisky, Distillery, Country, and Region in the URL", () => {
     const query = parseCatalogueQuery({
       name: "GlenAllachie 12",
       distillery: "GlenAllachie",
       country: "Шотландия",
       region: "Speyside",
-      q: "glen",
       page: "2",
     });
 
@@ -22,12 +21,11 @@ describe("catalogue search query", () => {
       distillery: "GlenAllachie",
       country: "Шотландия",
       region: "Speyside",
-      q: "glen",
       page: 2,
     });
     expect(catalogueHasActiveFilters(query)).toBe(true);
     expect(buildCatalogueHref(query, { page: 3 })).toBe(
-      "/catalogue?name=GlenAllachie+12&distillery=GlenAllachie&country=%D0%A8%D0%BE%D1%82%D0%BB%D0%B0%D0%BD%D0%B4%D0%B8%D1%8F&region=Speyside&q=glen&page=3",
+      "/catalogue?name=GlenAllachie+12&distillery=GlenAllachie&country=%D0%A8%D0%BE%D1%82%D0%BB%D0%B0%D0%BD%D0%B4%D0%B8%D1%8F&region=Speyside&page=3",
     );
   });
 
@@ -47,7 +45,7 @@ describe("catalogue search query", () => {
   });
 
   it("ignores blank search params", () => {
-    const query = parseCatalogueQuery({ name: "  ", q: "" });
+    const query = parseCatalogueQuery({ name: "  " });
 
     expect(query).toEqual({});
     expect(catalogueHasActiveFilters(query)).toBe(false);

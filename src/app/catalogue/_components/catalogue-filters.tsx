@@ -4,7 +4,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ChangeEvent } from "react";
 import { Icon } from "@/components/icon";
-import { type CatalogueQuery, ORIGINS } from "@/shop/types";
+import { SEARCH_HIT_LABELS } from "@/components/search-hit-labels";
+import {
+  type CatalogueQuery,
+  ORIGINS,
+  SEARCH_HIT_FILTER,
+  SEARCH_HIT_KINDS,
+} from "@/shop/types";
 import { ORIGIN_LABELS } from "@/utils/origin-labels";
 import {
   buildCatalogueHref,
@@ -80,39 +86,18 @@ function chipsFor(query: CatalogueQuery): Chip[] {
       clear: { experience: undefined, page: 1 },
     });
   }
-  if (query.name) {
+  for (const kind of SEARCH_HIT_KINDS) {
+    const key = SEARCH_HIT_FILTER[kind];
+    const value = query[key];
+    if (!value) {
+      continue;
+    }
+    const clear: Partial<CatalogueQuery> = { page: 1 };
+    clear[key] = undefined;
     chips.push({
-      key: "name",
-      label: `Уиски: ${query.name}`,
-      clear: { name: undefined, page: 1 },
-    });
-  }
-  if (query.distillery) {
-    chips.push({
-      key: "distillery",
-      label: `Дестилерия: ${query.distillery}`,
-      clear: { distillery: undefined, page: 1 },
-    });
-  }
-  if (query.country) {
-    chips.push({
-      key: "country",
-      label: `Държава: ${query.country}`,
-      clear: { country: undefined, page: 1 },
-    });
-  }
-  if (query.region) {
-    chips.push({
-      key: "region",
-      label: `Регион: ${query.region}`,
-      clear: { region: undefined, page: 1 },
-    });
-  }
-  if (query.q) {
-    chips.push({
-      key: "q",
-      label: `Търсене: ${query.q}`,
-      clear: { q: undefined, page: 1 },
+      key,
+      label: `${SEARCH_HIT_LABELS[kind]}: ${value}`,
+      clear,
     });
   }
 
