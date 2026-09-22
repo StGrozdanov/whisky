@@ -161,7 +161,7 @@ export function CatalogueFilters({ query }: CatalogueFiltersProps) {
         </label>
 
         <label className="flex flex-col gap-1 text-label-sm text-outline uppercase tracking-wider">
-          Оценка сомелиер
+          Оценка
           <select
             className={FILTER_SELECT_CLASS}
             onChange={(event) => onSelectChange(event, "minScore")}
