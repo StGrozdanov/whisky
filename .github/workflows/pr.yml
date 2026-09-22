@@ -147,6 +147,8 @@ jobs:
 
   deploy_preview:
     name: Deploy Preview
+    # Dependabot PRs cannot read Actions secrets, so skip the Vercel preview.
+    if: github.event.pull_request.user.login != 'dependabot[bot]'
     needs:
       [
         typecheck_app,

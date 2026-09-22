@@ -56,4 +56,4 @@ Nothing reaches production without passing e2e against a live nonprod deployment
 
 ### Dependency updates
 
-[Dependabot](./.github/dependabot.yml) opens weekly PRs for npm and GitHub Actions updates.
+[Dependabot](./.github/dependabot.yml) opens weekly PRs for npm and GitHub Actions updates. Those PRs still run the PR checks, but skip the Vercel preview deploy: GitHub does not pass Actions secrets to Dependabot workflows. CodeRabbit does not auto-review them.
