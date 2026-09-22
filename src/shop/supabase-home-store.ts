@@ -85,7 +85,7 @@ type DiscoveryPackItemRow = {
 const WHISKY_SELECT =
   "id, name, photo_url, origin, abv, non_chill_filtered, published, distillery, country, region, age_years, experience_level, house_score, tagline, photo_urls";
 
-const SHOP_CACHE_REVALIDATE_SECONDS = 60;
+const SHOP_CACHE_REVALIDATE_SECONDS = 30 * 60;
 
 type CachedPromotion = {
   whiskyId: string;
