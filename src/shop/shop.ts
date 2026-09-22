@@ -157,7 +157,9 @@ function catalogueOffer(entry: StoredCatalogueEntry): {
   priceEur: number;
   action: CatalogueCard["action"];
 } {
-  const inStock = entry.skus.filter((sku) => sku.quantity > 0);
+  const inStock = entry.skus
+    .filter((sku) => sku.quantity > 0)
+    .sort((left, right) => left.id.localeCompare(right.id));
   if (inStock.length > 0) {
     const primaryInStock = inStock.find((sku) => sku.isPrimary);
     const chosen = primaryInStock ? primaryInStock : inStock[0];

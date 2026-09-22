@@ -120,6 +120,7 @@ export type StoredWhisky = {
 };
 
 export type StoredSku = {
+  id: string;
   whiskyId: string;
   priceEur: number;
   quantity: number;

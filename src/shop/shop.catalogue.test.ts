@@ -358,7 +358,10 @@ describe("Shop catalogue", () => {
           },
         ],
         primarySkus: [{ whiskyId: "split", priceEur: 100, quantity: 0 }],
-        skus: [{ whiskyId: "split", priceEur: 18, quantity: 4 }],
+        skus: [
+          { id: "sku-b", whiskyId: "split", priceEur: 40, quantity: 2 },
+          { id: "sku-a", whiskyId: "split", priceEur: 18, quantity: 4 },
+        ],
       }),
     });
 

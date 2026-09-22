@@ -61,13 +61,13 @@ export function SiteHeader() {
                 src="/brand/emblem.png"
                 width={48}
               />
-              <span className="font-headline text-label-lg font-bold tracking-widest text-primary uppercase transition-colors group-hover:text-secondary">
+              <span className="hidden font-headline text-label-lg font-bold tracking-widest text-primary uppercase transition-colors group-hover:text-secondary sm:inline">
                 WHISKY FINDER
               </span>
             </Link>
             <nav
               aria-label="Основна навигация"
-              className="ml-space-md hidden items-center gap-space-md xl:flex"
+              className="ml-space-sm flex items-center gap-space-md sm:ml-space-md"
             >
               <Link
                 aria-current={catalogueCurrent ? "page" : undefined}

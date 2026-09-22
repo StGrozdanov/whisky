@@ -32,6 +32,7 @@ type SeedWhisky = {
 };
 
 type SeedSku = {
+  id?: string;
   whiskyId: string;
   priceEur: number;
   quantity: number;
@@ -79,6 +80,20 @@ type SeedDiscoveryPack = {
   lineup: SeedDiscoveryPackItem[];
 };
 
+function toStoredSku(sku: SeedSku, primaryByDefault: boolean): StoredSku {
+  const isPrimary =
+    sku.isPrimary !== undefined ? sku.isPrimary : primaryByDefault;
+  const id = sku.id ? sku.id : `${sku.whiskyId}:${sku.priceEur}:${isPrimary}`;
+
+  return {
+    id,
+    whiskyId: sku.whiskyId,
+    priceEur: sku.priceEur,
+    quantity: sku.quantity,
+    isPrimary,
+  };
+}
+
 export function createInMemoryHomeStore(seed?: {
   whiskies?: SeedWhisky[];
   primarySkus?: SeedSku[];
@@ -114,21 +129,9 @@ export function createInMemoryHomeStore(seed?: {
 
   const skus: StoredSku[] = [
     ...(seed?.primarySkus
-      ? seed.primarySkus.map((sku) => ({
-          whiskyId: sku.whiskyId,
-          priceEur: sku.priceEur,
-          quantity: sku.quantity,
-          isPrimary: sku.isPrimary !== false,
-        }))
+      ? seed.primarySkus.map((sku) => toStoredSku(sku, true))
       : []),
-    ...(seed?.skus
-      ? seed.skus.map((sku) => ({
-          whiskyId: sku.whiskyId,
-          priceEur: sku.priceEur,
-          quantity: sku.quantity,
-          isPrimary: sku.isPrimary === true,
-        }))
-      : []),
+    ...(seed?.skus ? seed.skus.map((sku) => toStoredSku(sku, false)) : []),
   ];
 
   const housePick: StoredHousePick | undefined = seed?.housePick

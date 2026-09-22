@@ -30,6 +30,7 @@ type WhiskyRow = {
 };
 
 type SkuRow = {
+  id: string;
   whisky_id: string;
   price_eur: number;
   quantity: number;
@@ -149,7 +150,7 @@ export function createSupabaseHomeStore(client: SupabaseClient): ShopStore {
 
       const { data: skuData, error: skuError } = await client
         .from("skus")
-        .select("whisky_id, price_eur, quantity, is_primary")
+        .select("id, whisky_id, price_eur, quantity, is_primary")
         .in("whisky_id", whiskyIds);
 
       if (skuError) {
@@ -175,6 +176,7 @@ export function createSupabaseHomeStore(client: SupabaseClient): ShopStore {
           continue;
         }
         const whiskySkus = rows.map((row) => ({
+          id: row.id,
           whiskyId: whisky.id,
           priceEur: Number(row.price_eur),
           quantity: row.quantity,
