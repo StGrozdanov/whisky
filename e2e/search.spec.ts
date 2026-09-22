@@ -45,9 +45,12 @@ test.describe("search", () => {
   }) => {
     const name = await firstPublishedWhiskyName(page);
     const option = await findDistilleryOption(page, name);
+    const distillery = (await option.innerText()).trim();
     await option.click();
 
-    await expect(page).toHaveURL(/distillery=/);
+    await expect
+      .poll(() => new URL(page.url()).searchParams.get("distillery"))
+      .toBe(distillery);
     await expect(page.getByRole("article").first()).toBeVisible();
   });
 });
