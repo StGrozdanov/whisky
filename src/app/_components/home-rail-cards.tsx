@@ -11,11 +11,7 @@ import { formatPriceEur } from "@/utils/format-price-eur";
 import { ORIGIN_LABELS } from "@/utils/origin-labels";
 
 function whiskyMeta(whisky: HomeWhisky): string {
-  const originLabel = ORIGIN_LABELS[whisky.origin];
-  if (whisky.abv !== undefined) {
-    return `${originLabel} • ${whisky.abv.toFixed(1)}%`;
-  }
-  return originLabel;
+  return ORIGIN_LABELS[whisky.origin];
 }
 
 type RailWhiskyCardChromeProps = {
@@ -103,27 +99,10 @@ export function PromotionCard({ promotion }: { promotion: HomePromotion }) {
   );
 }
 
-const NEW_WHISKY_BADGE_CLASS =
-  "bg-secondary text-on-secondary absolute top-2 left-2 z-10 rounded px-2 py-0.5 text-label-sm font-bold tracking-wider uppercase";
-
-const NEW_WHISKY_EXCLUSIVE_BADGE_CLASS =
-  "bg-primary-container text-on-primary-container absolute top-2 left-2 z-10 rounded px-2 py-0.5 text-label-sm font-bold tracking-wider uppercase";
-
-function newWhiskyBadgeClassName(badge: string): string {
-  if (badge === "Ексклузивно") {
-    return NEW_WHISKY_EXCLUSIVE_BADGE_CLASS;
-  }
-  return NEW_WHISKY_BADGE_CLASS;
-}
-
 export function NewWhiskyCard({ entry }: { entry: HomeNewWhisky }) {
   return (
     <RailWhiskyCardChrome
-      badge={
-        <span className={newWhiskyBadgeClassName(entry.badge)}>
-          {entry.badge}
-        </span>
-      }
+      badge={null}
       meta={whiskyMeta(entry.whisky)}
       name={entry.whisky.name}
       photoUrl={entry.whisky.photoUrl}
@@ -131,9 +110,6 @@ export function NewWhiskyCard({ entry }: { entry: HomeNewWhisky }) {
         <div className="mb-space-sm flex min-h-9 flex-wrap items-baseline justify-between gap-x-2 gap-y-1">
           <span className="font-headline text-headline-md font-bold text-primary">
             {formatPriceEur(entry.displayPriceEur)}
-          </span>
-          <span className="text-technical-data whitespace-nowrap text-on-surface-variant">
-            {entry.note}
           </span>
         </div>
       }

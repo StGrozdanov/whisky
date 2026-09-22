@@ -38,24 +38,31 @@ export function createShop(deps: ShopDeps) {
 
   return {
     async home(): Promise<HomePage> {
-      const storedWhiskies = await deps.store.allWhiskies();
+      const [
+        storedWhiskies,
+        storedPick,
+        storedPromotions,
+        storedNewWhiskies,
+        storedDiscoveryPacks,
+      ] = await Promise.all([
+        deps.store.allWhiskies(),
+        deps.store.currentHousePick(),
+        deps.store.promotions(),
+        deps.store.newWhiskies(),
+        deps.store.discoveryPacks(),
+      ]);
       const whiskyById = new Map(
         storedWhiskies
           .filter((whisky) => whisky.published)
           .map((whisky) => [whisky.id, whisky]),
       );
-      const storedPick = await deps.store.currentHousePick();
       const now = clock.now();
 
       return {
         housePick: toHousePick(storedPick, whiskyById),
-        promotions: toPromotions(
-          await deps.store.promotions(),
-          whiskyById,
-          now,
-        ),
-        newWhiskies: toNewWhiskies(await deps.store.newWhiskies(), whiskyById),
-        discoveryPacks: toDiscoveryPacks(await deps.store.discoveryPacks()),
+        promotions: toPromotions(storedPromotions, whiskyById, now),
+        newWhiskies: toNewWhiskies(storedNewWhiskies, whiskyById),
+        discoveryPacks: toDiscoveryPacks(storedDiscoveryPacks),
       };
     },
 

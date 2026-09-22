@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { unstable_cache } from "next/cache";
 import type {
   ExperienceLevel,
   Origin,
@@ -84,6 +85,17 @@ type DiscoveryPackItemRow = {
 const WHISKY_SELECT =
   "id, name, photo_url, origin, abv, non_chill_filtered, published, distillery, country, region, age_years, experience_level, house_score, tagline, photo_urls";
 
+const SHOP_CACHE_REVALIDATE_SECONDS = 30 * 60;
+
+type CachedPromotion = {
+  whiskyId: string;
+  discountedPriceEur: number;
+  priorPriceEur: number;
+  startsAt: string | undefined;
+  endsAt: string | undefined;
+  sortOrder: number;
+};
+
 function toStoredWhisky(row: WhiskyRow): StoredWhisky {
   return {
     id: row.id,
@@ -110,8 +122,8 @@ function toStoredWhisky(row: WhiskyRow): StoredWhisky {
 }
 
 export function createSupabaseHomeStore(client: SupabaseClient): ShopStore {
-  return {
-    async allWhiskies(): Promise<StoredWhisky[]> {
+  const loadAllWhiskies = unstable_cache(
+    async (): Promise<StoredWhisky[]> => {
       const { data, error } = await client
         .from("whiskies")
         .select(WHISKY_SELECT)
@@ -127,8 +139,12 @@ export function createSupabaseHomeStore(client: SupabaseClient): ShopStore {
 
       return (data as WhiskyRow[]).map(toStoredWhisky);
     },
+    ["shop-all-whiskies"],
+    { revalidate: SHOP_CACHE_REVALIDATE_SECONDS },
+  );
 
-    async catalogueEntries(): Promise<StoredCatalogueEntry[]> {
+  const loadCatalogueEntries = unstable_cache(
+    async (): Promise<StoredCatalogueEntry[]> => {
       const { data: whiskyData, error: whiskyError } = await client
         .from("whiskies")
         .select(WHISKY_SELECT)
@@ -190,8 +206,12 @@ export function createSupabaseHomeStore(client: SupabaseClient): ShopStore {
 
       return entries;
     },
+    ["shop-catalogue-entries"],
+    { revalidate: SHOP_CACHE_REVALIDATE_SECONDS },
+  );
 
-    async currentHousePick(): Promise<StoredHousePick | undefined> {
+  const loadCurrentHousePick = unstable_cache(
+    async (): Promise<StoredHousePick | null> => {
       const { data, error } = await client
         .from("house_picks")
         .select(
@@ -205,7 +225,7 @@ export function createSupabaseHomeStore(client: SupabaseClient): ShopStore {
       }
 
       if (!data) {
-        return undefined;
+        return null;
       }
 
       const row = data as HousePickRow;
@@ -226,8 +246,12 @@ export function createSupabaseHomeStore(client: SupabaseClient): ShopStore {
             : Number(row.display_price_eur),
       };
     },
+    ["shop-house-pick"],
+    { revalidate: SHOP_CACHE_REVALIDATE_SECONDS },
+  );
 
-    async promotions(): Promise<StoredHomePromotion[]> {
+  const loadPromotions = unstable_cache(
+    async (): Promise<CachedPromotion[]> => {
       const { data, error } = await client
         .from("home_promotions")
         .select(
@@ -248,13 +272,17 @@ export function createSupabaseHomeStore(client: SupabaseClient): ShopStore {
         whiskyId: row.whisky_id,
         discountedPriceEur: Number(row.discounted_price_eur),
         priorPriceEur: Number(row.prior_price_eur),
-        startsAt: row.starts_at ? new Date(row.starts_at) : undefined,
-        endsAt: row.ends_at ? new Date(row.ends_at) : undefined,
+        startsAt: row.starts_at ? row.starts_at : undefined,
+        endsAt: row.ends_at ? row.ends_at : undefined,
         sortOrder: row.sort_order,
       }));
     },
+    ["shop-promotions"],
+    { revalidate: SHOP_CACHE_REVALIDATE_SECONDS },
+  );
 
-    async newWhiskies(): Promise<StoredHomeNewWhisky[]> {
+  const loadNewWhiskies = unstable_cache(
+    async (): Promise<StoredHomeNewWhisky[]> => {
       const { data, error } = await client
         .from("home_new_whiskies")
         .select("whisky_id, display_price_eur, badge, note, sort_order")
@@ -277,8 +305,12 @@ export function createSupabaseHomeStore(client: SupabaseClient): ShopStore {
         sortOrder: row.sort_order,
       }));
     },
+    ["shop-new-whiskies"],
+    { revalidate: SHOP_CACHE_REVALIDATE_SECONDS },
+  );
 
-    async discoveryPacks(): Promise<StoredDiscoveryPack[]> {
+  const loadDiscoveryPacks = unstable_cache(
+    async (): Promise<StoredDiscoveryPack[]> => {
       const { data: packsData, error: packsError } = await client
         .from("discovery_packs")
         .select("id, title, photo_url, price_eur, sort_order")
@@ -341,6 +373,33 @@ export function createSupabaseHomeStore(client: SupabaseClient): ShopStore {
         };
       });
     },
+    ["shop-discovery-packs"],
+    { revalidate: SHOP_CACHE_REVALIDATE_SECONDS },
+  );
+
+  return {
+    allWhiskies: loadAllWhiskies,
+    catalogueEntries: loadCatalogueEntries,
+    async currentHousePick() {
+      const pick = await loadCurrentHousePick();
+      if (pick === null) {
+        return undefined;
+      }
+      return pick;
+    },
+    async promotions(): Promise<StoredHomePromotion[]> {
+      const rows = await loadPromotions();
+      return rows.map((row) => ({
+        whiskyId: row.whiskyId,
+        discountedPriceEur: row.discountedPriceEur,
+        priorPriceEur: row.priorPriceEur,
+        startsAt: row.startsAt ? new Date(row.startsAt) : undefined,
+        endsAt: row.endsAt ? new Date(row.endsAt) : undefined,
+        sortOrder: row.sortOrder,
+      }));
+    },
+    newWhiskies: loadNewWhiskies,
+    discoveryPacks: loadDiscoveryPacks,
   };
 }
 

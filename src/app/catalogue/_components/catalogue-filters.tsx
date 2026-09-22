@@ -22,7 +22,7 @@ type Chip = {
 };
 
 const FILTER_SELECT_CLASS =
-  "cursor-pointer rounded-lg border border-outline-variant/40 bg-surface-container-lowest px-space-sm py-2 text-body-sm text-on-surface focus:ring-1 focus:ring-primary focus:outline-none";
+  "cursor-pointer rounded-lg border border-surface-container-highest/40 bg-surface-container-low px-2.5 py-1.5 text-body-sm text-on-surface focus:ring-1 focus:ring-primary focus:outline-none";
 
 function scoreLabel(score: number): string {
   return `Оценка: Над ${score.toFixed(1)}/10`;
@@ -112,8 +112,8 @@ export function CatalogueFilters({ query }: CatalogueFiltersProps) {
   }
 
   return (
-    <div className="space-y-space-md">
-      <div className="grid grid-cols-1 gap-space-sm sm:grid-cols-2 lg:grid-cols-5">
+    <div className="w-full space-y-space-sm rounded-xl border border-surface-container-highest/40 bg-surface-container-lowest p-space-md shadow-md">
+      <div className="grid grid-cols-1 gap-space-sm sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
         <label className="flex flex-col gap-1 text-label-sm text-outline uppercase tracking-wider">
           Произход
           <select
@@ -188,34 +188,44 @@ export function CatalogueFilters({ query }: CatalogueFiltersProps) {
         </label>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-label-sm text-outline uppercase tracking-wider">
-          Активни филтри:
-        </span>
-        {chips.length === 0 ? (
-          <span className="text-body-sm text-on-surface-variant">
-            Няма избрани (показват се всички)
+      <div className="flex flex-wrap items-center justify-between gap-space-sm border-t border-surface-container-highest/40 pt-2">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="mr-1 text-technical-data text-outline">
+            Активни филтри:
           </span>
-        ) : (
-          chips.map((chip) => (
+          {chips.length === 0 ? (
+            <span className="text-body-sm text-on-surface-variant">
+              Няма избрани (показват се всички)
+            </span>
+          ) : (
+            chips.map((chip) => (
+              <Link
+                className="inline-flex cursor-pointer items-center gap-1 rounded-full border border-primary/20 bg-surface-container px-2.5 py-0.5 text-technical-data text-primary transition-colors hover:bg-surface-container-high"
+                href={buildCatalogueHref(query, chip.clear)}
+                key={chip.key}
+              >
+                {chip.label}
+                <Icon fontSize={14} name="close" />
+              </Link>
+            ))
+          )}
+          {hasFilters ? (
             <Link
-              className="inline-flex cursor-pointer items-center gap-1 rounded-full bg-surface-container px-space-sm py-1 text-body-sm text-on-surface transition-colors hover:bg-surface-container-high"
-              href={buildCatalogueHref(query, chip.clear)}
-              key={chip.key}
+              className="ml-2 cursor-pointer text-technical-data text-outline underline transition-colors hover:text-error"
+              href="/catalogue"
             >
-              {chip.label}
-              <Icon fontSize={14} name="close" />
+              Изчисти всички
             </Link>
-          ))
-        )}
-        {hasFilters ? (
-          <Link
-            className="cursor-pointer text-label-md text-secondary transition-colors hover:text-primary"
-            href="/catalogue"
-          >
-            Изчисти всички
-          </Link>
-        ) : null}
+          ) : null}
+        </div>
+        <div className="text-technical-data text-outline">
+          <Icon
+            className="mr-1 inline-block align-middle text-secondary"
+            fontSize={14}
+            name="sort_by_alpha"
+          />
+          Подредени по азбучен ред (A — Z)
+        </div>
       </div>
     </div>
   );
