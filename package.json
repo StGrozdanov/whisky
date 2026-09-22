@@ -15,8 +15,8 @@
     "type-check": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:integration": "playwright test",
-    "test:e2e": "playwright test",
+    "test:integration": "playwright test -c playwright.integration.config.ts",
+    "test:e2e": "playwright test -c playwright.e2e.config.ts",
     "prepare": "husky",
     "knip": "knip"
   },

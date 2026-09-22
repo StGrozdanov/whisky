@@ -166,7 +166,7 @@ jobs:
 
   integration_test_app:
     name: Integration Tests
-    needs: [install_app, db_migrations]
+    needs: [install_app]
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout repo
@@ -186,14 +186,12 @@ jobs:
 
       - name: Build Next.js
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SHOP_FIXTURE: mixed
         run: npm run build
 
       - name: Run Playwright integration
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SHOP_FIXTURE: mixed
         run: npm run test:integration
 
       - name: Upload Playwright integration report

@@ -16,7 +16,8 @@ export default async function CataloguePage({
 }: CataloguePageProps) {
   const params = await searchParams;
   const query = parseCatalogueQuery(params);
-  const catalogue = await getShop().catalogue(query);
+  const shop = await getShop();
+  const catalogue = await shop.catalogue(query);
 
   return <CatalogueView catalogue={catalogue} query={query} />;
 }

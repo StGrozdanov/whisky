@@ -20,7 +20,7 @@ npm install
 npm run dev
 ```
 
-Other useful scripts: `npm run type-check`, `npm run check` (Biome), `npm test` (Vitest), `npm run knip` (unused code), `npm run test:integration` / `npm run test:e2e` (Playwright).
+Other useful scripts: `npm run type-check`, `npm run check` (Biome), `npm test` (Vitest), `npm run knip` (unused code), `npm run test:integration` (Playwright fixtures, no DB), `npm run test:e2e` (Playwright against live nonprod). See [docs/agents/testing.md](./docs/agents/testing.md).
 
 ## Workflow
 
@@ -50,9 +50,9 @@ PR checks do **not** run Supabase migrations, e2e, or production deploy. Preview
 
 On every push to `main` ([.github/workflows/ci.yml](./.github/workflows/ci.yml)):
 
-install → typecheck / lint / unit tests / unused code (knip) / security (Trivy) (parallel) → Supabase DB migrations → Playwright integration tests → deploy to the shared nonprod Vercel alias (`whisky-finder-non-prod.vercel.app`) → Playwright e2e against nonprod → deploy to the prod Vercel alias.
+install → typecheck / lint / unit tests / unused code (knip) / security (Trivy) (parallel) → Playwright integration (fixture-backed, no database) in parallel with Supabase DB migrations → deploy to the shared nonprod Vercel alias (`whisky-finder-non-prod.vercel.app`) → Playwright e2e against nonprod → deploy to the prod Vercel alias.
 
-Nothing reaches production without passing e2e against a live nonprod deployment first.
+Nothing reaches production without passing e2e against a live nonprod deployment first. Integration and e2e use separate Playwright configs and folders — see [docs/agents/testing.md](./docs/agents/testing.md).
 
 ### Dependency updates
 
