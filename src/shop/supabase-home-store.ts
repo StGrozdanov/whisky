@@ -10,6 +10,7 @@ import type {
   StoredHomePromotion,
   StoredHousePick,
   StoredWhisky,
+  StoredWhiskyRelatedSet,
 } from "./types";
 
 type WhiskyRow = {
@@ -28,6 +29,10 @@ type WhiskyRow = {
   house_score: number | null;
   tagline: string | null;
   photo_urls: string[] | null;
+  photo_captions: string[] | null;
+  description: string | null;
+  natural_colour: boolean | null;
+  house_video_url: string | null;
 };
 
 type SkuRow = {
@@ -36,6 +41,43 @@ type SkuRow = {
   price_eur: number;
   quantity: number;
   is_primary: boolean;
+  volume_ml: number;
+};
+
+type WhiskyAwardRow = {
+  whisky_id: string;
+  title: string;
+  organisation: string;
+  year: number;
+  category: string;
+  sort_order: number;
+};
+
+type WhiskyTastingRow = {
+  whisky_id: string;
+  author_first_name: string;
+  author_last_name: string;
+  body: string;
+  score: number | null;
+  verified_purchase: boolean;
+  sort_order: number;
+};
+
+type WhiskyPairingRow = {
+  whisky_id: string;
+  eyebrow: string;
+  title: string;
+  body: string;
+  photo_url: string;
+  sort_order: number;
+};
+
+type WhiskyRelatedSetRow = {
+  whisky_id: string;
+  title: string;
+  description: string;
+  price_eur: number;
+  photo_url: string;
 };
 
 type HousePickRow = {
@@ -82,8 +124,22 @@ type DiscoveryPackItemRow = {
   sort_order: number;
 };
 
+function listRows<T>(
+  label: string,
+  error: { message: string } | null,
+  data: T[] | null,
+): T[] {
+  if (error) {
+    throw new Error(`${label}: ${error.message}`);
+  }
+  if (!data) {
+    return [];
+  }
+  return data;
+}
+
 const WHISKY_SELECT =
-  "id, name, photo_url, origin, abv, non_chill_filtered, published, distillery, country, region, age_years, experience_level, house_score, tagline, photo_urls";
+  "id, name, photo_url, origin, abv, non_chill_filtered, published, distillery, country, region, age_years, experience_level, house_score, tagline, photo_urls, photo_captions, description, natural_colour, house_video_url";
 
 const SHOP_CACHE_REVALIDATE_SECONDS = 30 * 60;
 
@@ -118,6 +174,10 @@ function toStoredWhisky(row: WhiskyRow): StoredWhisky {
       row.photo_urls && row.photo_urls.length > 0
         ? row.photo_urls
         : [row.photo_url],
+    photoCaptions: row.photo_captions ? row.photo_captions : [],
+    description: row.description ? row.description : undefined,
+    naturalColour: row.natural_colour === null ? undefined : row.natural_colour,
+    houseVideoUrl: row.house_video_url ? row.house_video_url : undefined,
   };
 }
 
@@ -166,7 +226,7 @@ export function createSupabaseHomeStore(client: SupabaseClient): ShopStore {
 
       const { data: skuData, error: skuError } = await client
         .from("skus")
-        .select("id, whisky_id, price_eur, quantity, is_primary")
+        .select("id, whisky_id, price_eur, quantity, is_primary, volume_ml")
         .in("whisky_id", whiskyIds);
 
       if (skuError) {
@@ -197,6 +257,7 @@ export function createSupabaseHomeStore(client: SupabaseClient): ShopStore {
           priceEur: Number(row.price_eur),
           quantity: row.quantity,
           isPrimary: row.is_primary,
+          volumeMl: Number(row.volume_ml),
         }));
         if (!whiskySkus.some((sku) => sku.isPrimary)) {
           continue;
@@ -377,9 +438,102 @@ export function createSupabaseHomeStore(client: SupabaseClient): ShopStore {
     { revalidate: SHOP_CACHE_REVALIDATE_SECONDS },
   );
 
+  async function loadWhiskyPageExtras(whiskyId: string) {
+    const [awardsResult, tastingsResult, pairingsResult, relatedResult] =
+      await Promise.all([
+        client
+          .from("whisky_awards")
+          .select("whisky_id, title, organisation, year, category, sort_order")
+          .eq("whisky_id", whiskyId)
+          .order("sort_order", { ascending: true }),
+        client
+          .from("whisky_tastings")
+          .select(
+            "whisky_id, author_first_name, author_last_name, body, score, verified_purchase, sort_order",
+          )
+          .eq("whisky_id", whiskyId)
+          .eq("approved", true)
+          .order("sort_order", { ascending: true }),
+        client
+          .from("whisky_pairings")
+          .select("whisky_id, eyebrow, title, body, photo_url, sort_order")
+          .eq("whisky_id", whiskyId)
+          .order("sort_order", { ascending: true }),
+        client
+          .from("whisky_related_sets")
+          .select("whisky_id, title, description, price_eur, photo_url")
+          .eq("whisky_id", whiskyId)
+          .maybeSingle(),
+      ]);
+
+    const awardRows = listRows(
+      "Failed to load Whisky awards",
+      awardsResult.error,
+      awardsResult.data as WhiskyAwardRow[] | null,
+    );
+    const tastingRows = listRows(
+      "Failed to load Whisky tastings",
+      tastingsResult.error,
+      tastingsResult.data as WhiskyTastingRow[] | null,
+    );
+    const pairingRows = listRows(
+      "Failed to load Whisky pairings",
+      pairingsResult.error,
+      pairingsResult.data as WhiskyPairingRow[] | null,
+    );
+    if (relatedResult.error) {
+      throw new Error(
+        `Failed to load Whisky related set: ${relatedResult.error.message}`,
+      );
+    }
+
+    const awards = awardRows.map((row) => ({
+      title: row.title,
+      organisation: row.organisation,
+      year: row.year,
+      category: row.category,
+    }));
+
+    const tastings = tastingRows.map((row) => ({
+      authorFirstName: row.author_first_name,
+      authorLastName: row.author_last_name,
+      text: row.body,
+      score: row.score === null ? undefined : Number(row.score),
+      verifiedPurchase: row.verified_purchase,
+    }));
+
+    const pairings = pairingRows.map((row) => ({
+      eyebrow: row.eyebrow,
+      title: row.title,
+      body: row.body,
+      photoUrl: row.photo_url,
+      sortOrder: row.sort_order,
+    }));
+
+    let relatedSet: StoredWhiskyRelatedSet | undefined;
+    if (relatedResult.data) {
+      const row = relatedResult.data as WhiskyRelatedSetRow;
+      relatedSet = {
+        title: row.title,
+        description: row.description,
+        priceEur: Number(row.price_eur),
+        photoUrl: row.photo_url,
+      };
+    }
+
+    return {
+      whiskyId,
+      awards,
+      tastings,
+      pairings,
+      relatedSet,
+    };
+  }
+
   return {
     allWhiskies: loadAllWhiskies,
     catalogueEntries: loadCatalogueEntries,
+    whiskyPageExtras: loadWhiskyPageExtras,
     async currentHousePick() {
       const pick = await loadCurrentHousePick();
       if (pick === null) {

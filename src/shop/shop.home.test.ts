@@ -29,6 +29,7 @@ describe("Shop home", () => {
 
     expect(home.housePick).toEqual({
       whisky: {
+        id: "glen",
         name: "GlenAllachie 12",
         photoUrl: "/bottles/glenallachie-12.svg",
         origin: "Scotch",
@@ -78,6 +79,7 @@ describe("Shop home", () => {
 
     expect(home.housePick).toEqual({
       whisky: {
+        id: "glen",
         name: "GlenAllachie 12",
         photoUrl: "/bottles/glenallachie-12.svg",
         origin: "Scotch",
@@ -204,6 +206,7 @@ describe("Shop home", () => {
     expect((await shop.home()).newWhiskies).toEqual([
       {
         whisky: {
+          id: "yama",
           name: "Yamazaki Distiller's Reserve",
           photoUrl: "/bottles/yamazaki-reserve.svg",
           origin: "Japanese",
@@ -216,6 +219,7 @@ describe("Shop home", () => {
       },
       {
         whisky: {
+          id: "laph",
           name: "Laphroaig 10",
           photoUrl: "/bottles/laphroaig-10.svg",
           origin: "Scotch",
@@ -273,6 +277,7 @@ describe("Shop home", () => {
     expect((await shop.home()).promotions).toEqual([
       {
         whisky: {
+          id: "redbreast",
           name: "Redbreast 12",
           photoUrl: "/bottles/redbreast-12.svg",
           origin: "Irish",
@@ -286,6 +291,7 @@ describe("Shop home", () => {
       },
       {
         whisky: {
+          id: "buffalo",
           name: "Buffalo Trace",
           photoUrl: "/bottles/buffalo-trace.svg",
           origin: "Bourbon",
@@ -356,6 +362,7 @@ describe("Shop home", () => {
     expect((await shop.home()).promotions).toEqual([
       {
         whisky: {
+          id: "glen",
           name: "GlenAllachie 12",
           photoUrl: "/bottles/glenallachie-12.svg",
           origin: "Scotch",
