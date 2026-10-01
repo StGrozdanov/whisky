@@ -5,10 +5,7 @@ import type { CatalogueCard } from "@/shop/types";
 import { formatPriceEur } from "@/utils/format-price-eur";
 import { ORIGIN_LABELS } from "@/utils/origin-labels";
 import { whiskyHref } from "@/utils/whisky-href";
-
-function formatScore(score: number): string {
-  return `${score.toFixed(1)}/10`;
-}
+import { formatDisplayedScore } from "@/utils/whisky-page-labels";
 
 function ageLabel(ageYears: number | undefined): string {
   if (ageYears === undefined) {
@@ -45,6 +42,7 @@ export function CatalogueWhiskyCard({ card }: CatalogueWhiskyCardProps) {
   const age = ageLabel(card.ageYears);
   const experience = experienceLabel(card.experienceLevel);
   const isAskUs = card.action === "ask-us";
+  const scoreLabel = formatDisplayedScore(card.displayedScore);
 
   return (
     <article className="h-full">
@@ -57,10 +55,10 @@ export function CatalogueWhiskyCard({ card }: CatalogueWhiskyCardProps) {
             <span className="rounded bg-surface-container-high px-2 py-0.5 text-label-sm tracking-wider text-on-surface uppercase">
               {card.priceTier} TIER
             </span>
-            {card.displayedScore !== undefined ? (
+            {scoreLabel ? (
               <span className="inline-flex items-center gap-0.5 rounded bg-surface-container px-2 py-0.5 text-technical-data font-bold text-secondary">
                 <Icon fontSize={14} name="star" />
-                {formatScore(card.displayedScore)}
+                {scoreLabel}
               </span>
             ) : null}
           </div>

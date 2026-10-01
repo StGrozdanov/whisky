@@ -1,3 +1,4 @@
+import { emptyWhiskyPageExtras } from "./empty-whisky-page-extras";
 import { createInMemoryHomeStore } from "./in-memory-home-store";
 import { createShop, type Shop } from "./shop";
 import type { Origin, ShopStore } from "./types";
@@ -47,13 +48,7 @@ function createErrorStore(): ShopStore {
       throw new Error("Fixture catalogue load failure");
     },
     async whiskyPageExtras(whiskyId: string) {
-      return {
-        whiskyId,
-        awards: [],
-        tastings: [],
-        pairings: [],
-        relatedSet: undefined,
-      };
+      return emptyWhiskyPageExtras(whiskyId);
     },
   };
 }

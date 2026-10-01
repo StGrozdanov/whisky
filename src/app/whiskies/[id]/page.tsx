@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { cache } from "react";
 import { WhiskyDetailView } from "@/app/whiskies/_components/whisky-detail-view";
 import { getShop } from "@/shop/get-shop";
 
@@ -9,12 +10,16 @@ type WhiskyRouteProps = {
   params: Promise<{ id: string }>;
 };
 
+const loadWhiskyPage = cache(async (id: string) => {
+  const shop = await getShop();
+  return shop.whisky(id);
+});
+
 export async function generateMetadata({
   params,
 }: WhiskyRouteProps): Promise<Metadata> {
   const { id } = await params;
-  const shop = await getShop();
-  const page = await shop.whisky(id);
+  const page = await loadWhiskyPage(id);
 
   if (!page) {
     return {
@@ -31,8 +36,7 @@ export async function generateMetadata({
 
 export default async function WhiskyRoutePage({ params }: WhiskyRouteProps) {
   const { id } = await params;
-  const shop = await getShop();
-  const page = await shop.whisky(id);
+  const page = await loadWhiskyPage(id);
 
   if (!page) {
     notFound();

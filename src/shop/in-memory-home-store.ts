@@ -1,3 +1,4 @@
+import { emptyWhiskyPageExtras } from "./empty-whisky-page-extras";
 import type {
   ExperienceLevel,
   Origin,
@@ -236,13 +237,7 @@ export function createInMemoryHomeStore(seed?: {
     async whiskyPageExtras(whiskyId: string) {
       const extras = whiskyPagesById.get(whiskyId);
       if (!extras) {
-        return {
-          whiskyId,
-          awards: [],
-          tastings: [],
-          pairings: [],
-          relatedSet: undefined,
-        };
+        return emptyWhiskyPageExtras(whiskyId);
       }
       return extras;
     },

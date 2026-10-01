@@ -244,8 +244,6 @@ export type WhiskyPage = {
   naturalColour: boolean | undefined;
   nonChillFiltered: boolean | undefined;
   houseScore: number | undefined;
-  displayedScore: number | undefined;
-  priceTier: PriceTier;
   houseVideoUrl: string | undefined;
   skus: WhiskyPageSku[];
   defaultSkuId: string;

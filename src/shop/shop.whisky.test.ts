@@ -126,7 +126,11 @@ describe("Shop whisky page", () => {
       { url: "/bottles/glenallachie-12.svg", caption: "Фронтален" },
       { url: "/bottles/buffalo-trace.svg", caption: "Кутия" },
     ]);
-    expect(page.displayedScore).toBe(9.3);
+    expect(page.houseScore).toBe(9.3);
+    expect(page.abv).toBe(46);
+    expect(page.ageYears).toBe(12);
+    expect(page.naturalColour).toBe(true);
+    expect(page.nonChillFiltered).toBe(true);
     expect(page.houseVideoUrl).toContain("youtube.com");
     expect(page.awards).toHaveLength(1);
     expect(page.tastings[0]?.authorName).toBe("Иван Петров");
@@ -149,6 +153,7 @@ describe("Shop whisky page", () => {
             distillery: "Partial",
             country: "Шотландия",
             abv: 40,
+            tastingAverage: 8.2,
           },
         ],
         primarySkus: [{ whiskyId: "partial", priceEur: 50, quantity: 1 }],
@@ -168,6 +173,10 @@ describe("Shop whisky page", () => {
     expect(page.pairings).toEqual([]);
     expect(page.relatedSet).toBeUndefined();
     expect(page.houseScore).toBeUndefined();
+    expect(page.naturalColour).toBeUndefined();
+    expect(page.nonChillFiltered).toBeUndefined();
+    expect(page.abv).toBe(40);
+    expect(page.ageYears).toBeUndefined();
   });
 
   it("marks out-of-stock SKUs as ask-us", async () => {

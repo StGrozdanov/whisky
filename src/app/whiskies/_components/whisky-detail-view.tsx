@@ -13,6 +13,8 @@ import {
   formatDisplayedScore,
   formatVolumeMl,
   formatWhiskyAgeYears,
+  skuAvailabilityLabel,
+  skuIsInStock,
 } from "@/utils/whisky-page-labels";
 import { youtubeVideoId } from "@/utils/youtube-video-id";
 
@@ -35,14 +37,12 @@ export function WhiskyDetailView({ page }: WhiskyDetailViewProps) {
   }, [page.skus, selectedSkuId]);
 
   const lineTotal = selectedSku.priceEur * quantity;
-  const scoreLabel = formatDisplayedScore(page.displayedScore);
+  const houseScoreLabel = formatDisplayedScore(page.houseScore);
   const colourFiltration = formatColourFiltration(
     page.naturalColour,
     page.nonChillFiltered,
   );
-  const regionLine = page.region
-    ? `${page.region}, ${page.country}`
-    : page.country;
+  const inStock = skuIsInStock(selectedSku.action);
   const mainPhoto = page.photos[photoIndex];
   const videoId = youtubeVideoId(page.houseVideoUrl);
 
@@ -160,24 +160,14 @@ export function WhiskyDetailView({ page }: WhiskyDetailViewProps) {
             </div>
 
             <div className="flex flex-col gap-space-md lg:col-span-6">
-              <div className="flex flex-wrap items-center justify-between gap-space-xs">
-                <div className="flex items-center gap-space-xs">
-                  <span className="rounded bg-surface-container-high px-2 py-0.5 text-label-sm tracking-wider text-on-surface uppercase">
-                    {page.priceTier} TIER
+              {houseScoreLabel ? (
+                <div className="flex flex-wrap items-center gap-space-xs">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-tertiary-container/30 px-space-sm py-1 text-label-sm font-semibold text-tertiary">
+                    <Icon fill fontSize={15} name="star" />
+                    {houseScoreLabel}
                   </span>
-                  {scoreLabel ? (
-                    <>
-                      <span className="text-technical-data text-outline">
-                        |
-                      </span>
-                      <span className="inline-flex items-center gap-1 rounded-full bg-tertiary-container/30 px-space-sm py-1 text-label-sm font-semibold text-tertiary">
-                        <Icon fill fontSize={15} name="star" />
-                        {scoreLabel}
-                      </span>
-                    </>
-                  ) : null}
                 </div>
-              </div>
+              ) : null}
 
               <div className="space-y-1">
                 <h1 className="font-headline text-headline-lg leading-tight tracking-tight text-on-surface">
@@ -191,7 +181,10 @@ export function WhiskyDetailView({ page }: WhiskyDetailViewProps) {
               </div>
 
               <div className="grid grid-cols-2 gap-space-xs pt-1 sm:grid-cols-4">
-                <SpecChip label="Регион" value={regionLine} />
+                <SpecChip label="Държава" value={page.country} />
+                {page.region ? (
+                  <SpecChip label="Регион" value={page.region} />
+                ) : null}
                 <SpecChip
                   label="Отлежаване"
                   value={formatWhiskyAgeYears(page.ageYears)}
@@ -290,16 +283,24 @@ export function WhiskyDetailView({ page }: WhiskyDetailViewProps) {
                     </button>
                   </div>
 
-                  {selectedSku.action === "buy" ? (
-                    <button
-                      className="flex w-full flex-1 cursor-pointer transform items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-primary-container to-secondary-container px-space-md py-3 text-label-lg uppercase tracking-wider text-on-primary-container shadow-[0_4px_20px_rgba(217,119,6,0.35)] transition-all hover:-translate-y-0.5 hover:shadow-[0_6px_28px_rgba(250,188,77,0.5)]"
-                      type="button"
-                    >
-                      <Icon fontSize={20} name="shopping_bag" />
-                      <span>
-                        Добави в кошницата • {formatPriceEur(lineTotal)}
-                      </span>
-                    </button>
+                  {inStock ? (
+                    <>
+                      <button
+                        className="flex w-full flex-1 cursor-pointer transform items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-primary-container to-secondary-container px-space-md py-3 text-label-lg uppercase tracking-wider text-on-primary-container shadow-[0_4px_20px_rgba(217,119,6,0.35)] transition-all hover:-translate-y-0.5 hover:shadow-[0_6px_28px_rgba(250,188,77,0.5)]"
+                        type="button"
+                      >
+                        <Icon fontSize={20} name="shopping_bag" />
+                        <span>
+                          Добави в кошницата • {formatPriceEur(lineTotal)}
+                        </span>
+                      </button>
+                      <button
+                        className="w-full cursor-pointer rounded-lg bg-surface-container-high px-space-lg py-3 text-label-lg uppercase tracking-wider text-primary transition-all hover:bg-surface-bright sm:w-auto"
+                        type="button"
+                      >
+                        Купи сега
+                      </button>
+                    </>
                   ) : (
                     <button
                       className="flex w-full flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border border-outline-variant bg-transparent px-space-md py-3 text-label-lg uppercase tracking-wider text-on-surface transition-colors hover:border-secondary hover:bg-surface-container"
@@ -309,13 +310,6 @@ export function WhiskyDetailView({ page }: WhiskyDetailViewProps) {
                       <span>Попитай ни</span>
                     </button>
                   )}
-
-                  <button
-                    className="w-full cursor-pointer rounded-lg bg-surface-container-high px-space-lg py-3 text-label-lg uppercase tracking-wider text-primary transition-all hover:bg-surface-bright sm:w-auto"
-                    type="button"
-                  >
-                    Купи сега
-                  </button>
                 </div>
 
                 <div className="flex flex-wrap items-center justify-between gap-space-sm pt-space-xs text-technical-data text-on-surface-variant">
@@ -404,31 +398,34 @@ export function WhiskyDetailView({ page }: WhiskyDetailViewProps) {
               Дегустации от членове
             </h2>
             <ul className="space-y-space-md">
-              {page.tastings.map((tasting) => (
-                <li
-                  className="rounded-xl bg-surface-container-low p-space-md shadow-sm"
-                  key={`${tasting.authorName}-${tasting.text.slice(0, 24)}`}
-                >
-                  <div className="mb-space-xs flex flex-wrap items-center gap-space-sm">
-                    <span className="font-semibold text-on-surface">
-                      {tasting.authorName}
-                    </span>
-                    {tasting.verifiedPurchase ? (
-                      <span className="rounded-full bg-primary/15 px-2 py-0.5 text-label-sm text-primary">
-                        Потвърдена покупка
+              {page.tastings.map((tasting) => {
+                const tastingScore = formatDisplayedScore(tasting.score);
+                return (
+                  <li
+                    className="rounded-xl bg-surface-container-low p-space-md shadow-sm"
+                    key={`${tasting.authorName}-${tasting.text.slice(0, 24)}`}
+                  >
+                    <div className="mb-space-xs flex flex-wrap items-center gap-space-sm">
+                      <span className="font-semibold text-on-surface">
+                        {tasting.authorName}
                       </span>
-                    ) : null}
-                    {tasting.score !== undefined ? (
-                      <span className="text-technical-data text-secondary">
-                        {tasting.score.toFixed(1)}/10
-                      </span>
-                    ) : null}
-                  </div>
-                  <p className="text-body-md text-on-surface-variant">
-                    {tasting.text}
-                  </p>
-                </li>
-              ))}
+                      {tasting.verifiedPurchase ? (
+                        <span className="rounded-full bg-primary/15 px-2 py-0.5 text-label-sm text-primary">
+                          Потвърдена покупка
+                        </span>
+                      ) : null}
+                      {tastingScore ? (
+                        <span className="text-technical-data text-secondary">
+                          {tastingScore}
+                        </span>
+                      ) : null}
+                    </div>
+                    <p className="text-body-md text-on-surface-variant">
+                      {tasting.text}
+                    </p>
+                  </li>
+                );
+              })}
             </ul>
           </div>
         </section>
@@ -579,7 +576,7 @@ function SkuOptionCard({
           {formatPriceEur(sku.priceEur)}
         </span>
         <span className="text-label-sm uppercase text-outline">
-          {sku.action === "buy" ? "В наличност" : "Попитай ни"}
+          {skuAvailabilityLabel(sku.action)}
         </span>
       </div>
     </button>

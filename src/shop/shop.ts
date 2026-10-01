@@ -405,7 +405,6 @@ function toWhiskyPage(
   extras: StoredWhiskyPageExtras,
 ): WhiskyPage {
   const whisky = entry.whisky;
-  const primary = primarySku(entry);
   const skus = [...entry.skus]
     .sort((left, right) => {
       if (left.isPrimary !== right.isPrimary) {
@@ -455,8 +454,6 @@ function toWhiskyPage(
     naturalColour: whisky.naturalColour,
     nonChillFiltered: whisky.nonChillFiltered,
     houseScore: whisky.houseScore,
-    displayedScore: displayedScore(whisky),
-    priceTier: priceTierFor(primary.priceEur),
     houseVideoUrl: whisky.houseVideoUrl,
     skus,
     defaultSkuId,

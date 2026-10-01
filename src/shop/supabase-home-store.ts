@@ -124,6 +124,20 @@ type DiscoveryPackItemRow = {
   sort_order: number;
 };
 
+function listRows<T>(
+  label: string,
+  error: { message: string } | null,
+  data: T[] | null,
+): T[] {
+  if (error) {
+    throw new Error(`${label}: ${error.message}`);
+  }
+  if (!data) {
+    return [];
+  }
+  return data;
+}
+
 const WHISKY_SELECT =
   "id, name, photo_url, origin, abv, non_chill_filtered, published, distillery, country, region, age_years, experience_level, house_score, tagline, photo_urls, photo_captions, description, natural_colour, house_video_url";
 
@@ -452,55 +466,49 @@ export function createSupabaseHomeStore(client: SupabaseClient): ShopStore {
           .maybeSingle(),
       ]);
 
-    if (awardsResult.error) {
-      throw new Error(
-        `Failed to load Whisky awards: ${awardsResult.error.message}`,
-      );
-    }
-    if (tastingsResult.error) {
-      throw new Error(
-        `Failed to load Whisky tastings: ${tastingsResult.error.message}`,
-      );
-    }
-    if (pairingsResult.error) {
-      throw new Error(
-        `Failed to load Whisky pairings: ${pairingsResult.error.message}`,
-      );
-    }
+    const awardRows = listRows(
+      "Failed to load Whisky awards",
+      awardsResult.error,
+      awardsResult.data as WhiskyAwardRow[] | null,
+    );
+    const tastingRows = listRows(
+      "Failed to load Whisky tastings",
+      tastingsResult.error,
+      tastingsResult.data as WhiskyTastingRow[] | null,
+    );
+    const pairingRows = listRows(
+      "Failed to load Whisky pairings",
+      pairingsResult.error,
+      pairingsResult.data as WhiskyPairingRow[] | null,
+    );
     if (relatedResult.error) {
       throw new Error(
         `Failed to load Whisky related set: ${relatedResult.error.message}`,
       );
     }
 
-    const awards = (awardsResult.data as WhiskyAwardRow[] | null)
-      ? (awardsResult.data as WhiskyAwardRow[]).map((row) => ({
-          title: row.title,
-          organisation: row.organisation,
-          year: row.year,
-          category: row.category,
-        }))
-      : [];
+    const awards = awardRows.map((row) => ({
+      title: row.title,
+      organisation: row.organisation,
+      year: row.year,
+      category: row.category,
+    }));
 
-    const tastings = (tastingsResult.data as WhiskyTastingRow[] | null)
-      ? (tastingsResult.data as WhiskyTastingRow[]).map((row) => ({
-          authorFirstName: row.author_first_name,
-          authorLastName: row.author_last_name,
-          text: row.body,
-          score: row.score === null ? undefined : Number(row.score),
-          verifiedPurchase: row.verified_purchase,
-        }))
-      : [];
+    const tastings = tastingRows.map((row) => ({
+      authorFirstName: row.author_first_name,
+      authorLastName: row.author_last_name,
+      text: row.body,
+      score: row.score === null ? undefined : Number(row.score),
+      verifiedPurchase: row.verified_purchase,
+    }));
 
-    const pairings = (pairingsResult.data as WhiskyPairingRow[] | null)
-      ? (pairingsResult.data as WhiskyPairingRow[]).map((row) => ({
-          eyebrow: row.eyebrow,
-          title: row.title,
-          body: row.body,
-          photoUrl: row.photo_url,
-          sortOrder: row.sort_order,
-        }))
-      : [];
+    const pairings = pairingRows.map((row) => ({
+      eyebrow: row.eyebrow,
+      title: row.title,
+      body: row.body,
+      photoUrl: row.photo_url,
+      sortOrder: row.sort_order,
+    }));
 
     let relatedSet: StoredWhiskyRelatedSet | undefined;
     if (relatedResult.data) {
