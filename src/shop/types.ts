@@ -160,14 +160,14 @@ export type StoredSku = {
   volumeMl: number;
 };
 
-export type StoredWhiskyAward = {
+type StoredWhiskyAward = {
   title: string;
   organisation: string;
   year: number;
   category: string;
 };
 
-export type StoredWhiskyTasting = {
+type StoredWhiskyTasting = {
   authorFirstName: string;
   authorLastName: string;
   text: string;
@@ -175,7 +175,7 @@ export type StoredWhiskyTasting = {
   verifiedPurchase: boolean;
 };
 
-export type StoredWhiskyPairing = {
+type StoredWhiskyPairing = {
   eyebrow: string;
   title: string;
   body: string;
@@ -198,7 +198,7 @@ export type StoredWhiskyPageExtras = {
   relatedSet: StoredWhiskyRelatedSet | undefined;
 };
 
-export type WhiskyPhoto = {
+type WhiskyPhoto = {
   url: string;
   caption: string | undefined;
 };
@@ -213,23 +213,23 @@ export type WhiskyPageSku = {
   isPrimary: boolean;
 };
 
-export type WhiskyPageAward = StoredWhiskyAward;
+type WhiskyPageAward = StoredWhiskyAward;
 
-export type WhiskyPageTasting = {
+type WhiskyPageTasting = {
   authorName: string;
   text: string;
   score: number | undefined;
   verifiedPurchase: boolean;
 };
 
-export type WhiskyPagePairing = {
+type WhiskyPagePairing = {
   eyebrow: string;
   title: string;
   body: string;
   photoUrl: string;
 };
 
-export type WhiskyPageRelatedSet = StoredWhiskyRelatedSet;
+type WhiskyPageRelatedSet = StoredWhiskyRelatedSet;
 
 export type WhiskyPage = {
   id: string;
