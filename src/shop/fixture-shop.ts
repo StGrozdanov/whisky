@@ -46,6 +46,15 @@ function createErrorStore(): ShopStore {
     async catalogueEntries() {
       throw new Error("Fixture catalogue load failure");
     },
+    async whiskyPageExtras(whiskyId: string) {
+      return {
+        whiskyId,
+        awards: [],
+        tastings: [],
+        pairings: [],
+        relatedSet: undefined,
+      };
+    },
   };
 }
 
@@ -72,6 +81,27 @@ function createMixedStore(): ShopStore {
         distillery: "Buy Distillery",
         country: "Шотландия",
         region: "Speyside",
+        abv: 46,
+        ageYears: 12,
+        nonChillFiltered: true,
+        naturalColour: true,
+        houseScore: 9.3,
+        description: "Fixture complete story for integration tests.",
+        houseVideoUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        photoUrls: [
+          "/bottles/glenallachie-12.svg",
+          "/bottles/buffalo-trace.svg",
+        ],
+        photoCaptions: ["Фронтален", "Кутия"],
+      },
+      {
+        id: "partial",
+        name: "Fixture Partial Editorial",
+        photoUrl: "/bottles/glenallachie-12.svg",
+        origin: "Scotch",
+        distillery: "Partial Distillery",
+        country: "Шотландия",
+        abv: 40,
       },
       {
         id: "ask",
@@ -92,8 +122,78 @@ function createMixedStore(): ShopStore {
       },
       ...pageWhiskies,
     ],
+    skus: [
+      {
+        id: "buy-sample",
+        whiskyId: "buy",
+        priceEur: 14.5,
+        quantity: 4,
+        volumeMl: 50,
+      },
+    ],
+    whiskyPages: [
+      {
+        whiskyId: "buy",
+        awards: [
+          {
+            title: "Златен медал",
+            organisation: "San Francisco WSC",
+            year: 2023,
+            category: "Single Malt",
+          },
+        ],
+        tastings: [
+          {
+            authorFirstName: "Fixture",
+            authorLastName: "Member",
+            text: "Отличен малц за тестове.",
+            score: 9,
+            verifiedPurchase: true,
+          },
+        ],
+        pairings: [
+          {
+            eyebrow: "Шоколад",
+            title: "Крафт шоколад",
+            body: "Баланс.",
+            photoUrl: "/bottles/glenallachie-12.svg",
+            sortOrder: 0,
+          },
+          {
+            eyebrow: "Сирене",
+            title: "Гауда",
+            body: "Отлежало.",
+            photoUrl: "/bottles/glenallachie-12.svg",
+            sortOrder: 1,
+          },
+          {
+            eyebrow: "Пура",
+            title: "Robusto",
+            body: "Maduro.",
+            photoUrl: "/bottles/glenallachie-12.svg",
+            sortOrder: 2,
+          },
+        ],
+        relatedSet: {
+          title: "Fixture Discovery Set",
+          description: "3 x 50ml за сравнение.",
+          priceEur: 18.25,
+          photoUrl: "/bottles/glenallachie-12.svg",
+        },
+      },
+    ],
+    newWhiskies: [
+      {
+        whiskyId: "buy",
+        displayPriceEur: 55.2,
+        badge: "Ново",
+        note: "Fixture rail",
+        sortOrder: 0,
+      },
+    ],
     primarySkus: [
       { whiskyId: "buy", priceEur: 55.2, quantity: 3 },
+      { whiskyId: "partial", priceEur: 48, quantity: 2 },
       { whiskyId: "ask", priceEur: 55, quantity: 0 },
       { whiskyId: "draft", priceEur: 40, quantity: 1 },
       ...pageWhiskies.map((whisky) => ({

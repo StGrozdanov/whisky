@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import type { ReactNode } from "react";
 import { Icon } from "@/components/icon";
 import type {
@@ -9,12 +10,14 @@ import type {
 } from "@/shop/types";
 import { formatPriceEur } from "@/utils/format-price-eur";
 import { ORIGIN_LABELS } from "@/utils/origin-labels";
+import { whiskyHref } from "@/utils/whisky-href";
 
 function whiskyMeta(whisky: HomeWhisky): string {
   return ORIGIN_LABELS[whisky.origin];
 }
 
 type RailWhiskyCardChromeProps = {
+  whiskyId: string;
   name: string;
   meta: string;
   photoUrl: string;
@@ -23,6 +26,7 @@ type RailWhiskyCardChromeProps = {
 };
 
 function RailWhiskyCardChrome({
+  whiskyId,
   name,
   meta,
   photoUrl,
@@ -30,41 +34,43 @@ function RailWhiskyCardChrome({
   priceRow,
 }: RailWhiskyCardChromeProps) {
   return (
-    <div className="group relative flex h-full w-full flex-col justify-between rounded-xl bg-surface-container-low p-space-md transition-all hover:bg-surface-container">
-      <div className="flex flex-col">
-        <div className="relative mb-space-sm flex aspect-[4/5] w-full items-center justify-center overflow-hidden rounded-lg bg-surface-container-lowest">
-          {badge}
-          <button
-            className="absolute top-2 right-2 z-10 cursor-pointer rounded-lg bg-surface/80 p-1.5 text-on-surface-variant transition-colors hover:bg-surface"
-            title="Любими"
-            type="button"
-          >
-            <Icon fontSize={18} name="favorite_border" />
-          </button>
-          <Image
-            alt={name}
-            className="h-4/5 w-auto object-contain transition-transform duration-700 group-hover:scale-105"
-            height={320}
-            src={photoUrl}
-            unoptimized
-            width={220}
-          />
+    <div className="relative flex h-full w-full flex-col">
+      <Link
+        className="group flex h-full w-full cursor-pointer flex-col justify-between rounded-xl bg-surface-container-low p-space-md transition-all hover:bg-surface-container"
+        href={whiskyHref(whiskyId)}
+      >
+        <div className="flex flex-col">
+          <div className="relative mb-space-sm flex aspect-[4/5] w-full items-center justify-center overflow-hidden rounded-lg bg-surface-container-lowest">
+            {badge}
+            <Image
+              alt={name}
+              className="h-4/5 w-auto object-contain transition-transform duration-700 group-hover:scale-105"
+              height={320}
+              src={photoUrl}
+              unoptimized
+              width={220}
+            />
+          </div>
+          <span className="mb-1 text-technical-data text-outline">{meta}</span>
+          <h3 className="mb-2 truncate font-headline text-headline-sm text-on-surface">
+            {name}
+          </h3>
         </div>
-        <span className="mb-1 text-technical-data text-outline">{meta}</span>
-        <h3 className="mb-2 truncate font-headline text-headline-sm text-on-surface">
-          {name}
-        </h3>
-      </div>
-      <div className="border-t border-surface-container-highest/40 pt-space-xs">
-        {priceRow}
-        <button
-          className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-label-md font-bold text-on-primary uppercase tracking-wider shadow-sm transition-colors hover:bg-primary-fixed"
-          type="button"
-        >
-          <Icon fontSize={18} name="shopping_bag" />
-          <span>Купи</span>
-        </button>
-      </div>
+        <div className="border-t border-surface-container-highest/40 pt-space-xs">
+          {priceRow}
+          <span className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-label-md font-bold text-on-primary uppercase tracking-wider shadow-sm transition-colors group-hover:bg-primary-fixed">
+            <Icon fontSize={18} name="shopping_bag" />
+            <span>Купи</span>
+          </span>
+        </div>
+      </Link>
+      <button
+        className="absolute top-4 right-4 z-20 cursor-pointer rounded-lg bg-surface/80 p-1.5 text-on-surface-variant transition-colors hover:bg-surface"
+        title="Любими"
+        type="button"
+      >
+        <Icon fontSize={18} name="favorite_border" />
+      </button>
     </div>
   );
 }
@@ -79,6 +85,7 @@ export function PromotionCard({ promotion }: { promotion: HomePromotion }) {
       }
       meta={whiskyMeta(promotion.whisky)}
       name={promotion.whisky.name}
+      whiskyId={promotion.whisky.id}
       photoUrl={promotion.whisky.photoUrl}
       priceRow={
         <div className="mb-space-sm flex min-h-9 flex-wrap items-baseline justify-between gap-x-2 gap-y-1">
@@ -105,6 +112,7 @@ export function NewWhiskyCard({ entry }: { entry: HomeNewWhisky }) {
       badge={null}
       meta={whiskyMeta(entry.whisky)}
       name={entry.whisky.name}
+      whiskyId={entry.whisky.id}
       photoUrl={entry.whisky.photoUrl}
       priceRow={
         <div className="mb-space-sm flex min-h-9 flex-wrap items-baseline justify-between gap-x-2 gap-y-1">

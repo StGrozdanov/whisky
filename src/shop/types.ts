@@ -70,6 +70,7 @@ export const SEARCH_HIT_FILTER = {
 >;
 
 export type HomeWhisky = {
+  id: string;
   name: string;
   photoUrl: string;
   origin: Origin;
@@ -144,6 +145,10 @@ export type StoredWhisky = {
   tastingAverage: number | undefined;
   tagline: string | undefined;
   photoUrls: string[];
+  photoCaptions: string[];
+  description: string | undefined;
+  naturalColour: boolean | undefined;
+  houseVideoUrl: string | undefined;
 };
 
 export type StoredSku = {
@@ -152,6 +157,102 @@ export type StoredSku = {
   priceEur: number;
   quantity: number;
   isPrimary: boolean;
+  volumeMl: number;
+};
+
+export type StoredWhiskyAward = {
+  title: string;
+  organisation: string;
+  year: number;
+  category: string;
+};
+
+export type StoredWhiskyTasting = {
+  authorFirstName: string;
+  authorLastName: string;
+  text: string;
+  score: number | undefined;
+  verifiedPurchase: boolean;
+};
+
+export type StoredWhiskyPairing = {
+  eyebrow: string;
+  title: string;
+  body: string;
+  photoUrl: string;
+  sortOrder: number;
+};
+
+export type StoredWhiskyRelatedSet = {
+  title: string;
+  description: string;
+  priceEur: number;
+  photoUrl: string;
+};
+
+export type StoredWhiskyPageExtras = {
+  whiskyId: string;
+  awards: StoredWhiskyAward[];
+  tastings: StoredWhiskyTasting[];
+  pairings: StoredWhiskyPairing[];
+  relatedSet: StoredWhiskyRelatedSet | undefined;
+};
+
+export type WhiskyPhoto = {
+  url: string;
+  caption: string | undefined;
+};
+
+type WhiskySkuAction = "buy" | "ask-us";
+
+export type WhiskyPageSku = {
+  id: string;
+  volumeMl: number;
+  priceEur: number;
+  action: WhiskySkuAction;
+  isPrimary: boolean;
+};
+
+export type WhiskyPageAward = StoredWhiskyAward;
+
+export type WhiskyPageTasting = {
+  authorName: string;
+  text: string;
+  score: number | undefined;
+  verifiedPurchase: boolean;
+};
+
+export type WhiskyPagePairing = {
+  eyebrow: string;
+  title: string;
+  body: string;
+  photoUrl: string;
+};
+
+export type WhiskyPageRelatedSet = StoredWhiskyRelatedSet;
+
+export type WhiskyPage = {
+  id: string;
+  name: string;
+  distillery: string;
+  country: string;
+  region: string | undefined;
+  description: string | undefined;
+  photos: WhiskyPhoto[];
+  abv: number | undefined;
+  ageYears: number | undefined;
+  naturalColour: boolean | undefined;
+  nonChillFiltered: boolean | undefined;
+  houseScore: number | undefined;
+  displayedScore: number | undefined;
+  priceTier: PriceTier;
+  houseVideoUrl: string | undefined;
+  skus: WhiskyPageSku[];
+  defaultSkuId: string;
+  awards: WhiskyPageAward[];
+  tastings: WhiskyPageTasting[];
+  pairings: WhiskyPagePairing[];
+  relatedSet: WhiskyPageRelatedSet | undefined;
 };
 
 export type StoredCatalogueEntry = {
@@ -210,6 +311,7 @@ export type StoredDiscoveryPack = {
 export type ShopStore = {
   allWhiskies(): Promise<StoredWhisky[]>;
   catalogueEntries(): Promise<StoredCatalogueEntry[]>;
+  whiskyPageExtras(whiskyId: string): Promise<StoredWhiskyPageExtras>;
   currentHousePick(): Promise<StoredHousePick | undefined>;
   promotions(): Promise<StoredHomePromotion[]>;
   newWhiskies(): Promise<StoredHomeNewWhisky[]>;

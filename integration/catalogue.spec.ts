@@ -48,7 +48,7 @@ test.describe("catalogue fixtures", () => {
         .filter({
           has: page.getByRole("heading", { name: "Fixture Buy Bottle" }),
         })
-        .getByRole("button", { name: "Купи" }),
+        .getByRole("link", { name: /Купи/i }),
     ).toBeVisible();
 
     await expect(
@@ -57,7 +57,7 @@ test.describe("catalogue fixtures", () => {
         .filter({
           has: page.getByRole("heading", { name: "Fixture Ask Bottle" }),
         })
-        .getByRole("button", { name: "Попитай ни" }),
+        .getByRole("link", { name: /Попитай ни/i }),
     ).toBeVisible();
 
     await expect(
