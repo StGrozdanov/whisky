@@ -209,4 +209,61 @@ describe("Shop promotions", () => {
 
     expect(await shop.promotions()).toEqual([]);
   });
+  it("keeps past and scheduled Promotions of one SKU and shows only the current one", async () => {
+    const promotionsAt = async (now: Date) => {
+      const shop = createShop({
+        store: createInMemoryHomeStore({
+          whiskies: [redbreast],
+          primarySkus: [
+            {
+              id: "redbreast-700",
+              whiskyId: "redbreast",
+              priceEur: 52,
+              quantity: 3,
+            },
+          ],
+          promotions: [
+            {
+              whiskyId: "redbreast",
+              skuId: "redbreast-700",
+              discountedPriceEur: 40,
+              priorPriceEur: 50,
+              startsAt: new Date("2026-09-01T00:00:00.000Z"),
+              endsAt: new Date("2026-10-01T00:00:00.000Z"),
+              sortOrder: 1,
+            },
+            {
+              whiskyId: "redbreast",
+              skuId: "redbreast-700",
+              discountedPriceEur: 45,
+              priorPriceEur: 50,
+              startsAt: new Date("2026-10-15T00:00:00.000Z"),
+              endsAt: new Date("2026-11-15T00:00:00.000Z"),
+              sortOrder: 2,
+            },
+            {
+              whiskyId: "redbreast",
+              skuId: "redbreast-700",
+              discountedPriceEur: 39,
+              priorPriceEur: 45,
+              startsAt: new Date("2026-12-01T00:00:00.000Z"),
+              endsAt: new Date("2026-12-24T00:00:00.000Z"),
+              sortOrder: 3,
+            },
+          ],
+        }),
+        clock: { now: () => now },
+      });
+      const promotions = await shop.promotions();
+      return promotions.map((promotion) => promotion.discountedPriceEur);
+    };
+
+    expect(await promotionsAt(NOW)).toEqual([45]);
+    expect(await promotionsAt(new Date("2026-12-10T12:00:00.000Z"))).toEqual([
+      39,
+    ]);
+    expect(await promotionsAt(new Date("2026-11-20T12:00:00.000Z"))).toEqual(
+      [],
+    );
+  });
 });

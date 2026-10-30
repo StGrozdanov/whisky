@@ -32,7 +32,12 @@ alter table promotions
   add constraint promotions_sku_fkey
     foreign key (sku_id, whisky_id) references skus (id, whisky_id) on delete cascade;
 
-create unique index promotions_sku_id_uidx on promotions (sku_id);
+-- A SKU keeps its past and scheduled Promotions, but their periods never overlap.
+create extension if not exists btree_gist;
+
+alter table promotions
+  add constraint promotions_sku_period_excl
+    exclude using gist (sku_id with =, tstzrange(starts_at, ends_at) with &&);
 
 -- A Pack is sold by its own quantity, independent of its lineup.
 alter table discovery_packs
@@ -76,6 +81,16 @@ where exists (select 1 from whiskies where whiskies.id = seed.whisky_id)
    or exists (select 1 from discovery_packs where discovery_packs.id = seed.pack_id);
 
 -- An Award is identified by what it is, so the Award page can key on it.
+-- Keep the first of any duplicates entered before this rule existed.
+delete from whisky_awards duplicate
+using whisky_awards kept
+where duplicate.whisky_id = kept.whisky_id
+  and duplicate.organisation = kept.organisation
+  and duplicate.year = kept.year
+  and duplicate.category = kept.category
+  and duplicate.title = kept.title
+  and (duplicate.sort_order, duplicate.id) > (kept.sort_order, kept.id);
+
 create unique index whisky_awards_identity_uidx
   on whisky_awards (whisky_id, organisation, year, category, title);
 
@@ -98,4 +113,5 @@ from (values
     'Scotch Single Malt 15 Y.O.'
   )
 ) as seed (whisky_id, title, organisation, year, category)
-where exists (select 1 from whiskies where whiskies.id = seed.whisky_id);
+where exists (select 1 from whiskies where whiskies.id = seed.whisky_id)
+on conflict (whisky_id, organisation, year, category, title) do nothing;
