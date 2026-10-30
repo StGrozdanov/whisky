@@ -40,7 +40,7 @@ export type CatalogueCard = {
   promotion: CardPromotion | undefined;
 };
 
-export type CardPromotion = {
+type CardPromotion = {
   discountedPriceEur: number;
   priorPriceEur: number;
   discountPercent: number;
