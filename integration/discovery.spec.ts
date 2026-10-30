@@ -23,13 +23,13 @@ test.describe("guest discovery pages", () => {
     ).toBeVisible();
 
     const buy = cardFor(page, "Fixture Buy Bottle");
-    await expect(buy.getByText("49.90 €")).toBeVisible();
+    await expect(buy.getByText("49.90 €", { exact: true })).toBeVisible();
     await expect(buy.getByText("Редовна цена")).toBeVisible();
-    await expect(buy.getByText("55.20 €")).toBeVisible();
+    await expect(buy.getByText("55.20 €", { exact: true })).toBeVisible();
     await expect(
       buy.getByText("Най-ниска цена за последните 30 дни"),
     ).toBeVisible();
-    await expect(buy.getByText("54.00 €")).toBeVisible();
+    await expect(buy.getByText("54.00 €", { exact: true })).toBeVisible();
     await expect(buy.getByText("Валидна до 31 декември 2099 г.")).toBeVisible();
     await expect(buy.getByRole("link", { name: /Купи/ })).toBeVisible();
 
@@ -54,9 +54,9 @@ test.describe("guest discovery pages", () => {
       const buy = cardFor(page, "Fixture Buy Bottle");
       await expect(buy.getByText("-8%")).toBeVisible();
       await expect(buy.getByText("Промоционална цена")).toBeVisible();
-      await expect(buy.getByText("49.90 €")).toBeVisible();
-      await expect(buy.getByText("54.00 €")).toBeVisible();
-      await expect(buy.getByText("55.20 €")).toBeVisible();
+      await expect(buy.getByText("49.90 €", { exact: true })).toBeVisible();
+      await expect(buy.getByText("54.00 €", { exact: true })).toBeVisible();
+      await expect(buy.getByText("55.20 €", { exact: true })).toBeVisible();
     });
   }
 
@@ -165,7 +165,7 @@ test.describe("guest discovery pages", () => {
     await expect(
       page.getByRole("heading", { level: 1, name: "Whisky Finder Клуб" }),
     ).toBeVisible();
-    await expect(page.getByText("60.00 €")).toBeVisible();
+    await expect(page.getByText("60.00 €", { exact: true })).toBeVisible();
     await expect(
       page.getByText(
         "Плаща се еднократно с карта и не се подновява автоматично.",
@@ -203,9 +203,11 @@ test.describe("guest discovery pages", () => {
           name: "Възникна временна грешка при зареждане",
         }),
       ).toBeVisible();
-      await expect(
-        page.getByRole("button", { name: "Опитай отново" }),
-      ).toBeVisible();
+      await expect(page.getByRole("article")).toHaveCount(0);
+
+      await page.setExtraHTTPHeaders({ "x-shop-fixture": "mixed" });
+      await page.getByRole("button", { name: "Опитай отново" }).click();
+      await expect(page.getByRole("article").first()).toBeVisible();
     });
   }
 });
