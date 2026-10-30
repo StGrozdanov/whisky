@@ -156,6 +156,27 @@ describe("Shop promotions", () => {
     ]);
   });
 
+  it("hides a Promotion that does not reduce the SKU's regular price", async () => {
+    const shop = createShop({
+      store: createInMemoryHomeStore({
+        whiskies: [redbreast],
+        primarySkus: [{ whiskyId: "redbreast", priceEur: 45, quantity: 1 }],
+        promotions: [
+          {
+            whiskyId: "redbreast",
+            discountedPriceEur: 45,
+            priorPriceEur: 50,
+            sortOrder: 1,
+          },
+        ],
+      }),
+      clock: { now: () => NOW },
+    });
+
+    expect(await shop.promotions()).toEqual([]);
+    expect((await shop.home()).promotions).toEqual([]);
+  });
+
   it("hides Promotions of draft Whiskies and unknown SKUs", async () => {
     const shop = createShop({
       store: createInMemoryHomeStore({

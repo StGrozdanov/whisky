@@ -44,7 +44,7 @@ describe("Shop gifts", () => {
       }),
     });
 
-    const gifts = await shop.gifts();
+    const gifts = await shop.giftPageEntries();
 
     expect(gifts).toHaveLength(2);
     expect(gifts[0]).toEqual({
@@ -89,6 +89,6 @@ describe("Shop gifts", () => {
       }),
     });
 
-    expect(await shop.gifts()).toEqual([]);
+    expect(await shop.giftPageEntries()).toEqual([]);
   });
 });

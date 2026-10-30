@@ -73,13 +73,6 @@ export function DiscoveryPackCard({
             <span>Попитай ни</span>
           </button>
         )}
-        <button
-          className="cursor-pointer rounded-lg bg-surface-container-high p-3 text-on-surface-variant transition-colors hover:bg-surface-bright"
-          title="Добави в любими"
-          type="button"
-        >
-          <Icon fontSize={20} name="favorite_border" />
-        </button>
       </div>
     </article>
   );

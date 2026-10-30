@@ -269,6 +269,7 @@ function createMixedStore(): ShopStore {
       { kind: "whisky", whiskyId: "buy", sortOrder: 1 },
       { kind: "pack", packId: "pack-in-stock", sortOrder: 2 },
       { kind: "whisky", whiskyId: "draft", sortOrder: 3 },
+      { kind: "pack", packId: "pack-sold-out", sortOrder: 4 },
     ],
     newWhiskies: [
       {

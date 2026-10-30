@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 
 export default async function GiftsPage() {
   const shop = await getShop();
-  const gifts = await shop.gifts();
+  const gifts = await shop.giftPageEntries();
 
   return (
     <DiscoveryPageLayout

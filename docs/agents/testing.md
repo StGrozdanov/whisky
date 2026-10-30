@@ -19,7 +19,7 @@ Three layers, three data sources. Do not leak concerns across them.
 ## E2e — Playwright (`e2e/`)
 
 - **Runner:** `npm run test:e2e` (CI job “E2E Tests”, against the shared nonprod URL after deploy).
-- **Scope:** Main customer flows only: age gate, shell, Home renders (content present or omitted), Catalogue opens and a filter updates the URL.
+- **Scope:** Main customer flows only: age gate, shell, Home renders (content present or omitted), Catalogue opens and a filter updates the URL, and each discovery page (Promotions, Gifts, Discovery Packs, Award page, Club) renders live entries or its empty state. Expired and unavailable entries are covered in integration, not e2e.
 - **Data:** Live nonprod database. No named bottles, stock levels, page counts, rail sizes, or “this tier is empty” assumptions.
 - **Config:** `playwright.e2e.config.ts` — `testDir: ./e2e`.
 
@@ -37,7 +37,7 @@ Three layers, three data sources. Do not leak concerns across them.
 
 | Name | Behaviour |
 | --- | --- |
-| `mixed` | Published catalogue with Buy and Ask us cards, 25 Whiskies for page 2, a draft that must stay hidden, Scotch-only so `origin=Japanese` matches nothing. Also active (Home-selected and not), expired, and draft Promotions; an In-stock and a sold-out Discovery Pack; Gift selections including a hidden draft; Awards on Buy, Ask us, and draft Whiskies |
+| `mixed` | Published catalogue with Buy and Ask us cards, 25 Whiskies for page 2, a draft that must stay hidden, Scotch-only so `origin=Japanese` matches nothing. Also active (Home-selected and not), expired, and draft Promotions; an In-stock and a sold-out Discovery Pack; Gift selections including a hidden draft and a sold-out Pack; Awards on Buy, Ask us, and draft Whiskies |
 | `empty` | No published catalogue entries, Promotions, Packs, Gifts, or Awards |
 | `error` | Catalogue, Discovery Pack, Gift, and Award loads throw so each route's `error.tsx` can render |
 

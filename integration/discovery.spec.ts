@@ -55,6 +55,8 @@ test.describe("guest discovery pages", () => {
     const rail = page.getByRole("region", { name: "Специални Оферти" });
     await expect(rail.getByText("Fixture Buy Bottle")).toBeVisible();
     await expect(rail.getByText("Fixture Ask Bottle")).toHaveCount(0);
+    await expect(rail.getByText("Fixture Partial Editorial")).toHaveCount(0);
+    await expect(rail.getByText("Редовна цена")).toBeVisible();
 
     await rail.getByRole("link", { name: "Всички промоции" }).click();
     await expect(page).toHaveURL(/\/promotions$/);
@@ -82,6 +84,11 @@ test.describe("guest discovery pages", () => {
     await expect(
       page.getByRole("heading", { name: "Fixture Ask Bottle" }),
     ).toHaveCount(0);
+    await expect(
+      cardFor(page, "Fixture Pack Sold Out").getByRole("button", {
+        name: "Попитай ни",
+      }),
+    ).toBeVisible();
   });
 
   test("Discovery Packs are sold by their own quantity", async ({ page }) => {
@@ -110,6 +117,9 @@ test.describe("guest discovery pages", () => {
     ).toBeVisible();
     await expect(
       cardFor(page, "Fixture Buy Bottle").getByText("Златен медал"),
+    ).toBeVisible();
+    await expect(
+      cardFor(page, "Fixture Buy Bottle").getByText(/Single Malt/),
     ).toBeVisible();
     await expect(
       cardFor(page, "Fixture Ask Bottle").getByRole("link", {

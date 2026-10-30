@@ -308,5 +308,5 @@ function primarySkuId(skus: StoredSku[], whiskyId: string): string {
   if (primary) {
     return primary.id;
   }
-  return `${whiskyId}:primary`;
+  return `${whiskyId}:no-primary-sku`;
 }

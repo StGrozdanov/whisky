@@ -94,14 +94,6 @@ export type HousePick = {
   displayPriceEur: number | undefined;
 };
 
-export type HomePromotion = {
-  whisky: HomeWhisky;
-  discountedPriceEur: number;
-  priorPriceEur: number;
-  savingsEur: number;
-  discountPercent: number;
-};
-
 export type HomeNewWhisky = {
   whisky: HomeWhisky;
   displayPriceEur: number;
@@ -125,7 +117,7 @@ export type DiscoveryPack = {
 
 export type HomePage = {
   housePick: HousePick | undefined;
-  promotions: HomePromotion[];
+  promotions: Promotion[];
   newWhiskies: HomeNewWhisky[];
   discoveryPacks: DiscoveryPack[];
 };
@@ -143,7 +135,7 @@ export type Promotion = {
   action: CatalogueAction;
 };
 
-export type Gift =
+export type GiftPageEntry =
   | { kind: "whisky"; whisky: CatalogueCard }
   | { kind: "pack"; pack: DiscoveryPack };
 

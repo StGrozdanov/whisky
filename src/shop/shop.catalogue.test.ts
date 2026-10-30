@@ -317,6 +317,10 @@ describe("Shop catalogue", () => {
             published: false,
           },
         ],
+        primarySkus: [
+          { whiskyId: "live", priceEur: 50, quantity: 1 },
+          { whiskyId: "hidden", priceEur: 40, quantity: 1 },
+        ],
         housePick: {
           whiskyId: "hidden",
           story: "Should not show",

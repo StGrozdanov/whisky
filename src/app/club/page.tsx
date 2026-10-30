@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: "Клуб",
 };
 
-const CLUB_PRICE_EUR = 60;
+const CLUB_MEMBERSHIP_PRICE_EUR = 60;
 
 type ClubBenefit = {
   icon: IconName;
@@ -29,12 +29,7 @@ const BENEFITS: ClubBenefit[] = [
   {
     icon: "stars",
     title: "Клубни оферти",
-    text: "Специални предложения с ограничено количество и срок, видими само за активни членове.",
-  },
-  {
-    icon: "verified",
-    title: "Ранен достъп",
-    text: "Някои нови уискита са първо достъпни за членовете на Клуба, преди да станат публични.",
+    text: "Специални предложения с ограничено количество и срок, видими само за активни членове. Понякога така ще получите достъп до ново уиски, преди то да стане публично.",
   },
 ];
 
@@ -89,7 +84,7 @@ export default function ClubPage() {
           className="h-fit rounded-2xl bg-surface-container-low p-space-lg shadow-xl lg:col-span-5"
         >
           <p className="font-headline text-headline-hero leading-none font-bold text-primary">
-            {formatPriceEur(CLUB_PRICE_EUR)}
+            {formatPriceEur(CLUB_MEMBERSHIP_PRICE_EUR)}
           </p>
           <p className="mb-space-md text-technical-data text-outline">
             за 12 месеца

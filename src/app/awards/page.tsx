@@ -29,7 +29,7 @@ function AwardList({ awards }: { awards: WhiskyAward[] }) {
           />
           <span>
             <span className="font-semibold text-on-surface">{award.title}</span>{" "}
-            • {award.organisation} {award.year}
+            • {award.organisation} {award.year} • {award.category}
           </span>
         </li>
       ))}
