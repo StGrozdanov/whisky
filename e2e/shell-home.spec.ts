@@ -59,7 +59,7 @@ test.describe("shell and home", () => {
       }),
     ).toBeVisible();
     await expect(
-      page.getByRole("button", { name: "Стани клубен член" }),
+      page.getByRole("link", { name: /Научи повече за Клуба/ }),
     ).toBeVisible();
 
     await expect(
