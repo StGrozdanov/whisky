@@ -20,7 +20,12 @@ function AwardList({ awards }: { awards: WhiskyAward[] }) {
       {awards.map((award) => (
         <li
           className="flex items-start gap-1.5 text-body-sm text-on-surface-variant"
-          key={`${award.organisation}-${award.year}-${award.category}-${award.title}`}
+          key={JSON.stringify([
+            award.organisation,
+            award.year,
+            award.category,
+            award.title,
+          ])}
         >
           <Icon
             className="mt-0.5 text-secondary"
