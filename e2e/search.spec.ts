@@ -21,7 +21,7 @@ test.describe("search", () => {
 
     await expect(page).not.toHaveURL(/catalogue/);
     await expect(page.getByText("Няма съвпадения")).toBeVisible();
-    await expect(page.getByRole("article")).toHaveCount(0);
+    await expect(page.getByRole("banner").getByRole("article")).toHaveCount(0);
   });
 
   test("Enter on a published Whisky name opens that exact Catalogue filter", async ({

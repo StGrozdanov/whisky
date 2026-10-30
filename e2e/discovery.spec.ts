@@ -70,7 +70,7 @@ test.describe("guest discovery pages", () => {
     await expect(
       page.getByRole("heading", { level: 1, name: "Whisky Finder Клуб" }),
     ).toBeVisible();
-    await expect(page.getByText("60.00 €")).toBeVisible();
-    await expect(page.getByText("за 12 месеца")).toBeVisible();
+    await expect(page.getByText("60.00 €", { exact: true })).toBeVisible();
+    await expect(page.getByText("за 12 месеца", { exact: true })).toBeVisible();
   });
 });
