@@ -3,12 +3,14 @@ import type {
   ExperienceLevel,
   Origin,
   ShopStore,
+  StoredAward,
   StoredCatalogueEntry,
   StoredDiscoveryPack,
   StoredDiscoveryPackItem,
+  StoredGiftSelection,
   StoredHomeNewWhisky,
-  StoredHomePromotion,
   StoredHousePick,
+  StoredPromotion,
   StoredSku,
   StoredWhisky,
   StoredWhiskyPageExtras,
@@ -65,6 +67,8 @@ type SeedHousePick = {
 
 type SeedPromotion = {
   whiskyId: string;
+  skuId?: string;
+  featuredOnHome?: boolean;
   discountedPriceEur: number;
   priorPriceEur: number;
   startsAt?: Date;
@@ -91,6 +95,7 @@ type SeedDiscoveryPack = {
   title: string;
   photoUrl: string;
   priceEur: number;
+  quantity?: number;
   sortOrder: number;
   lineup: SeedDiscoveryPackItem[];
 };
@@ -120,6 +125,7 @@ export function createInMemoryHomeStore(seed?: {
   promotions?: SeedPromotion[];
   newWhiskies?: SeedNewWhisky[];
   discoveryPacks?: SeedDiscoveryPack[];
+  giftSelections?: StoredGiftSelection[];
   whiskyPages?: SeedWhiskyPageExtras[];
 }): ShopStore {
   const whiskyPagesById = new Map<string, StoredWhiskyPageExtras>();
@@ -194,9 +200,13 @@ export function createInMemoryHomeStore(seed?: {
         displayPriceEur: seed.housePick.displayPriceEur,
       }
     : undefined;
-  const promotions: StoredHomePromotion[] = seed?.promotions
+  const promotions: StoredPromotion[] = seed?.promotions
     ? seed.promotions.map((promotion) => ({
         whiskyId: promotion.whiskyId,
+        skuId: promotion.skuId
+          ? promotion.skuId
+          : primarySkuId(skus, promotion.whiskyId),
+        featuredOnHome: promotion.featuredOnHome !== false,
         discountedPriceEur: promotion.discountedPriceEur,
         priorPriceEur: promotion.priorPriceEur,
         startsAt: promotion.startsAt,
@@ -219,6 +229,7 @@ export function createInMemoryHomeStore(seed?: {
         title: pack.title,
         photoUrl: pack.photoUrl,
         priceEur: pack.priceEur,
+        quantity: pack.quantity !== undefined ? pack.quantity : 0,
         sortOrder: pack.sortOrder,
         lineup: pack.lineup.map(
           (item): StoredDiscoveryPackItem => ({
@@ -229,6 +240,12 @@ export function createInMemoryHomeStore(seed?: {
         ),
       }))
     : [];
+  const giftSelections: StoredGiftSelection[] = seed?.giftSelections
+    ? seed.giftSelections
+    : [];
+  const awards: StoredAward[] = [...whiskyPagesById.values()].flatMap((page) =>
+    page.awards.map((award) => ({ ...award, whiskyId: page.whiskyId })),
+  );
 
   return {
     async allWhiskies() {
@@ -275,5 +292,21 @@ export function createInMemoryHomeStore(seed?: {
           lineup: [...pack.lineup].sort((a, b) => a.sortOrder - b.sortOrder),
         }));
     },
+    async giftSelections() {
+      return [...giftSelections].sort((a, b) => a.sortOrder - b.sortOrder);
+    },
+    async awards() {
+      return awards;
+    },
   };
+}
+
+function primarySkuId(skus: StoredSku[], whiskyId: string): string {
+  const primary = skus.find(
+    (sku) => sku.whiskyId === whiskyId && sku.isPrimary,
+  );
+  if (primary) {
+    return primary.id;
+  }
+  return `${whiskyId}:primary`;
 }

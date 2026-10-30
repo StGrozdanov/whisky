@@ -109,23 +109,47 @@ export type HomeNewWhisky = {
   note: string;
 };
 
-type HomeDiscoveryPackLineupItem = {
+type DiscoveryPackLineupItem = {
   name: string;
   detail: string;
 };
 
-export type HomeDiscoveryPack = {
+export type DiscoveryPack = {
+  id: string;
   title: string;
   photoUrl: string;
   priceEur: number;
-  lineup: HomeDiscoveryPackLineupItem[];
+  action: CatalogueAction;
+  lineup: DiscoveryPackLineupItem[];
 };
 
 export type HomePage = {
   housePick: HousePick | undefined;
   promotions: HomePromotion[];
   newWhiskies: HomeNewWhisky[];
-  discoveryPacks: HomeDiscoveryPack[];
+  discoveryPacks: DiscoveryPack[];
+};
+
+export type Promotion = {
+  whisky: HomeWhisky;
+  skuId: string;
+  volumeMl: number;
+  regularPriceEur: number;
+  discountedPriceEur: number;
+  priorPriceEur: number;
+  savingsEur: number;
+  discountPercent: number;
+  endsAt: Date | undefined;
+  action: CatalogueAction;
+};
+
+export type Gift =
+  | { kind: "whisky"; whisky: CatalogueCard }
+  | { kind: "pack"; pack: DiscoveryPack };
+
+export type AwardedWhisky = {
+  whisky: CatalogueCard;
+  awards: WhiskyAward[];
 };
 
 export type StoredWhisky = {
@@ -160,7 +184,7 @@ export type StoredSku = {
   volumeMl: number;
 };
 
-type StoredWhiskyAward = {
+export type WhiskyAward = {
   title: string;
   organisation: string;
   year: number;
@@ -192,7 +216,7 @@ export type StoredWhiskyRelatedSet = {
 
 export type StoredWhiskyPageExtras = {
   whiskyId: string;
-  awards: StoredWhiskyAward[];
+  awards: WhiskyAward[];
   tastings: StoredWhiskyTasting[];
   pairings: StoredWhiskyPairing[];
   relatedSet: StoredWhiskyRelatedSet | undefined;
@@ -212,8 +236,6 @@ export type WhiskyPageSku = {
   action: WhiskySkuAction;
   isPrimary: boolean;
 };
-
-type WhiskyPageAward = StoredWhiskyAward;
 
 type WhiskyPageTasting = {
   authorName: string;
@@ -247,7 +269,7 @@ export type WhiskyPage = {
   houseVideoUrl: string | undefined;
   skus: WhiskyPageSku[];
   defaultSkuId: string;
-  awards: WhiskyPageAward[];
+  awards: WhiskyAward[];
   tastings: WhiskyPageTasting[];
   pairings: WhiskyPagePairing[];
   relatedSet: WhiskyPageRelatedSet | undefined;
@@ -274,8 +296,10 @@ export type StoredHousePick = {
   displayPriceEur: number | undefined;
 };
 
-export type StoredHomePromotion = {
+export type StoredPromotion = {
   whiskyId: string;
+  skuId: string;
+  featuredOnHome: boolean;
   discountedPriceEur: number;
   priorPriceEur: number;
   startsAt: Date | undefined;
@@ -302,8 +326,17 @@ export type StoredDiscoveryPack = {
   title: string;
   photoUrl: string;
   priceEur: number;
+  quantity: number;
   sortOrder: number;
   lineup: StoredDiscoveryPackItem[];
+};
+
+export type StoredGiftSelection =
+  | { kind: "whisky"; whiskyId: string; sortOrder: number }
+  | { kind: "pack"; packId: string; sortOrder: number };
+
+export type StoredAward = WhiskyAward & {
+  whiskyId: string;
 };
 
 export type ShopStore = {
@@ -311,9 +344,11 @@ export type ShopStore = {
   catalogueEntries(): Promise<StoredCatalogueEntry[]>;
   whiskyPageExtras(whiskyId: string): Promise<StoredWhiskyPageExtras>;
   currentHousePick(): Promise<StoredHousePick | undefined>;
-  promotions(): Promise<StoredHomePromotion[]>;
+  promotions(): Promise<StoredPromotion[]>;
   newWhiskies(): Promise<StoredHomeNewWhisky[]>;
   discoveryPacks(): Promise<StoredDiscoveryPack[]>;
+  giftSelections(): Promise<StoredGiftSelection[]>;
+  awards(): Promise<StoredAward[]>;
 };
 
 export type Clock = {

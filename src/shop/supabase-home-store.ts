@@ -4,11 +4,13 @@ import type {
   ExperienceLevel,
   Origin,
   ShopStore,
+  StoredAward,
   StoredCatalogueEntry,
   StoredDiscoveryPack,
+  StoredGiftSelection,
   StoredHomeNewWhisky,
-  StoredHomePromotion,
   StoredHousePick,
+  StoredPromotion,
   StoredWhisky,
   StoredWhiskyRelatedSet,
 } from "./types";
@@ -94,6 +96,8 @@ type HousePickRow = {
 
 type PromotionRow = {
   whisky_id: string;
+  sku_id: string;
+  featured_on_home: boolean;
   discounted_price_eur: number;
   prior_price_eur: number;
   starts_at: string | null;
@@ -114,6 +118,13 @@ type DiscoveryPackRow = {
   title: string;
   photo_url: string;
   price_eur: number;
+  quantity: number;
+  sort_order: number;
+};
+
+type GiftSelectionRow = {
+  whisky_id: string | null;
+  pack_id: string | null;
   sort_order: number;
 };
 
@@ -145,6 +156,8 @@ const SHOP_CACHE_REVALIDATE_SECONDS = 30 * 60;
 
 type CachedPromotion = {
   whiskyId: string;
+  skuId: string;
+  featuredOnHome: boolean;
   discountedPriceEur: number;
   priorPriceEur: number;
   startsAt: string | undefined;
@@ -314,14 +327,14 @@ export function createSupabaseHomeStore(client: SupabaseClient): ShopStore {
   const loadPromotions = unstable_cache(
     async (): Promise<CachedPromotion[]> => {
       const { data, error } = await client
-        .from("home_promotions")
+        .from("promotions")
         .select(
-          "whisky_id, discounted_price_eur, prior_price_eur, starts_at, ends_at, sort_order",
+          "whisky_id, sku_id, featured_on_home, discounted_price_eur, prior_price_eur, starts_at, ends_at, sort_order",
         )
         .order("sort_order", { ascending: true });
 
       if (error) {
-        throw new Error(`Failed to load Home promotions: ${error.message}`);
+        throw new Error(`Failed to load Promotions: ${error.message}`);
       }
 
       if (!data) {
@@ -331,6 +344,8 @@ export function createSupabaseHomeStore(client: SupabaseClient): ShopStore {
       const rows = data as PromotionRow[];
       return rows.map((row) => ({
         whiskyId: row.whisky_id,
+        skuId: row.sku_id,
+        featuredOnHome: row.featured_on_home,
         discountedPriceEur: Number(row.discounted_price_eur),
         priorPriceEur: Number(row.prior_price_eur),
         startsAt: row.starts_at ? row.starts_at : undefined,
@@ -374,7 +389,7 @@ export function createSupabaseHomeStore(client: SupabaseClient): ShopStore {
     async (): Promise<StoredDiscoveryPack[]> => {
       const { data: packsData, error: packsError } = await client
         .from("discovery_packs")
-        .select("id, title, photo_url, price_eur, sort_order")
+        .select("id, title, photo_url, price_eur, quantity, sort_order")
         .order("sort_order", { ascending: true });
 
       if (packsError) {
@@ -429,12 +444,73 @@ export function createSupabaseHomeStore(client: SupabaseClient): ShopStore {
           title: pack.title,
           photoUrl: pack.photo_url,
           priceEur: Number(pack.price_eur),
+          quantity: pack.quantity,
           sortOrder: pack.sort_order,
           lineup,
         };
       });
     },
     ["shop-discovery-packs"],
+    { revalidate: SHOP_CACHE_REVALIDATE_SECONDS },
+  );
+
+  const loadGiftSelections = unstable_cache(
+    async (): Promise<StoredGiftSelection[]> => {
+      const { data, error } = await client
+        .from("gift_selections")
+        .select("whisky_id, pack_id, sort_order")
+        .order("sort_order", { ascending: true });
+
+      const rows = listRows(
+        "Failed to load Gift selections",
+        error,
+        data as GiftSelectionRow[] | null,
+      );
+
+      return rows.flatMap((row): StoredGiftSelection[] => {
+        if (row.whisky_id) {
+          return [
+            {
+              kind: "whisky",
+              whiskyId: row.whisky_id,
+              sortOrder: row.sort_order,
+            },
+          ];
+        }
+        if (row.pack_id) {
+          return [
+            { kind: "pack", packId: row.pack_id, sortOrder: row.sort_order },
+          ];
+        }
+        return [];
+      });
+    },
+    ["shop-gift-selections"],
+    { revalidate: SHOP_CACHE_REVALIDATE_SECONDS },
+  );
+
+  const loadAwards = unstable_cache(
+    async (): Promise<StoredAward[]> => {
+      const { data, error } = await client
+        .from("whisky_awards")
+        .select("whisky_id, title, organisation, year, category, sort_order")
+        .order("sort_order", { ascending: true });
+
+      const rows = listRows(
+        "Failed to load Awards",
+        error,
+        data as WhiskyAwardRow[] | null,
+      );
+
+      return rows.map((row) => ({
+        whiskyId: row.whisky_id,
+        title: row.title,
+        organisation: row.organisation,
+        year: row.year,
+        category: row.category,
+      }));
+    },
+    ["shop-awards"],
     { revalidate: SHOP_CACHE_REVALIDATE_SECONDS },
   );
 
@@ -541,10 +617,12 @@ export function createSupabaseHomeStore(client: SupabaseClient): ShopStore {
       }
       return pick;
     },
-    async promotions(): Promise<StoredHomePromotion[]> {
+    async promotions(): Promise<StoredPromotion[]> {
       const rows = await loadPromotions();
       return rows.map((row) => ({
         whiskyId: row.whiskyId,
+        skuId: row.skuId,
+        featuredOnHome: row.featuredOnHome,
         discountedPriceEur: row.discountedPriceEur,
         priorPriceEur: row.priorPriceEur,
         startsAt: row.startsAt ? new Date(row.startsAt) : undefined,
@@ -554,6 +632,8 @@ export function createSupabaseHomeStore(client: SupabaseClient): ShopStore {
     },
     newWhiskies: loadNewWhiskies,
     discoveryPacks: loadDiscoveryPacks,
+    giftSelections: loadGiftSelections,
+    awards: loadAwards,
   };
 }
 

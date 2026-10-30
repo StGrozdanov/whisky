@@ -1,6 +1,7 @@
 "use client";
 
 import useEmblaCarousel from "embla-carousel-react";
+import Link from "next/link";
 import { Children, isValidElement, type ReactNode, useCallback } from "react";
 import { Icon, type IconName } from "@/components/icon";
 
@@ -12,10 +13,16 @@ type HomeRailEyebrow = {
   className: string;
 };
 
+type HomeRailViewAll = {
+  href: string;
+  label: string;
+};
+
 type HomeRailCarouselProps = {
   headingId: string;
   eyebrow?: HomeRailEyebrow;
   title: string;
+  viewAll?: HomeRailViewAll;
   prevLabel: string;
   nextLabel: string;
   slideBasis: HomeRailSlideBasis;
@@ -37,6 +44,7 @@ export function HomeRailCarousel({
   headingId,
   eyebrow,
   title,
+  viewAll,
   prevLabel,
   nextLabel,
   slideBasis,
@@ -84,6 +92,15 @@ export function HomeRailCarousel({
           </h2>
         </div>
         <div className="flex items-center gap-2">
+          {viewAll ? (
+            <Link
+              className="mr-space-xs inline-flex cursor-pointer items-center gap-1 text-label-md text-secondary transition-colors hover:text-primary"
+              href={viewAll.href}
+            >
+              {viewAll.label}
+              <Icon fontSize={18} name="arrow_forward" />
+            </Link>
+          ) : null}
           <button
             aria-label={prevLabel}
             className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg bg-surface-container text-on-surface transition-colors hover:bg-surface-container-high"

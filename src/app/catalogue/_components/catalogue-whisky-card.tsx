@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { Icon } from "@/components/icon";
 import type { CatalogueCard } from "@/shop/types";
 import { formatPriceEur } from "@/utils/format-price-eur";
@@ -36,9 +37,10 @@ function metaLine(card: CatalogueCard): string {
 
 type CatalogueWhiskyCardProps = {
   card: CatalogueCard;
+  extra?: ReactNode;
 };
 
-export function CatalogueWhiskyCard({ card }: CatalogueWhiskyCardProps) {
+export function CatalogueWhiskyCard({ card, extra }: CatalogueWhiskyCardProps) {
   const age = ageLabel(card.ageYears);
   const experience = experienceLabel(card.experienceLevel);
   const isAskUs = card.action === "ask-us";
@@ -97,6 +99,8 @@ export function CatalogueWhiskyCard({ card }: CatalogueWhiskyCardProps) {
               </p>
             ) : null}
           </div>
+
+          {extra}
         </div>
 
         <div className="mt-space-md space-y-space-sm border-t border-surface-container-highest/40 pt-space-sm">

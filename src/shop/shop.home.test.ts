@@ -411,9 +411,11 @@ describe("Shop home", () => {
 
     expect((await shop.home()).discoveryPacks).toEqual([
       {
+        id: "pack-1",
         title: "Шери срещу Торф (3 x 50ml)",
         photoUrl: "/bottles/glenallachie-12.svg",
         priceEur: 21.5,
+        action: "ask-us",
         lineup: [
           {
             name: "1. GlenAllachie 12",

@@ -43,9 +43,17 @@ function createErrorStore(): ShopStore {
     currentHousePick: () => empty.currentHousePick(),
     promotions: () => empty.promotions(),
     newWhiskies: () => empty.newWhiskies(),
-    discoveryPacks: () => empty.discoveryPacks(),
     async catalogueEntries() {
       throw new Error("Fixture catalogue load failure");
+    },
+    async discoveryPacks() {
+      throw new Error("Fixture Discovery Pack load failure");
+    },
+    async giftSelections() {
+      throw new Error("Fixture Gift load failure");
+    },
+    async awards() {
+      throw new Error("Fixture Award load failure");
     },
     async whiskyPageExtras(whiskyId: string) {
       return emptyWhiskyPageExtras(whiskyId);
@@ -176,6 +184,91 @@ function createMixedStore(): ShopStore {
           photoUrl: "/bottles/glenallachie-12.svg",
         },
       },
+      {
+        whiskyId: "ask",
+        awards: [
+          {
+            title: "Сребърен медал",
+            organisation: "IWSC",
+            year: 2024,
+            category: "Scotch Whisky",
+          },
+        ],
+      },
+      {
+        whiskyId: "draft",
+        awards: [
+          {
+            title: "Скрит медал",
+            organisation: "Draft Awards",
+            year: 2024,
+            category: "Draft",
+          },
+        ],
+      },
+    ],
+    promotions: [
+      {
+        whiskyId: "buy",
+        discountedPriceEur: 49.9,
+        priorPriceEur: 54,
+        endsAt: new Date("2099-12-31T22:00:00.000Z"),
+        sortOrder: 1,
+      },
+      {
+        whiskyId: "ask",
+        discountedPriceEur: 47,
+        priorPriceEur: 52,
+        featuredOnHome: false,
+        sortOrder: 2,
+      },
+      {
+        whiskyId: "partial",
+        discountedPriceEur: 40,
+        priorPriceEur: 46,
+        endsAt: new Date("2020-01-01T00:00:00.000Z"),
+        sortOrder: 3,
+      },
+      {
+        whiskyId: "draft",
+        discountedPriceEur: 35,
+        priorPriceEur: 38,
+        sortOrder: 4,
+      },
+    ],
+    discoveryPacks: [
+      {
+        id: "pack-in-stock",
+        title: "Fixture Pack In Stock",
+        photoUrl: "/bottles/glenallachie-12.svg",
+        priceEur: 21.5,
+        quantity: 3,
+        sortOrder: 1,
+        lineup: [
+          { name: "1. Fixture Buy Bottle", detail: "Speyside", sortOrder: 1 },
+          { name: "2. Fixture Ask Bottle", detail: "Шотландия", sortOrder: 2 },
+        ],
+      },
+      {
+        id: "pack-sold-out",
+        title: "Fixture Pack Sold Out",
+        photoUrl: "/bottles/glenallachie-12.svg",
+        priceEur: 24.9,
+        quantity: 0,
+        sortOrder: 2,
+        lineup: [
+          {
+            name: "1. Fixture Partial Editorial",
+            detail: "Шотландия",
+            sortOrder: 1,
+          },
+        ],
+      },
+    ],
+    giftSelections: [
+      { kind: "whisky", whiskyId: "buy", sortOrder: 1 },
+      { kind: "pack", packId: "pack-in-stock", sortOrder: 2 },
+      { kind: "whisky", whiskyId: "draft", sortOrder: 3 },
     ],
     newWhiskies: [
       {

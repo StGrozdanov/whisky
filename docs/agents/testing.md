@@ -12,7 +12,7 @@ Three layers, three data sources. Do not leak concerns across them.
 ## Integration — Playwright (`integration/`)
 
 - **Runner:** `npm run test:integration` (CI job “Integration Tests”, before nonprod deploy). Locally Playwright starts `next dev`, so a clean checkout needs no prior build. In CI the workflow builds first and Playwright starts `next start`.
-- **Scope:** Every catalogue (and similar) edge case that needs a rendered page: empty catalogue, no filter matches, Buy and Ask us, pagination, drafts hidden, retryable error page.
+- **Scope:** Every catalogue (and similar) edge case that needs a rendered page: empty catalogue, no filter matches, Buy and Ask us, pagination, drafts hidden, retryable error page. The same applies to Promotions, Gifts, Discovery Packs, and the Award page.
 - **Data:** In-memory fixtures only. Never Supabase. The Next server starts with `SHOP_FIXTURE` set; `getShop` serves a fixture store. Per-test override via request header `x-shop-fixture` (`empty` | `mixed` | `error`) when fixtures are enabled.
 - **Config:** `playwright.integration.config.ts` — `testDir: ./integration`.
 
@@ -37,8 +37,8 @@ Three layers, three data sources. Do not leak concerns across them.
 
 | Name | Behaviour |
 | --- | --- |
-| `mixed` | Published catalogue with Buy and Ask us cards, 25 Whiskies for page 2, a draft that must stay hidden, Scotch-only so `origin=Japanese` matches nothing |
-| `empty` | No published catalogue entries |
-| `error` | Catalogue load throws so `catalogue/error.tsx` can render |
+| `mixed` | Published catalogue with Buy and Ask us cards, 25 Whiskies for page 2, a draft that must stay hidden, Scotch-only so `origin=Japanese` matches nothing. Also active (Home-selected and not), expired, and draft Promotions; an In-stock and a sold-out Discovery Pack; Gift selections including a hidden draft; Awards on Buy, Ask us, and draft Whiskies |
+| `empty` | No published catalogue entries, Promotions, Packs, Gifts, or Awards |
+| `error` | Catalogue, Discovery Pack, Gift, and Award loads throw so each route's `error.tsx` can render |
 
 Unset `SHOP_FIXTURE` in production and e2e: `getShop` always uses Supabase.
