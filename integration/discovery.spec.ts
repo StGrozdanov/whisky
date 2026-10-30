@@ -47,6 +47,29 @@ test.describe("guest discovery pages", () => {
     ).toHaveCount(0);
   });
 
+  for (const path of ["/catalogue", "/gifts", "/awards"]) {
+    test(`${path} Whisky cards show the active Promotion`, async ({ page }) => {
+      await page.goto(path);
+
+      const buy = cardFor(page, "Fixture Buy Bottle");
+      await expect(buy.getByText("-8%")).toBeVisible();
+      await expect(buy.getByText("Промоционална цена")).toBeVisible();
+      await expect(buy.getByText("49.90 €")).toBeVisible();
+      await expect(buy.getByText("54.00 €")).toBeVisible();
+      await expect(buy.getByText("55.20 €")).toBeVisible();
+    });
+  }
+
+  test("Catalogue cards without a Promotion show only the regular price", async ({
+    page,
+  }) => {
+    await page.goto("/catalogue");
+
+    const partial = cardFor(page, "Fixture Partial Editorial");
+    await expect(partial.getByText("Цена", { exact: true })).toBeVisible();
+    await expect(partial.getByText("Промоционална цена")).toHaveCount(0);
+  });
+
   test("Home shows only Promotions the Shopkeeper selected and links to all", async ({
     page,
   }) => {

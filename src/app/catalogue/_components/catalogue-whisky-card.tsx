@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Icon } from "@/components/icon";
+import { PromotionPrices } from "@/components/promotion-prices";
 import type { CatalogueCard } from "@/shop/types";
 import { formatPriceEur } from "@/utils/format-price-eur";
 import { ORIGIN_LABELS } from "@/utils/origin-labels";
@@ -66,6 +67,11 @@ export function CatalogueWhiskyCard({ card, extra }: CatalogueWhiskyCardProps) {
           </div>
 
           <div className="relative flex h-44 w-full items-center justify-center overflow-hidden rounded-lg bg-gradient-to-b from-surface-container-low to-surface-container-lowest">
+            {card.promotion ? (
+              <span className="absolute top-2 left-2 z-10 rounded bg-primary px-2 py-0.5 text-label-sm font-bold text-on-primary">
+                -{card.promotion.discountPercent}%
+              </span>
+            ) : null}
             <Image
               alt={card.name}
               className="h-36 w-auto object-contain drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)] transition-transform duration-300 group-hover:scale-105"
@@ -104,12 +110,20 @@ export function CatalogueWhiskyCard({ card, extra }: CatalogueWhiskyCardProps) {
         </div>
 
         <div className="mt-space-md space-y-space-sm border-t border-surface-container-highest/40 pt-space-sm">
-          <div className="flex items-baseline justify-between gap-2">
-            <span className="text-technical-data text-outline">Цена</span>
-            <span className="font-headline text-headline-md font-bold text-primary">
-              {formatPriceEur(card.priceEur)}
-            </span>
-          </div>
+          {card.promotion ? (
+            <PromotionPrices
+              discountedPriceEur={card.promotion.discountedPriceEur}
+              priorPriceEur={card.promotion.priorPriceEur}
+              regularPriceEur={card.priceEur}
+            />
+          ) : (
+            <div className="flex items-baseline justify-between gap-2">
+              <span className="text-technical-data text-outline">Цена</span>
+              <span className="font-headline text-headline-md font-bold text-primary">
+                {formatPriceEur(card.priceEur)}
+              </span>
+            </div>
+          )}
           {isAskUs ? (
             <span className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-outline-variant bg-transparent py-2.5 text-label-md font-bold text-on-surface uppercase tracking-wider transition-colors group-hover:border-secondary group-hover:bg-surface-container">
               <Icon fontSize={18} name="mail" />

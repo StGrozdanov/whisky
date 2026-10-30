@@ -37,6 +37,13 @@ export type CatalogueCard = {
   priceEur: number;
   priceTier: PriceTier;
   action: CatalogueAction;
+  promotion: CardPromotion | undefined;
+};
+
+export type CardPromotion = {
+  discountedPriceEur: number;
+  priorPriceEur: number;
+  discountPercent: number;
 };
 
 export type CataloguePage = {

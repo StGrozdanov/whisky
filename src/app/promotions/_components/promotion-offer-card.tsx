@@ -1,8 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Icon } from "@/components/icon";
+import { PromotionPrices } from "@/components/promotion-prices";
 import type { Promotion } from "@/shop/types";
-import { formatPriceEur } from "@/utils/format-price-eur";
 import { ORIGIN_LABELS } from "@/utils/origin-labels";
 import { promotionEndLabel } from "@/utils/promotion-labels";
 import { whiskyHref } from "@/utils/whisky-href";
@@ -59,28 +59,11 @@ export function PromotionOfferCard({ promotion }: { promotion: Promotion }) {
         </div>
 
         <div className="mt-space-md space-y-space-sm border-t border-surface-container-highest/40 pt-space-sm">
-          <div className="flex items-baseline justify-between gap-2">
-            <span className="text-technical-data text-outline">
-              Промоционална цена
-            </span>
-            <span className="font-headline text-headline-md font-bold whitespace-nowrap text-primary">
-              {formatPriceEur(promotion.discountedPriceEur)}
-            </span>
-          </div>
-          <dl className="space-y-1 text-technical-data text-on-surface-variant">
-            <div className="flex justify-between gap-2">
-              <dt>Най-ниска цена за последните 30 дни</dt>
-              <dd className="whitespace-nowrap line-through">
-                {formatPriceEur(promotion.priorPriceEur)}
-              </dd>
-            </div>
-            <div className="flex justify-between gap-2">
-              <dt>Редовна цена</dt>
-              <dd className="whitespace-nowrap">
-                {formatPriceEur(promotion.regularPriceEur)}
-              </dd>
-            </div>
-          </dl>
+          <PromotionPrices
+            discountedPriceEur={promotion.discountedPriceEur}
+            priorPriceEur={promotion.priorPriceEur}
+            regularPriceEur={promotion.regularPriceEur}
+          />
           {promotion.action === "ask-us" ? (
             <span className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-outline-variant bg-transparent py-2.5 text-label-md font-bold text-on-surface uppercase tracking-wider transition-colors group-hover:border-secondary group-hover:bg-surface-container">
               <Icon fontSize={18} name="mail" />

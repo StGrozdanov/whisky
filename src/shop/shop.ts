@@ -81,7 +81,11 @@ export function createShop(deps: ShopDeps) {
     },
 
     async catalogue(query: CatalogueQuery): Promise<CataloguePage> {
-      const entries = await deps.store.catalogueEntries();
+      const [entries, storedPromotions] = await Promise.all([
+        deps.store.catalogueEntries(),
+        deps.store.promotions(),
+      ]);
+      const promotions = toPromotions(storedPromotions, entries, clock.now());
       const filtered = entries.filter((entry) =>
         matchesCatalogue(entry, query),
       );
@@ -100,7 +104,7 @@ export function createShop(deps: ShopDeps) {
       const start = (page - 1) * CATALOGUE_PAGE_SIZE;
       const whiskies = filtered
         .slice(start, start + CATALOGUE_PAGE_SIZE)
-        .map(toCatalogueCard);
+        .map((entry) => toCatalogueCard(entry, promotions));
 
       return { whiskies, totalCount, page, pageCount };
     },
@@ -118,11 +122,14 @@ export function createShop(deps: ShopDeps) {
     },
 
     async giftPageEntries(): Promise<GiftPageEntry[]> {
-      const [entries, storedPacks, selections] = await Promise.all([
-        deps.store.catalogueEntries(),
-        deps.store.discoveryPacks(),
-        deps.store.giftSelections(),
-      ]);
+      const [entries, storedPacks, selections, storedPromotions] =
+        await Promise.all([
+          deps.store.catalogueEntries(),
+          deps.store.discoveryPacks(),
+          deps.store.giftSelections(),
+          deps.store.promotions(),
+        ]);
+      const promotions = toPromotions(storedPromotions, entries, clock.now());
       const entryById = catalogueEntryById(entries);
       const packById = new Map(
         toDiscoveryPacks(storedPacks).map((pack) => [pack.id, pack]),
@@ -133,7 +140,10 @@ export function createShop(deps: ShopDeps) {
         if (selection.kind === "whisky") {
           const entry = entryById.get(selection.whiskyId);
           if (entry) {
-            gifts.push({ kind: "whisky", whisky: toCatalogueCard(entry) });
+            gifts.push({
+              kind: "whisky",
+              whisky: toCatalogueCard(entry, promotions),
+            });
           }
           continue;
         }
@@ -148,14 +158,16 @@ export function createShop(deps: ShopDeps) {
     },
 
     async awards(): Promise<AwardedWhisky[]> {
-      const [entries, storedAwards] = await Promise.all([
+      const [entries, storedAwards, storedPromotions] = await Promise.all([
         deps.store.catalogueEntries(),
         deps.store.awards(),
+        deps.store.promotions(),
       ]);
+      const promotions = toPromotions(storedPromotions, entries, clock.now());
 
       return entries
         .map((entry) => ({
-          whisky: toCatalogueCard(entry),
+          whisky: toCatalogueCard(entry, promotions),
           awards: storedAwards
             .filter((award) => award.whiskyId === entry.whisky.id)
             .map((award) => ({
@@ -291,10 +303,14 @@ function sameLabel(left: string, right: string): boolean {
   return left.toLocaleLowerCase("bg") === right.toLocaleLowerCase("bg");
 }
 
-function toCatalogueCard(entry: StoredCatalogueEntry): CatalogueCard {
+function toCatalogueCard(
+  entry: StoredCatalogueEntry,
+  promotions: Promotion[],
+): CatalogueCard {
   const whisky = entry.whisky;
   const primary = primarySku(entry);
   const offer = catalogueOffer(entry);
+  const promotion = promotions.find((item) => item.skuId === offer.skuId);
 
   return {
     id: whisky.id,
@@ -309,6 +325,13 @@ function toCatalogueCard(entry: StoredCatalogueEntry): CatalogueCard {
     priceEur: offer.priceEur,
     priceTier: priceTierFor(primary.priceEur),
     action: offer.action,
+    promotion: promotion
+      ? {
+          discountedPriceEur: promotion.discountedPriceEur,
+          priorPriceEur: promotion.priorPriceEur,
+          discountPercent: promotion.discountPercent,
+        }
+      : undefined,
   };
 }
 
@@ -321,6 +344,7 @@ function primarySku(entry: StoredCatalogueEntry) {
 }
 
 function catalogueOffer(entry: StoredCatalogueEntry): {
+  skuId: string;
   priceEur: number;
   action: CatalogueCard["action"];
 } {
@@ -330,10 +354,11 @@ function catalogueOffer(entry: StoredCatalogueEntry): {
   if (inStock.length > 0) {
     const primaryInStock = inStock.find((sku) => sku.isPrimary);
     const chosen = primaryInStock ? primaryInStock : inStock[0];
-    return { priceEur: chosen.priceEur, action: "buy" };
+    return { skuId: chosen.id, priceEur: chosen.priceEur, action: "buy" };
   }
 
-  return { priceEur: primarySku(entry).priceEur, action: "ask-us" };
+  const primary = primarySku(entry);
+  return { skuId: primary.id, priceEur: primary.priceEur, action: "ask-us" };
 }
 
 function displayedScore(whisky: StoredWhisky): number | undefined {
