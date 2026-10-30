@@ -85,14 +85,14 @@ test.describe("search", () => {
 
     await expect(page.getByText("Няма съвпадения")).toBeVisible();
     await expect(page.getByRole("option")).toHaveCount(0);
-    await expect(page.getByRole("article")).toHaveCount(0);
+    await expect(page.getByRole("banner").getByRole("article")).toHaveCount(0);
 
     await search.press("Enter");
 
     await expect(page).not.toHaveURL(/catalogue/);
     await expect(page.getByText("Няма съвпадения")).toBeVisible();
     await expect(page.getByRole("option")).toHaveCount(0);
-    await expect(page.getByRole("article")).toHaveCount(0);
+    await expect(page.getByRole("banner").getByRole("article")).toHaveCount(0);
   });
 
   test("Enter on a full Whisky name opens that exact Catalogue filter", async ({

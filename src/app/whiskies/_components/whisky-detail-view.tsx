@@ -36,7 +36,7 @@ export function WhiskyDetailView({ page }: WhiskyDetailViewProps) {
     return page.skus[0];
   }, [page.skus, selectedSkuId]);
 
-  const lineTotal = selectedSku.priceEur * quantity;
+  const lineTotal = skuPurchasePrice(selectedSku) * quantity;
   const houseScoreLabel = formatDisplayedScore(page.houseScore);
   const colourFiltration = formatColourFiltration(
     page.naturalColour,
@@ -573,12 +573,35 @@ function SkuOptionCard({
       </div>
       <div className="mt-space-sm flex items-baseline justify-between">
         <span className="font-headline text-headline-md font-bold text-primary">
-          {formatPriceEur(sku.priceEur)}
+          {formatPriceEur(skuPurchasePrice(sku))}
         </span>
         <span className="text-label-sm uppercase text-outline">
           {skuAvailabilityLabel(sku.action)}
         </span>
       </div>
+      {sku.promotion ? (
+        <dl className="mt-1 space-y-0.5 text-left text-technical-data text-outline">
+          <div className="flex justify-between gap-2">
+            <dt>Най-ниска за 30 дни</dt>
+            <dd className="whitespace-nowrap line-through">
+              {formatPriceEur(sku.promotion.priorPriceEur)}
+            </dd>
+          </div>
+          <div className="flex justify-between gap-2">
+            <dt>Редовна цена</dt>
+            <dd className="whitespace-nowrap">
+              {formatPriceEur(sku.priceEur)}
+            </dd>
+          </div>
+        </dl>
+      ) : null}
     </button>
   );
+}
+
+function skuPurchasePrice(sku: WhiskyPageSku): number {
+  if (sku.promotion) {
+    return sku.promotion.discountedPriceEur;
+  }
+  return sku.priceEur;
 }

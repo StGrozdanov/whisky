@@ -252,6 +252,15 @@ describe("Shop home", () => {
             abv: 40.0,
           },
         ],
+        primarySkus: [
+          {
+            id: "redbreast-700",
+            whiskyId: "redbreast",
+            priceEur: 52,
+            quantity: 3,
+          },
+          { id: "buffalo-700", whiskyId: "buffalo", priceEur: 36, quantity: 0 },
+        ],
         promotions: [
           {
             whiskyId: "redbreast",
@@ -284,10 +293,15 @@ describe("Shop home", () => {
           abv: 40.0,
           nonChillFiltered: undefined,
         },
+        skuId: "redbreast-700",
+        volumeMl: 700,
+        regularPriceEur: 52,
         discountedPriceEur: 42.5,
         priorPriceEur: 50.0,
         savingsEur: 7.5,
         discountPercent: 15,
+        endsAt: undefined,
+        action: "buy",
       },
       {
         whisky: {
@@ -298,10 +312,15 @@ describe("Shop home", () => {
           abv: 40.0,
           nonChillFiltered: undefined,
         },
+        skuId: "buffalo-700",
+        volumeMl: 700,
+        regularPriceEur: 36,
         discountedPriceEur: 28.0,
         priorPriceEur: 35.0,
         savingsEur: 7.0,
         discountPercent: 20,
+        endsAt: new Date("2026-12-31T23:59:59.000Z"),
+        action: "ask-us",
       },
     ]);
   });
@@ -328,6 +347,11 @@ describe("Shop home", () => {
             photoUrl: "/bottles/glenallachie-12.svg",
             origin: "Scotch",
           },
+        ],
+        primarySkus: [
+          { whiskyId: "redbreast", priceEur: 52, quantity: 1 },
+          { whiskyId: "buffalo", priceEur: 36, quantity: 1 },
+          { id: "glen-700", whiskyId: "glen", priceEur: 55.2, quantity: 1 },
         ],
         promotions: [
           {
@@ -369,10 +393,15 @@ describe("Shop home", () => {
           abv: undefined,
           nonChillFiltered: undefined,
         },
+        skuId: "glen-700",
+        volumeMl: 700,
+        regularPriceEur: 55.2,
         discountedPriceEur: 49.0,
         priorPriceEur: 55.2,
         savingsEur: 6.2,
         discountPercent: 11,
+        endsAt: undefined,
+        action: "buy",
       },
     ]);
   });
@@ -411,9 +440,11 @@ describe("Shop home", () => {
 
     expect((await shop.home()).discoveryPacks).toEqual([
       {
+        id: "pack-1",
         title: "Шери срещу Торф (3 x 50ml)",
         photoUrl: "/bottles/glenallachie-12.svg",
         priceEur: 21.5,
+        action: "ask-us",
         lineup: [
           {
             name: "1. GlenAllachie 12",
@@ -443,6 +474,7 @@ describe("Shop home", () => {
             origin: "Scotch",
           },
         ],
+        primarySkus: [{ whiskyId: "glen", priceEur: 55.2, quantity: 1 }],
         promotions: [
           {
             whiskyId: "missing",

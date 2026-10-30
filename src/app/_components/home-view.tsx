@@ -1,10 +1,11 @@
+import Link from "next/link";
 import {
-  DiscoveryPackCard,
   NewWhiskyCard,
   PromotionCard,
 } from "@/app/_components/home-rail-cards";
 import { HomeRailCarousel } from "@/app/_components/home-rail-carousel";
 import { HousePickMedia } from "@/app/_components/house-pick-media";
+import { DiscoveryPackCard } from "@/components/discovery-pack-card";
 import { Icon } from "@/components/icon";
 import type { HomePage, HousePick, HousePickNote } from "@/shop/types";
 import { formatPriceEur } from "@/utils/format-price-eur";
@@ -43,12 +44,10 @@ export function HomeView({ home }: HomeViewProps) {
               prevLabel="Предишни оферти"
               slideBasis="quarter"
               title="Специални Оферти"
+              viewAll={{ href: "/promotions", label: "Всички промоции" }}
             >
               {home.promotions.map((promotion) => (
-                <PromotionCard
-                  key={promotion.whisky.name}
-                  promotion={promotion}
-                />
+                <PromotionCard key={promotion.skuId} promotion={promotion} />
               ))}
             </HomeRailCarousel>
           ) : null}
@@ -83,9 +82,10 @@ export function HomeView({ home }: HomeViewProps) {
               prevLabel="Предишни discovery сетове"
               slideBasis="half"
               title="50ml Discovery Сетове"
+              viewAll={{ href: "/packs", label: "Всички сетове" }}
             >
               {home.discoveryPacks.map((pack) => (
-                <DiscoveryPackCard key={pack.title} pack={pack} />
+                <DiscoveryPackCard headingLevel={3} key={pack.id} pack={pack} />
               ))}
             </HomeRailCarousel>
           </div>
@@ -287,13 +287,13 @@ function ClubTeaser() {
             </div>
           </div>
           <div className="flex justify-center lg:col-span-5">
-            <button
+            <Link
               className="flex w-full cursor-pointer items-center justify-center gap-space-xs rounded-lg bg-primary px-space-xl py-3.5 text-label-md font-bold text-on-primary uppercase shadow-sm transition-colors hover:bg-primary-fixed sm:w-auto"
-              type="button"
+              href="/club"
             >
-              Стани клубен член
+              Научи повече за Клуба
               <Icon fontSize={18} name="arrow_forward" />
-            </button>
+            </Link>
           </div>
         </div>
       </div>

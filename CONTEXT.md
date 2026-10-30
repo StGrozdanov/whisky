@@ -37,7 +37,7 @@ A Whisky or Pack prepared for another person, optionally with Shopkeeper-priced 
 _Avoid_: voucher, gift card
 
 **Promotion**:
-A scheduled reduction of a SKU’s regular price with a start and end. The Customer sees the regular, discounted, and legally required prior price. The Shopkeeper keeps the prior-price record, but there is no price-history page. It does not use promotional codes, quantity discounts, or bundle discounts. A Promotion appears on Home only when it is both active and selected by the Shopkeeper.
+A scheduled reduction of a SKU’s regular price with a start and end. A SKU keeps its past and scheduled Promotions, but their periods never overlap. The Customer sees the regular, discounted, and legally required prior price. The Shopkeeper keeps the prior-price record, but there is no price-history page. It does not use promotional codes, quantity discounts, or bundle discounts. A Promotion appears on Home only when it is both active and selected by the Shopkeeper.
 _Avoid_: coupon, promo code, Club price
 
 **Award**:

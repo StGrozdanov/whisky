@@ -2,12 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Icon } from "@/components/icon";
-import type {
-  HomeDiscoveryPack,
-  HomeNewWhisky,
-  HomePromotion,
-  HomeWhisky,
-} from "@/shop/types";
+import type { HomeNewWhisky, HomeWhisky, Promotion } from "@/shop/types";
 import { formatPriceEur } from "@/utils/format-price-eur";
 import { ORIGIN_LABELS } from "@/utils/origin-labels";
 import { whiskyHref } from "@/utils/whisky-href";
@@ -23,6 +18,7 @@ type RailWhiskyCardChromeProps = {
   photoUrl: string;
   badge: ReactNode;
   priceRow: ReactNode;
+  action: Promotion["action"];
 };
 
 function RailWhiskyCardChrome({
@@ -32,6 +28,7 @@ function RailWhiskyCardChrome({
   photoUrl,
   badge,
   priceRow,
+  action,
 }: RailWhiskyCardChromeProps) {
   return (
     <div className="relative flex h-full w-full flex-col">
@@ -58,10 +55,17 @@ function RailWhiskyCardChrome({
         </div>
         <div className="border-t border-surface-container-highest/40 pt-space-xs">
           {priceRow}
-          <span className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-label-md font-bold text-on-primary uppercase tracking-wider shadow-sm transition-colors group-hover:bg-primary-fixed">
-            <Icon fontSize={18} name="shopping_bag" />
-            <span>Купи</span>
-          </span>
+          {action === "ask-us" ? (
+            <span className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-outline-variant bg-transparent py-2.5 text-label-md font-bold text-on-surface uppercase tracking-wider transition-colors group-hover:border-secondary group-hover:bg-surface-container">
+              <Icon fontSize={18} name="mail" />
+              <span>Попитай ни</span>
+            </span>
+          ) : (
+            <span className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-label-md font-bold text-on-primary uppercase tracking-wider shadow-sm transition-colors group-hover:bg-primary-fixed">
+              <Icon fontSize={18} name="shopping_bag" />
+              <span>Купи</span>
+            </span>
+          )}
         </div>
       </Link>
       <button
@@ -75,9 +79,10 @@ function RailWhiskyCardChrome({
   );
 }
 
-export function PromotionCard({ promotion }: { promotion: HomePromotion }) {
+export function PromotionCard({ promotion }: { promotion: Promotion }) {
   return (
     <RailWhiskyCardChrome
+      action={promotion.action}
       badge={
         <span className="absolute top-2 left-2 z-10 rounded bg-primary px-2 py-0.5 text-label-sm font-bold text-on-primary">
           -{promotion.discountPercent}%
@@ -88,18 +93,29 @@ export function PromotionCard({ promotion }: { promotion: HomePromotion }) {
       whiskyId={promotion.whisky.id}
       photoUrl={promotion.whisky.photoUrl}
       priceRow={
-        <div className="mb-space-sm flex min-h-9 flex-wrap items-baseline justify-between gap-x-2 gap-y-1">
-          <div className="flex items-baseline gap-2">
-            <span className="font-headline text-headline-md font-bold text-primary">
+        <div className="mb-space-sm">
+          <div className="flex min-h-9 flex-wrap items-baseline justify-between gap-x-2 gap-y-1">
+            <span className="font-headline text-headline-md font-bold whitespace-nowrap text-primary">
               {formatPriceEur(promotion.discountedPriceEur)}
             </span>
-            <span className="text-technical-data text-outline line-through">
-              {formatPriceEur(promotion.priorPriceEur)}
+            <span className="text-technical-data font-semibold whitespace-nowrap text-secondary">
+              Спестяваш {formatPriceEur(promotion.savingsEur)}
             </span>
           </div>
-          <span className="text-technical-data font-semibold whitespace-nowrap text-secondary">
-            Спестяваш {formatPriceEur(promotion.savingsEur)}
-          </span>
+          <dl className="space-y-0.5 text-technical-data text-outline">
+            <div className="flex justify-between gap-2">
+              <dt>Най-ниска за 30 дни</dt>
+              <dd className="whitespace-nowrap line-through">
+                {formatPriceEur(promotion.priorPriceEur)}
+              </dd>
+            </div>
+            <div className="flex justify-between gap-2">
+              <dt>Редовна цена</dt>
+              <dd className="whitespace-nowrap">
+                {formatPriceEur(promotion.regularPriceEur)}
+              </dd>
+            </div>
+          </dl>
         </div>
       }
     />
@@ -109,6 +125,7 @@ export function PromotionCard({ promotion }: { promotion: HomePromotion }) {
 export function NewWhiskyCard({ entry }: { entry: HomeNewWhisky }) {
   return (
     <RailWhiskyCardChrome
+      action="buy"
       badge={null}
       meta={whiskyMeta(entry.whisky)}
       name={entry.whisky.name}
@@ -122,67 +139,5 @@ export function NewWhiskyCard({ entry }: { entry: HomeNewWhisky }) {
         </div>
       }
     />
-  );
-}
-
-export function DiscoveryPackCard({ pack }: { pack: HomeDiscoveryPack }) {
-  return (
-    <div className="flex h-full w-full flex-col justify-between rounded-xl bg-surface-container p-space-lg shadow-md">
-      <div>
-        <div className="mb-space-md flex items-start justify-between">
-          <div>
-            <h3 className="font-headline text-headline-md text-on-surface">
-              {pack.title}
-            </h3>
-          </div>
-          <div className="text-right">
-            <span className="font-headline text-headline-md font-bold text-primary">
-              {formatPriceEur(pack.priceEur)}
-            </span>
-          </div>
-        </div>
-        <div className="relative mb-space-md flex aspect-[16/9] w-full items-center justify-center overflow-hidden rounded-lg bg-surface-container-lowest">
-          <Image
-            alt={pack.title}
-            className="h-4/5 w-auto object-contain"
-            height={240}
-            src={pack.photoUrl}
-            unoptimized
-            width={320}
-          />
-        </div>
-        <div className="mb-space-md space-y-2 text-body-sm">
-          {pack.lineup.map((item) => (
-            <div
-              className="flex items-center justify-between gap-2 rounded bg-surface-container-low p-2"
-              key={item.name}
-            >
-              <span className="font-semibold whitespace-nowrap text-on-surface">
-                {item.name}
-              </span>
-              <span className="text-right whitespace-nowrap text-on-surface-variant">
-                {item.detail}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div className="flex items-center gap-space-sm pt-space-xs">
-        <button
-          className="flex flex-1 cursor-pointer items-center justify-center gap-space-xs rounded-lg bg-primary py-3 text-label-md text-on-primary uppercase tracking-wider shadow-sm transition-colors hover:bg-primary-fixed"
-          type="button"
-        >
-          <Icon fontSize={18} name="add_shopping_cart" />
-          <span>Поръчай Сет ({formatPriceEur(pack.priceEur)})</span>
-        </button>
-        <button
-          className="cursor-pointer rounded-lg bg-surface-container-high p-3 text-on-surface-variant transition-colors hover:bg-surface-bright"
-          title="Добави в любими"
-          type="button"
-        >
-          <Icon fontSize={20} name="favorite_border" />
-        </button>
-      </div>
-    </div>
   );
 }

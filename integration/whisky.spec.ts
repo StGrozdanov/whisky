@@ -29,7 +29,10 @@ test.describe("whisky page fixtures", () => {
     ).toBeVisible();
     await expect(page.getByText("Fixture Discovery Set")).toBeVisible();
     await expect(
-      page.getByRole("button", { name: "Добави в кошницата • 55.20 €" }),
+      page.getByRole("button", { name: "Добави в кошницата • 49.90 €" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /700 мл/ }).getByText("Редовна цена"),
     ).toBeVisible();
     await expect(page.getByRole("button", { name: "Купи сега" })).toBeVisible();
     await expect(page.getByText("Държава")).toBeVisible();
@@ -48,7 +51,7 @@ test.describe("whisky page fixtures", () => {
 
     await page.getByRole("button", { name: "Увеличи количеството" }).click();
     await expect(
-      page.getByRole("button", { name: "Добави в кошницата • 110.40 €" }),
+      page.getByRole("button", { name: "Добави в кошницата • 99.80 €" }),
     ).toBeVisible();
   });
 

@@ -12,14 +12,14 @@ Three layers, three data sources. Do not leak concerns across them.
 ## Integration — Playwright (`integration/`)
 
 - **Runner:** `npm run test:integration` (CI job “Integration Tests”, before nonprod deploy). Locally Playwright starts `next dev`, so a clean checkout needs no prior build. In CI the workflow builds first and Playwright starts `next start`.
-- **Scope:** Every catalogue (and similar) edge case that needs a rendered page: empty catalogue, no filter matches, Buy and Ask us, pagination, drafts hidden, retryable error page.
+- **Scope:** Every catalogue (and similar) edge case that needs a rendered page: empty catalogue, no filter matches, Buy and Ask us, pagination, drafts hidden, retryable error page. The same applies to Promotions, Gifts, Discovery Packs, and the Award page.
 - **Data:** In-memory fixtures only. Never Supabase. The Next server starts with `SHOP_FIXTURE` set; `getShop` serves a fixture store. Per-test override via request header `x-shop-fixture` (`empty` | `mixed` | `error`) when fixtures are enabled.
 - **Config:** `playwright.integration.config.ts` — `testDir: ./integration`.
 
 ## E2e — Playwright (`e2e/`)
 
 - **Runner:** `npm run test:e2e` (CI job “E2E Tests”, against the shared nonprod URL after deploy).
-- **Scope:** Main customer flows only: age gate, shell, Home renders (content present or omitted), Catalogue opens and a filter updates the URL.
+- **Scope:** Main customer flows only: age gate, shell, Home renders (content present or omitted), Catalogue opens and a filter updates the URL, and each discovery page (Promotions, Gifts, Discovery Packs, Award page, Club) renders live entries or its empty state. Expired and unavailable entries are covered in integration, not e2e.
 - **Data:** Live nonprod database. No named bottles, stock levels, page counts, rail sizes, or “this tier is empty” assumptions.
 - **Config:** `playwright.e2e.config.ts` — `testDir: ./e2e`.
 
@@ -37,8 +37,8 @@ Three layers, three data sources. Do not leak concerns across them.
 
 | Name | Behaviour |
 | --- | --- |
-| `mixed` | Published catalogue with Buy and Ask us cards, 25 Whiskies for page 2, a draft that must stay hidden, Scotch-only so `origin=Japanese` matches nothing |
-| `empty` | No published catalogue entries |
-| `error` | Catalogue load throws so `catalogue/error.tsx` can render |
+| `mixed` | Published catalogue with Buy and Ask us cards, 25 Whiskies for page 2, a draft that must stay hidden, Scotch-only so `origin=Japanese` matches nothing. Also active (Home-selected and not), expired, and draft Promotions; an In-stock and a sold-out Discovery Pack; Gift selections including a hidden draft and a sold-out Pack; Awards on Buy, Ask us, and draft Whiskies |
+| `empty` | No published catalogue entries, Promotions, Packs, Gifts, or Awards |
+| `error` | Catalogue, Discovery Pack, Gift, and Award loads throw so each route's `error.tsx` can render |
 
 Unset `SHOP_FIXTURE` in production and e2e: `getShop` always uses Supabase.
