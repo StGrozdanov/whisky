@@ -221,12 +221,18 @@ type WhiskyPhoto = {
 
 type WhiskySkuAction = "buy" | "ask-us";
 
+type WhiskyPageSkuPromotion = {
+  discountedPriceEur: number;
+  priorPriceEur: number;
+};
+
 export type WhiskyPageSku = {
   id: string;
   volumeMl: number;
   priceEur: number;
   action: WhiskySkuAction;
   isPrimary: boolean;
+  promotion: WhiskyPageSkuPromotion | undefined;
 };
 
 type WhiskyPageTasting = {

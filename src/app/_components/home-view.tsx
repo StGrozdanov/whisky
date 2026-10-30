@@ -47,10 +47,7 @@ export function HomeView({ home }: HomeViewProps) {
               viewAll={{ href: "/promotions", label: "Всички промоции" }}
             >
               {home.promotions.map((promotion) => (
-                <PromotionCard
-                  key={promotion.whisky.name}
-                  promotion={promotion}
-                />
+                <PromotionCard key={promotion.skuId} promotion={promotion} />
               ))}
             </HomeRailCarousel>
           ) : null}

@@ -176,8 +176,12 @@ export function createShop(deps: ShopDeps) {
         return undefined;
       }
 
-      const extras = await deps.store.whiskyPageExtras(id);
-      return toWhiskyPage(entry, extras);
+      const [extras, storedPromotions] = await Promise.all([
+        deps.store.whiskyPageExtras(id),
+        deps.store.promotions(),
+      ]);
+      const promotions = toPromotions(storedPromotions, [entry], clock.now());
+      return toWhiskyPage(entry, extras, promotions);
     },
 
     async search(query: string): Promise<SearchHit[]> {
@@ -499,6 +503,7 @@ function toHomeWhisky(whisky: StoredWhisky): HomeWhisky {
 function toWhiskyPage(
   entry: StoredCatalogueEntry,
   extras: StoredWhiskyPageExtras,
+  promotions: Promotion[],
 ): WhiskyPage {
   const whisky = entry.whisky;
   const skus = [...entry.skus]
@@ -508,7 +513,7 @@ function toWhiskyPage(
       }
       return left.volumeMl - right.volumeMl;
     })
-    .map(toWhiskyPageSku);
+    .map((sku) => toWhiskyPageSku(sku, promotions));
 
   const defaultSku = skus.find((sku) => sku.isPrimary);
   const defaultSkuId = defaultSku ? defaultSku.id : skus[0].id;
@@ -562,13 +567,21 @@ function toWhiskyPage(
 
 function toWhiskyPageSku(
   sku: StoredCatalogueEntry["skus"][number],
+  promotions: Promotion[],
 ): WhiskyPageSku {
+  const promotion = promotions.find((item) => item.skuId === sku.id);
   return {
     id: sku.id,
     volumeMl: sku.volumeMl,
     priceEur: sku.priceEur,
     action: availabilityAction(sku.quantity),
     isPrimary: sku.isPrimary,
+    promotion: promotion
+      ? {
+          discountedPriceEur: promotion.discountedPriceEur,
+          priorPriceEur: promotion.priorPriceEur,
+        }
+      : undefined,
   };
 }
 

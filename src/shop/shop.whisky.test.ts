@@ -199,4 +199,56 @@ describe("Shop whisky page", () => {
     const page = await shop.whisky("ask");
     expect(page?.skus[0]?.action).toBe("ask-us");
   });
+
+  it("attaches only an active Promotion to its SKU", async () => {
+    const shop = createShop({
+      store: createInMemoryHomeStore({
+        whiskies: [
+          {
+            id: "glen",
+            name: "GlenAllachie 12",
+            photoUrl: "/bottles/glenallachie-12.svg",
+            origin: "Scotch",
+          },
+        ],
+        primarySkus: [
+          { id: "glen-700", whiskyId: "glen", priceEur: 55.2, quantity: 2 },
+        ],
+        skus: [
+          {
+            id: "glen-50",
+            whiskyId: "glen",
+            priceEur: 9,
+            quantity: 2,
+            volumeMl: 50,
+          },
+        ],
+        promotions: [
+          {
+            whiskyId: "glen",
+            skuId: "glen-700",
+            discountedPriceEur: 49.9,
+            priorPriceEur: 54,
+            sortOrder: 1,
+          },
+          {
+            whiskyId: "glen",
+            skuId: "glen-50",
+            discountedPriceEur: 7,
+            priorPriceEur: 9,
+            endsAt: new Date("2020-01-01T00:00:00.000Z"),
+            sortOrder: 2,
+          },
+        ],
+      }),
+      clock: { now: () => new Date("2026-10-30T12:00:00.000Z") },
+    });
+
+    const page = await shop.whisky("glen");
+
+    expect(page?.skus.map((sku) => [sku.id, sku.promotion])).toEqual([
+      ["glen-700", { discountedPriceEur: 49.9, priorPriceEur: 54 }],
+      ["glen-50", undefined],
+    ]);
+  });
 });

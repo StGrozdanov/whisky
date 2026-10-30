@@ -63,28 +63,39 @@ create index gift_selections_sort_order_idx on gift_selections (sort_order);
 
 alter table gift_selections enable row level security;
 
-insert into gift_selections (whisky_id, pack_id, sort_order) values
-  ('11111111-1111-1111-1111-111111111111', null, 1),
+insert into gift_selections (whisky_id, pack_id, sort_order)
+select seed.whisky_id, seed.pack_id, seed.sort_order
+from (values
+  ('11111111-1111-1111-1111-111111111111'::uuid, null::uuid, 1),
   (null, 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 2),
   ('22222222-2222-2222-2222-222222222222', null, 3),
   ('99999999-9999-9999-9999-999999999999', null, 4),
-  (null, 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 5);
+  (null, 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 5)
+) as seed (whisky_id, pack_id, sort_order)
+where exists (select 1 from whiskies where whiskies.id = seed.whisky_id)
+   or exists (select 1 from discovery_packs where discovery_packs.id = seed.pack_id);
+
+-- An Award is identified by what it is, so the Award page can key on it.
+create unique index whisky_awards_identity_uidx
+  on whisky_awards (whisky_id, organisation, year, category, title);
 
 -- More awarded Whiskies so the Award page has more than one entry.
-insert into whisky_awards (whisky_id, title, organisation, year, category, sort_order) values
+insert into whisky_awards (whisky_id, title, organisation, year, category, sort_order)
+select seed.whisky_id, seed.title, seed.organisation, seed.year, seed.category, 0
+from (values
   (
-    '22222222-2222-2222-2222-222222222222',
+    '22222222-2222-2222-2222-222222222222'::uuid,
     'Златен медал',
     'International Spirits Challenge',
     2024,
-    'Irish Single Pot Still',
-    0
+    'Irish Single Pot Still'
   ),
   (
     '99999999-9999-9999-9999-999999999999',
     'Сребърен медал',
     'IWSC',
     2023,
-    'Scotch Single Malt 15 Y.O.',
-    0
-  );
+    'Scotch Single Malt 15 Y.O.'
+  )
+) as seed (whisky_id, title, organisation, year, category)
+where exists (select 1 from whiskies where whiskies.id = seed.whisky_id);
