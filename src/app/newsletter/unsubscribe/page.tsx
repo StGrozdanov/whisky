@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DiscoveryPageLayout } from "@/components/discovery-page";
 import { FormStatus } from "@/components/form-status";
+import { SHOP_CONTACT } from "@/shop/shop-contact";
 import { UnsubscribeForm } from "./_components/unsubscribe-form";
 
 export const metadata: Metadata = {
@@ -26,7 +27,7 @@ export default async function UnsubscribePage({
       <div className="max-w-xl rounded-2xl bg-surface-container-low p-space-lg shadow-xl">
         {unsubscribeToken === "" ? (
           <FormStatus
-            message="Линкът за отписване е непълен. Използвайте линка от последното ни писмо или пишете на info@whiskyfinder.bg."
+            message={`Линкът за отписване е непълен. Използвайте линка от последното ни писмо или пишете на ${SHOP_CONTACT.email}.`}
             tone="error"
           />
         ) : (

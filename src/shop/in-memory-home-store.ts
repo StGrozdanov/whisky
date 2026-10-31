@@ -343,9 +343,15 @@ export function createInMemoryHomeStore(seed?: {
     async newsletterSuppressions() {
       return [...newsletterSuppressions.values()];
     },
-    async saveNewsletterSubscription(subscription) {
+    async isNewsletterEmailSuppressed(email) {
+      return newsletterSuppressions.has(email);
+    },
+    async addNewsletterSubscription(subscription) {
+      if (newsletterSubscriptions.has(subscription.email)) {
+        return "duplicate";
+      }
       newsletterSubscriptions.set(subscription.email, subscription);
-      newsletterSuppressions.delete(subscription.email);
+      return "added";
     },
     async newsletterSubscriptionByToken(unsubscribeToken) {
       return [...newsletterSubscriptions.values()].find(

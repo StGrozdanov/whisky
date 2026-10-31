@@ -3,6 +3,7 @@ import { getShop } from "@/shop/get-shop";
 import { createFinder, type Finder } from "./finder";
 import { finderSettingsFromEnv } from "./finder-settings";
 import {
+  FINDER_FIXTURE_NAMES,
   type FinderFixtureName,
   fixtureOpenRouterFetch,
   isFinderFixtureName,
@@ -61,6 +62,6 @@ async function resolveFixtureName(
   }
 
   throw new Error(
-    `Unknown FINDER_FIXTURE "${fallback}". Expected ranked, empty, invalid-ids, http-error, or malformed.`,
+    `Unknown FINDER_FIXTURE "${fallback}". Expected ${FINDER_FIXTURE_NAMES.join(", ")}.`,
   );
 }

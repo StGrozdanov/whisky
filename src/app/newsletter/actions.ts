@@ -1,6 +1,7 @@
 "use server";
 
 import { getShop } from "@/shop/get-shop";
+import { SHOP_CONTACT } from "@/shop/shop-contact";
 import {
   type EnquiryFormState,
   parseNewsletterForm,
@@ -51,8 +52,7 @@ export async function unsubscribeFromNewsletter(
     if (outcome === "unknown-token") {
       return {
         status: "failed",
-        message:
-          "Линкът за отписване е невалиден или вече е използван. Ако все още получавате бюлетина, пишете ни на info@whiskyfinder.bg.",
+        message: `Линкът за отписване е невалиден или вече е използван. Ако все още получавате бюлетина, пишете ни на ${SHOP_CONTACT.email}.`,
         values,
       };
     }

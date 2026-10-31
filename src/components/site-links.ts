@@ -18,11 +18,6 @@ export const POLICY_LINKS = [
   { href: "/age-policy", label: "Възрастова политика" },
 ] as const;
 
-export const SHOP_CONTACT = {
-  phone: "0876473165",
-  email: "info@whiskyfinder.bg",
-} as const;
-
 export function isCurrentPath(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
 }

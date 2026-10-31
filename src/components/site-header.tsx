@@ -4,12 +4,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Icon } from "@/components/icon";
-import {
-  isCurrentPath,
-  MAIN_NAVIGATION_LINKS,
-  SHOP_CONTACT,
-} from "@/components/site-links";
+import { isCurrentPath, MAIN_NAVIGATION_LINKS } from "@/components/site-links";
 import { SiteSearch } from "@/components/site-search";
+import { SHOP_CONTACT } from "@/shop/shop-contact";
 
 export function SiteHeader() {
   const pathname = usePathname();
@@ -41,7 +38,7 @@ export function SiteHeader() {
             </span>
             <span className="mx-1 hidden text-outline lg:inline">•</span>
             <span className="hidden lg:inline">
-              Безплатна доставка за цялата страна при поръчки над 50,00 €
+              Доставка със Спиди до адрес или офис в цялата страна
             </span>
           </div>
           <Link

@@ -367,10 +367,14 @@ export type ShopStore = {
   saveContactRequest(request: StoredContactRequest): Promise<void>;
   newsletterSubscriptions(): Promise<StoredNewsletterSubscription[]>;
   newsletterSuppressions(): Promise<StoredNewsletterSuppression[]>;
-  /** Upserts by email and lifts any suppression for that email. */
-  saveNewsletterSubscription(
+  isNewsletterEmailSuppressed(email: string): Promise<boolean>;
+  /**
+   * Returns "duplicate" and leaves the stored consent evidence and
+   * unsubscribe token untouched when the email is already subscribed.
+   */
+  addNewsletterSubscription(
     subscription: StoredNewsletterSubscription,
-  ): Promise<void>;
+  ): Promise<"added" | "duplicate">;
   newsletterSubscriptionByToken(
     unsubscribeToken: string,
   ): Promise<StoredNewsletterSubscription | undefined>;
@@ -421,6 +425,11 @@ export type NewsletterRecipient = {
   email: string;
   unsubscribeUrl: string;
 };
+
+export type NewsletterSubscribeOutcome =
+  | "subscribed"
+  | "already-subscribed"
+  | "suppressed";
 
 export type NewsletterUnsubscribeOutcome = "unsubscribed" | "unknown-token";
 

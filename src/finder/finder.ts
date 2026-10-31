@@ -4,12 +4,12 @@ import type { FinderAnswers } from "./answers";
 import {
   FinderResearchError,
   type FinderResearcher,
+  MAX_REASON_LENGTH,
   type RankedRecommendation,
   type ResearchCandidate,
 } from "./openrouter-researcher";
 
 const MAX_PER_TIER = 3;
-const MAX_REASON_LENGTH = 160;
 
 export type FinderRecommendation = {
   whisky: CatalogueCard;

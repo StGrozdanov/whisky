@@ -700,7 +700,8 @@ function createSupabaseEnquiryMethods(
   | "saveContactRequest"
   | "newsletterSubscriptions"
   | "newsletterSuppressions"
-  | "saveNewsletterSubscription"
+  | "isNewsletterEmailSuppressed"
+  | "addNewsletterSubscription"
   | "newsletterSubscriptionByToken"
   | "suppressNewsletterEmail"
   | "waitlistSku"
@@ -749,25 +750,30 @@ function createSupabaseEnquiryMethods(
       }));
     },
 
-    // Subscription first, then lift suppression: a partial failure leaves the
-    // address suppressed, which never sends unwanted email.
-    async saveNewsletterSubscription(subscription) {
-      const { error } = await client.from("newsletter_subscriptions").upsert(
-        {
-          email: subscription.email,
-          consented_at: subscription.consentedAt.toISOString(),
-          policy_version: subscription.policyVersion,
-          unsubscribe_token: subscription.unsubscribeToken,
-        },
-        { onConflict: "email" },
-      );
-      throwOnError("Failed to save Newsletter subscription", error);
-
-      const { error: liftError } = await client
+    async isNewsletterEmailSuppressed(email) {
+      const { data, error } = await client
         .from("newsletter_suppressions")
-        .delete()
-        .eq("email", subscription.email);
-      throwOnError("Failed to lift Newsletter suppression", liftError);
+        .select("email")
+        .eq("email", email)
+        .maybeSingle();
+      throwOnError("Failed to check Newsletter suppression", error);
+      return data !== null;
+    },
+
+    // Insert only: a repeat sign-up must not rotate the unsubscribe token
+    // already sent in earlier emails or overwrite the first consent evidence.
+    async addNewsletterSubscription(subscription) {
+      const { error } = await client.from("newsletter_subscriptions").insert({
+        email: subscription.email,
+        consented_at: subscription.consentedAt.toISOString(),
+        policy_version: subscription.policyVersion,
+        unsubscribe_token: subscription.unsubscribeToken,
+      });
+      if (error && error.code === UNIQUE_VIOLATION) {
+        return "duplicate";
+      }
+      throwOnError("Failed to save Newsletter subscription", error);
+      return "added";
     },
 
     async newsletterSubscriptionByToken(unsubscribeToken) {

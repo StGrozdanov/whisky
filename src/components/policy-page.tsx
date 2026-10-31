@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { DiscoveryPageLayout } from "@/components/discovery-page";
-import { POLICY_LINKS, SHOP_CONTACT } from "@/components/site-links";
+import { POLICY_LINKS } from "@/components/site-links";
+import { SHOP_CONTACT } from "@/shop/shop-contact";
 import { POLICIES_UPDATED_LABEL } from "@/utils/policy-versions";
 
 export type PolicySection = {

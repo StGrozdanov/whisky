@@ -22,11 +22,12 @@ describe("Shop Newsletter subscription", () => {
       siteUrl: SITE_URL,
     });
 
-    await shop.subscribeToNewsletter({
+    const outcome = await shop.subscribeToNewsletter({
       email: " Ivan@Example.com",
       policyVersion: "2026-10-31",
     });
 
+    expect(outcome).toBe("subscribed");
     const [subscription] = await store.newsletterSubscriptions();
     expect(subscription).toMatchObject({
       email: "ivan@example.com",
@@ -42,7 +43,7 @@ describe("Shop Newsletter subscription", () => {
     );
   });
 
-  it("keeps one subscription per email and refreshes its consent evidence", async () => {
+  it("keeps the first consent evidence and unsubscribe link when the same email subscribes again", async () => {
     let now = SUBSCRIBED_AT;
     const store = createInMemoryHomeStore();
     const shop = createShop({ store, clock: { now: () => now } });
@@ -51,18 +52,21 @@ describe("Shop Newsletter subscription", () => {
       email: "ivan@example.com",
       policyVersion: "2026-10-31",
     });
+    const [sentRecipient] = await shop.newsletterRecipients();
     now = new Date("2026-11-05T09:00:00.000Z");
-    await shop.subscribeToNewsletter({
+    const outcome = await shop.subscribeToNewsletter({
       email: "IVAN@example.com",
       policyVersion: "2026-11-01",
     });
 
+    expect(outcome).toBe("already-subscribed");
     const subscriptions = await store.newsletterSubscriptions();
     expect(subscriptions).toHaveLength(1);
     expect(subscriptions[0]).toMatchObject({
-      consentedAt: now,
-      policyVersion: "2026-11-01",
+      consentedAt: SUBSCRIBED_AT,
+      policyVersion: "2026-10-31",
     });
+    expect(await shop.newsletterRecipients()).toEqual([sentRecipient]);
   });
 
   it("unsubscribes by token, keeping only the email on the suppression list", async () => {
@@ -135,8 +139,8 @@ describe("Shop Newsletter subscription", () => {
     ]);
   });
 
-  it("treats a fresh subscription after unsubscribe as new consent", async () => {
-    const resubscribedAt = new Date("2026-12-01T10:00:00.000Z");
+  it("keeps an unsubscribed email on the suppression list when it subscribes again", async () => {
+    const unsubscribedAt = new Date("2026-11-10T08:00:00.000Z");
     let now = SUBSCRIBED_AT;
     const store = createInMemoryHomeStore();
     const shop = createShop({ store, clock: { now: () => now } });
@@ -145,23 +149,22 @@ describe("Shop Newsletter subscription", () => {
       policyVersion: "2026-10-31",
     });
     const [recipient] = await shop.newsletterRecipients();
+    now = unsubscribedAt;
     await shop.unsubscribeFromNewsletter(
       unsubscribeToken(recipient.unsubscribeUrl),
     );
 
-    now = resubscribedAt;
-    await shop.subscribeToNewsletter({
-      email: "ivan@example.com",
+    now = new Date("2026-12-01T10:00:00.000Z");
+    const outcome = await shop.subscribeToNewsletter({
+      email: " Ivan@Example.com",
       policyVersion: "2026-10-31",
     });
 
-    expect(await store.newsletterSuppressions()).toEqual([]);
-    const recipients = await shop.newsletterRecipients();
-    expect(recipients.map((entry) => entry.email)).toEqual([
-      "ivan@example.com",
+    expect(outcome).toBe("suppressed");
+    expect(await store.newsletterSubscriptions()).toEqual([]);
+    expect(await shop.newsletterRecipients()).toEqual([]);
+    expect(await store.newsletterSuppressions()).toEqual([
+      { email: "ivan@example.com", suppressedAt: unsubscribedAt },
     ]);
-    expect(recipients[0].unsubscribeUrl).not.toBe(recipient.unsubscribeUrl);
-    const [subscription] = await store.newsletterSubscriptions();
-    expect(subscription.consentedAt).toEqual(resubscribedAt);
   });
 });

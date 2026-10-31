@@ -36,9 +36,7 @@ test.describe("shell and home", () => {
       banner.getByRole("link", { name: /0876473165/ }),
     ).toHaveAttribute("href", "tel:0876473165");
     await expect(
-      banner.getByText(
-        "Безплатна доставка за цялата страна при поръчки над 50,00 €",
-      ),
+      banner.getByText("Доставка със Спиди до адрес или офис в цялата страна"),
     ).toBeVisible();
     await expect(
       banner.getByRole("link", { name: "Свържете се с нас" }),

@@ -1,4 +1,5 @@
 import { createUnconfiguredMailer, type Mailer } from "./mailer";
+import { SHOP_CONTACT } from "./shop-contact";
 import type {
   AwardedWhisky,
   CatalogueCard,
@@ -15,6 +16,7 @@ import type {
   HousePick,
   HousePickNote,
   NewsletterRecipient,
+  NewsletterSubscribeOutcome,
   NewsletterUnsubscribeOutcome,
   PriceTier,
   Promotion,
@@ -277,17 +279,27 @@ export function createShop(deps: ShopDeps) {
       });
     },
 
-    /** Single opt-in: the subscription is active as soon as it is stored. */
+    /**
+     * Single opt-in: the subscription is active as soon as it is stored.
+     * A repeat sign-up keeps the first consent evidence and unsubscribe link,
+     * and an unsubscribed email stays only on the suppression list.
+     */
     async subscribeToNewsletter(input: {
       email: string;
       policyVersion: string;
-    }): Promise<void> {
-      await deps.store.saveNewsletterSubscription({
-        email: normalizeEmail(input.email),
+    }): Promise<NewsletterSubscribeOutcome> {
+      const email = normalizeEmail(input.email);
+      if (await deps.store.isNewsletterEmailSuppressed(email)) {
+        return "suppressed";
+      }
+
+      const added = await deps.store.addNewsletterSubscription({
+        email,
         consentedAt: clock.now(),
         policyVersion: input.policyVersion,
         unsubscribeToken: crypto.randomUUID(),
       });
+      return added === "added" ? "subscribed" : "already-subscribed";
     },
 
     async newsletterRecipients(): Promise<NewsletterRecipient[]> {
@@ -409,7 +421,7 @@ function waitlistRestockEmail(
       "Изпращаме го еднократно и премахнахме имейла ви от списъка за изчакване за този размер.",
       "",
       "Whisky Finder",
-      "info@whiskyfinder.bg · 0876473165",
+      `${SHOP_CONTACT.email} · ${SHOP_CONTACT.phone}`,
     ].join("\n"),
   };
 }

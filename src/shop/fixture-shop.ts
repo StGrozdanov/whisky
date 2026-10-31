@@ -73,7 +73,10 @@ function createErrorStore(): ShopStore {
     async newsletterSuppressions() {
       throw new Error("Fixture Newsletter failure");
     },
-    async saveNewsletterSubscription() {
+    async isNewsletterEmailSuppressed() {
+      throw new Error("Fixture Newsletter failure");
+    },
+    async addNewsletterSubscription() {
       throw new Error("Fixture Newsletter failure");
     },
     async newsletterSubscriptionByToken() {

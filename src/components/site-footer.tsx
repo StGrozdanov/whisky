@@ -3,11 +3,8 @@ import Link from "next/link";
 import { BrandIcon } from "@/components/brand-icon";
 import { Icon } from "@/components/icon";
 import { NewsletterSignup } from "@/components/newsletter-signup";
-import {
-  MAIN_NAVIGATION_LINKS,
-  POLICY_LINKS,
-  SHOP_CONTACT,
-} from "@/components/site-links";
+import { MAIN_NAVIGATION_LINKS, POLICY_LINKS } from "@/components/site-links";
+import { SHOP_CONTACT } from "@/shop/shop-contact";
 
 const SOCIAL_LINKS = [
   { label: "Facebook", icon: "facebook" },

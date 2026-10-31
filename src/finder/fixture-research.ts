@@ -4,7 +4,7 @@
  * building, response parsing, and Catalogue enforcement all still run.
  * Whisky IDs match the `mixed` Shop fixture.
  */
-const FINDER_FIXTURE_NAMES = [
+export const FINDER_FIXTURE_NAMES = [
   "ranked",
   "empty",
   "invalid-ids",

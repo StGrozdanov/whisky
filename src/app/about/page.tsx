@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { DiscoveryPageLayout } from "@/components/discovery-page";
 import { Icon, type IconName } from "@/components/icon";
-import { SHOP_CONTACT } from "@/components/site-links";
+import { SHOP_CONTACT } from "@/shop/shop-contact";
 
 export const metadata: Metadata = {
   title: "За нас",
