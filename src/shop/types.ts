@@ -76,6 +76,14 @@ export const SEARCH_HIT_FILTER = {
   "name" | "distillery" | "country" | "region"
 >;
 
+/** A published Catalogue Whisky offered to the Finder's live research. */
+export type FinderCandidate = {
+  whisky: CatalogueCard;
+  distillery: string;
+  country: string;
+  region: string | undefined;
+};
+
 export type HomeWhisky = {
   id: string;
   name: string;
