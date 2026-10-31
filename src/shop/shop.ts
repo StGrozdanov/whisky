@@ -380,11 +380,11 @@ function waitlistRestockEmail(
   const whiskyUrl = `${siteUrl}/whiskies/${encodeURIComponent(sku.whiskyId)}`;
   return {
     to,
-    subject: `${sku.whiskyName} (${sku.volumeMl} ml) отново е в наличност`,
+    subject: `${sku.whiskyName} (${sku.volumeMl} мл) отново е в наличност`,
     text: [
       "Здравейте,",
       "",
-      `${sku.whiskyName} (${sku.volumeMl} ml), за което ни попитахте, отново е в наличност в Whisky Finder.`,
+      `${sku.whiskyName} (${sku.volumeMl} мл), за което ни попитахте, отново е в наличност в Whisky Finder.`,
       `Можете да го поръчате тук: ${whiskyUrl}`,
       "",
       "Това известие не е резервация — количеството е ограничено и бутилката не е запазена за вас.",
