@@ -388,7 +388,11 @@ export type ShopStore = {
   addWaitlistEntry(
     entry: Omit<StoredWaitlistEntry, "id">,
   ): Promise<"added" | "duplicate">;
-  removeWaitlistEntries(ids: string[]): Promise<void>;
+  /**
+   * Atomically removes and returns the target's entries, oldest first, so
+   * overlapping restock runs never receive the same entry.
+   */
+  claimWaitlistEntries(target: WaitlistTarget): Promise<StoredWaitlistEntry[]>;
 };
 
 export type Clock = {

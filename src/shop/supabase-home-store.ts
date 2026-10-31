@@ -680,6 +680,18 @@ type WaitlistEntryRow = {
   created_at: string;
 };
 
+function toWaitlistEntry(row: WaitlistEntryRow): StoredWaitlistEntry {
+  return {
+    id: row.id,
+    target: row.pack_id
+      ? { kind: "pack", packId: row.pack_id }
+      : { kind: "sku", skuId: row.sku_id ? row.sku_id : "" },
+    email: row.email,
+    phone: row.phone ? row.phone : undefined,
+    createdAt: new Date(row.created_at),
+  };
+}
+
 function waitlistTargetColumn(target: WaitlistTarget) {
   return target.kind === "sku"
     ? { name: "sku_id", id: target.skuId }
@@ -721,7 +733,7 @@ function createSupabaseEnquiryMethods(
   | "waitlistItem"
   | "waitlistEntries"
   | "addWaitlistEntry"
-  | "removeWaitlistEntries"
+  | "claimWaitlistEntries"
 > {
   return {
     async saveContactRequest(request) {
@@ -888,15 +900,7 @@ function createSupabaseEnquiryMethods(
         error,
         data as WaitlistEntryRow[] | null,
       );
-      return rows.map((row) => ({
-        id: row.id,
-        target: row.pack_id
-          ? { kind: "pack", packId: row.pack_id }
-          : { kind: "sku", skuId: row.sku_id ? row.sku_id : "" },
-        email: row.email,
-        phone: row.phone ? row.phone : undefined,
-        createdAt: new Date(row.created_at),
-      }));
+      return rows.map(toWaitlistEntry);
     },
 
     async addWaitlistEntry(entry) {
@@ -914,15 +918,27 @@ function createSupabaseEnquiryMethods(
       return "added";
     },
 
-    async removeWaitlistEntries(ids) {
-      if (ids.length === 0) {
-        return;
+    // One DELETE … RETURNING statement, so concurrent claims get disjoint rows.
+    async claimWaitlistEntries(target): Promise<StoredWaitlistEntry[]> {
+      const column = waitlistTargetColumn(target);
+      if (!UUID_PATTERN.test(column.id)) {
+        return [];
       }
-      const { error } = await client
+      const { data, error } = await client
         .from("waitlist_entries")
         .delete()
-        .in("id", ids);
-      throwOnError("Failed to clear Waitlist entries", error);
+        .eq(column.name, column.id)
+        .select("id, sku_id, pack_id, email, phone, created_at");
+      const rows = listRows(
+        "Failed to claim Waitlist entries",
+        error,
+        data as WaitlistEntryRow[] | null,
+      );
+      return rows
+        .map(toWaitlistEntry)
+        .sort(
+          (left, right) => left.createdAt.getTime() - right.createdAt.getTime(),
+        );
     },
   };
 }

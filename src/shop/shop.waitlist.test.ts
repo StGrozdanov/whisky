@@ -181,6 +181,30 @@ describe("Shop Waitlist notification on restock", () => {
     expect(remaining.map((entry) => entry.email)).toEqual(["b@example.com"]);
   });
 
+  it("emails each entry once even when restock runs overlap", async () => {
+    const store = await storeWithEntries(3);
+    const mailer = createInMemoryMailer();
+    const shop = createShop({ store, mailer });
+
+    const results = await Promise.all([
+      shop.notifyRestockedWaitlist(GLEN_700),
+      shop.notifyRestockedWaitlist(GLEN_700),
+    ]);
+
+    expect(mailer.sent.map((email) => email.to).sort()).toEqual([
+      "a@example.com",
+      "b@example.com",
+    ]);
+    expect(
+      results.reduce(
+        (total, result) =>
+          total + (result.status === "notified" ? result.sent : 0),
+        0,
+      ),
+    ).toBe(2);
+    expect(await store.waitlistEntries(GLEN_700)).toEqual([]);
+  });
+
   it("does nothing while the SKU is still not In stock", async () => {
     const store = await storeWithEntries(0);
     const mailer = createInMemoryMailer();

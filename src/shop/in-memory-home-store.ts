@@ -414,10 +414,15 @@ export function createInMemoryHomeStore(seed?: {
       nextWaitlistEntryId += 1;
       return "added";
     },
-    async removeWaitlistEntries(ids) {
-      const removed = new Set(ids);
-      const kept = waitlistEntries.filter((entry) => !removed.has(entry.id));
+    async claimWaitlistEntries(target) {
+      const claimed = waitlistEntries.filter((entry) =>
+        sameWaitlistTarget(entry.target, target),
+      );
+      const kept = waitlistEntries.filter(
+        (entry) => !sameWaitlistTarget(entry.target, target),
+      );
       waitlistEntries.splice(0, waitlistEntries.length, ...kept);
+      return claimed;
     },
     setSkuQuantity(skuId, quantity) {
       const index = skus.findIndex((sku) => sku.id === skuId);

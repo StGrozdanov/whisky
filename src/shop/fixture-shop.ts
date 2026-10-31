@@ -94,7 +94,7 @@ function createErrorStore(): ShopStore {
     async addWaitlistEntry() {
       throw new Error("Fixture Waitlist failure");
     },
-    async removeWaitlistEntries() {
+    async claimWaitlistEntries() {
       throw new Error("Fixture Waitlist failure");
     },
   };

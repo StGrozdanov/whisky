@@ -27,6 +27,7 @@ import type {
   StoredHomeNewWhisky,
   StoredHousePick,
   StoredPromotion,
+  StoredWaitlistEntry,
   StoredWaitlistItem,
   StoredWhisky,
   StoredWhiskyPageExtras,
@@ -371,24 +372,30 @@ export function createShop(deps: ShopDeps) {
         return { status: "sku-not-in-stock" };
       }
 
-      const entries = await deps.store.waitlistEntries(target);
-      const sentIds: string[] = [];
+      // Claim before sending: a concurrent run or a retry can never email the
+      // same entry twice. Only entries whose email failed go back on the list.
+      const entries = await deps.store.claimWaitlistEntries(target);
+      const unsent: StoredWaitlistEntry[] = [];
       for (const entry of entries) {
         try {
           await mailer.send(waitlistRestockEmail(item, entry.email, siteUrl));
-          sentIds.push(entry.id);
         } catch {
-          // Keep the entry so a later run can retry it.
+          unsent.push(entry);
         }
       }
-
-      if (sentIds.length > 0) {
-        await deps.store.removeWaitlistEntries(sentIds);
+      for (const entry of unsent) {
+        await deps.store.addWaitlistEntry({
+          target: entry.target,
+          email: entry.email,
+          phone: entry.phone,
+          createdAt: entry.createdAt,
+        });
       }
+
       return {
         status: "notified",
-        sent: sentIds.length,
-        failed: entries.length - sentIds.length,
+        sent: entries.length - unsent.length,
+        failed: unsent.length,
       };
     },
   };
