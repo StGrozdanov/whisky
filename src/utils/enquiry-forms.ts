@@ -1,4 +1,8 @@
-import type { ContactRequestInput, WaitlistJoinInput } from "@/shop/types";
+import type {
+  ContactRequestInput,
+  WaitlistJoinInput,
+  WaitlistTarget,
+} from "@/shop/types";
 
 type Parsed<Field extends string, Value> =
   | { ok: true; value: Value }
@@ -9,7 +13,7 @@ type Parsed<Field extends string, Value> =
     };
 
 export type ContactField = "name" | "email" | "phone" | "subject" | "message";
-export type WaitlistField = "skuId" | "email" | "phone";
+export type WaitlistField = "target" | "email" | "phone";
 
 /** Server action state shared by the Contact, Newsletter and Waitlist forms. */
 export type EnquiryFormState<Field extends string> =
@@ -39,7 +43,7 @@ const MESSAGES = {
   phone: "Моля, въведете валиден телефонен номер или оставете полето празно.",
   subject: "Моля, въведете тема.",
   message: "Моля, напишете съобщение.",
-  sku: "Моля, изберете размер на бутилката.",
+  target: "Не разпознахме продукта. Моля, презаредете страницата.",
 } as const;
 
 function text(form: FormData, name: string): string {
@@ -146,21 +150,49 @@ export function parseWaitlistForm(
   form: FormData,
 ): Parsed<WaitlistField, WaitlistJoinInput> {
   const values = {
-    skuId: text(form, "skuId"),
+    target: text(form, "target"),
     email: text(form, "email"),
     phone: text(form, "phone"),
   };
+  const target = parseWaitlistTarget(values.target);
   const errors = withoutUndefined<WaitlistField>({
-    skuId: values.skuId === "" ? MESSAGES.sku : undefined,
+    target: target ? undefined : MESSAGES.target,
     email: emailError(values.email),
     phone: phoneError(values.phone),
   });
 
-  if (hasErrors(errors)) {
+  if (!target || hasErrors(errors)) {
     return { ok: false, errors, values };
   }
   return {
     ok: true,
-    value: { ...values, phone: values.phone === "" ? undefined : values.phone },
+    value: {
+      target,
+      email: values.email,
+      phone: values.phone === "" ? undefined : values.phone,
+    },
   };
+}
+
+/** The hidden form value for a Waitlist target: `sku:<id>` or `pack:<id>`. */
+export function waitlistTargetValue(target: WaitlistTarget): string {
+  return target.kind === "sku"
+    ? `sku:${target.skuId}`
+    : `pack:${target.packId}`;
+}
+
+function parseWaitlistTarget(value: string): WaitlistTarget | undefined {
+  const separator = value.indexOf(":");
+  const kind = value.slice(0, separator);
+  const id = value.slice(separator + 1);
+  if (separator < 0 || id === "") {
+    return undefined;
+  }
+  if (kind === "sku") {
+    return { kind, skuId: id };
+  }
+  if (kind === "pack") {
+    return { kind, packId: id };
+  }
+  return undefined;
 }

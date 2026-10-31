@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { Icon } from "@/components/icon";
+import { PackWaitlist } from "@/components/pack-waitlist";
 import type { DiscoveryPack } from "@/shop/types";
 import { formatPriceEur } from "@/utils/format-price-eur";
 
@@ -65,13 +66,7 @@ export function DiscoveryPackCard({
             <span>Поръчай Сет ({formatPriceEur(pack.priceEur)})</span>
           </button>
         ) : (
-          <button
-            className="flex flex-1 cursor-pointer items-center justify-center gap-space-xs rounded-lg border border-outline-variant bg-transparent py-3 text-label-md font-bold text-on-surface uppercase tracking-wider transition-colors hover:border-secondary hover:bg-surface-container-high"
-            type="button"
-          >
-            <Icon fontSize={18} name="mail" />
-            <span>Попитай ни</span>
-          </button>
+          <PackWaitlist packId={pack.id} />
         )}
       </div>
     </article>

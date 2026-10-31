@@ -114,20 +114,43 @@ describe("parseWaitlistForm", () => {
   it("requires an email and accepts an optional phone", () => {
     expect(
       parseWaitlistForm(
-        form({ skuId: "sku-1", email: "guest@example.com", phone: "" }),
+        form({ target: "sku:sku-1", email: "guest@example.com", phone: "" }),
       ),
     ).toEqual({
       ok: true,
-      value: { skuId: "sku-1", email: "guest@example.com", phone: undefined },
+      value: {
+        target: { kind: "sku", skuId: "sku-1" },
+        email: "guest@example.com",
+        phone: undefined,
+      },
     });
   });
 
-  it("rejects a missing email or SKU", () => {
-    const result = parseWaitlistForm(form({ skuId: "", email: "" }));
+  it("reads a Pack target", () => {
+    expect(
+      parseWaitlistForm(
+        form({ target: "pack:pack-1", email: "guest@example.com" }),
+      ),
+    ).toMatchObject({
+      ok: true,
+      value: { target: { kind: "pack", packId: "pack-1" } },
+    });
+  });
+
+  it("rejects a missing email or target", () => {
+    const result = parseWaitlistForm(form({ target: "", email: "" }));
 
     expect(result).toMatchObject({
       ok: false,
-      errors: { email: "Моля, въведете имейл.", skuId: expect.any(String) },
+      errors: { email: "Моля, въведете имейл.", target: expect.any(String) },
     });
+  });
+
+  it("rejects a malformed target", () => {
+    for (const target of ["sku:", "box:1", "sku-1"]) {
+      expect(
+        parseWaitlistForm(form({ target, email: "guest@example.com" })),
+      ).toMatchObject({ ok: false, errors: { target: expect.any(String) } });
+    }
   });
 });

@@ -1,6 +1,6 @@
 -- Public enquiry surface: Contact requests, Newsletter subscriptions with a
--- suppression list, and SKU Waitlists. Written by the Shop server only
--- (service role); RLS stays on with no public policies.
+-- suppression list, and Waitlists for Whisky SKUs and Packs. Written by the
+-- Shop server only (service role); RLS stays on with no public policies.
 
 -- Contact request: no Account, no Customer-visible status or confirmation.
 create table contact_requests (
@@ -44,16 +44,20 @@ create table newsletter_suppressions (
 
 alter table newsletter_suppressions enable row level security;
 
--- Waitlist: one entry per email and SKU; cleared after the restock email.
+-- Waitlist: one entry per email and Whisky SKU or Pack (a Pack is its own
+-- SKU, stored in discovery_packs); cleared after the restock email.
 create table waitlist_entries (
   id uuid primary key default gen_random_uuid(),
-  sku_id uuid not null references skus (id) on delete cascade,
+  sku_id uuid references skus (id) on delete cascade,
+  pack_id uuid references discovery_packs (id) on delete cascade,
   email text not null,
   phone text,
   created_at timestamptz not null default now(),
+  constraint waitlist_entries_one_target check (num_nonnulls(sku_id, pack_id) = 1),
   constraint waitlist_entries_email_lower check (email = lower(email)),
   constraint waitlist_entries_phone_length check (phone is null or length(phone) <= 30),
-  constraint waitlist_entries_one_per_email_sku unique (sku_id, email)
+  constraint waitlist_entries_one_per_email_sku unique (sku_id, email),
+  constraint waitlist_entries_one_per_email_pack unique (pack_id, email)
 );
 
 alter table waitlist_entries enable row level security;

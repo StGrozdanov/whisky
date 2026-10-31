@@ -18,12 +18,14 @@ import type {
   StoredWaitlistEntry,
   StoredWhisky,
   StoredWhiskyPageExtras,
+  WaitlistTarget,
 } from "./types";
 
 /** In-memory store plus test hooks the back office (#26) will own later. */
 type InMemoryShopStore = ShopStore & {
   contactRequests(): StoredContactRequest[];
   setSkuQuantity(skuId: string, quantity: number): void;
+  setPackQuantity(packId: string, quantity: number): void;
 };
 
 type SeedWhisky = {
@@ -362,8 +364,19 @@ export function createInMemoryHomeStore(seed?: {
       newsletterSuppressions.set(suppression.email, suppression);
       newsletterSubscriptions.delete(suppression.email);
     },
-    async waitlistSku(skuId) {
-      const sku = skus.find((item) => item.id === skuId);
+    async waitlistItem(target) {
+      if (target.kind === "pack") {
+        const pack = discoveryPacks.find((item) => item.id === target.packId);
+        return pack
+          ? {
+              kind: "pack",
+              packId: pack.id,
+              title: pack.title,
+              quantity: pack.quantity,
+            }
+          : undefined;
+      }
+      const sku = skus.find((item) => item.id === target.skuId);
       const whisky = sku
         ? whiskies.find((item) => item.id === sku.whiskyId)
         : undefined;
@@ -371,6 +384,7 @@ export function createInMemoryHomeStore(seed?: {
         return undefined;
       }
       return {
+        kind: "sku",
         skuId: sku.id,
         whiskyId: whisky.id,
         whiskyName: whisky.name,
@@ -379,13 +393,16 @@ export function createInMemoryHomeStore(seed?: {
         quantity: sku.quantity,
       };
     },
-    async waitlistEntries(skuId) {
-      return waitlistEntries.filter((entry) => entry.skuId === skuId);
+    async waitlistEntries(target) {
+      return waitlistEntries.filter((entry) =>
+        sameWaitlistTarget(entry.target, target),
+      );
     },
     async addWaitlistEntry(entry) {
       const duplicate = waitlistEntries.some(
         (existing) =>
-          existing.skuId === entry.skuId && existing.email === entry.email,
+          sameWaitlistTarget(existing.target, entry.target) &&
+          existing.email === entry.email,
       );
       if (duplicate) {
         return "duplicate";
@@ -408,7 +425,19 @@ export function createInMemoryHomeStore(seed?: {
         skus[index] = { ...skus[index], quantity };
       }
     },
+    setPackQuantity(packId, quantity) {
+      const index = discoveryPacks.findIndex((pack) => pack.id === packId);
+      if (index >= 0) {
+        discoveryPacks[index] = { ...discoveryPacks[index], quantity };
+      }
+    },
   };
+}
+
+function sameWaitlistTarget(left: WaitlistTarget, right: WaitlistTarget) {
+  return left.kind === "sku"
+    ? right.kind === "sku" && left.skuId === right.skuId
+    : right.kind === "pack" && left.packId === right.packId;
 }
 
 function primarySkuId(skus: StoredSku[], whiskyId: string): string {

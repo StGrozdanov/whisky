@@ -291,3 +291,70 @@ test.describe("Ask us joins the Waitlist", () => {
     ).toHaveValue("guest@example.com");
   });
 });
+
+test.describe("Ask us on a Pack joins its Waitlist", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      window.localStorage.setItem("whiskyfinder.ageConfirmed", "true");
+    });
+  });
+
+  async function openPackWaitlist(page: Page) {
+    await page.goto("/packs");
+    const card = page.getByRole("article").filter({
+      has: page.getByRole("heading", { name: "Fixture Pack Sold Out" }),
+    });
+    const askUs = card.getByRole("button", { name: "Попитай ни" });
+    await expect(askUs).toHaveAttribute("aria-expanded", "false");
+    await askUs.click();
+    await expect(askUs).toHaveAttribute("aria-expanded", "true");
+    return {
+      card,
+      form: card.getByRole("form", { name: "Списък за изчакване" }),
+    };
+  }
+
+  test("signs up once per email and Pack, never as a reservation", async ({
+    page,
+  }) => {
+    const email = uniqueEmail("pack-waitlist");
+
+    let { card, form } = await openPackWaitlist(page);
+    await expect(
+      form.getByText(/когато сетът е отново в наличност/),
+    ).toBeVisible();
+    await form.getByRole("button", { name: "Уведоми ме" }).click();
+    await expect(form.getByText("Моля, въведете имейл.")).toBeVisible();
+
+    await form.getByRole("textbox", { name: "Имейл", exact: true }).fill(email);
+    await form.getByRole("button", { name: "Уведоми ме" }).click();
+    await expect(card.getByRole("status")).toContainText(
+      "Записахме ви. Ще ви изпратим един имейл, когато този сет е отново в наличност.",
+    );
+
+    ({ card, form } = await openPackWaitlist(page));
+    await form
+      .getByRole("textbox", { name: "Имейл", exact: true })
+      .fill(email.toUpperCase());
+    await form.getByRole("button", { name: "Уведоми ме" }).click();
+    await expect(card.getByRole("status")).toContainText(
+      "вече е в списъка за изчакване за този сет",
+    );
+  });
+
+  test("shows a retryable error when the Pack Waitlist cannot be saved", async ({
+    page,
+  }) => {
+    const { form } = await openPackWaitlist(page);
+    await page.setExtraHTTPHeaders({ "x-shop-fixture": "error" });
+
+    await form
+      .getByRole("textbox", { name: "Имейл", exact: true })
+      .fill("guest@example.com");
+    await form.getByRole("button", { name: "Уведоми ме" }).click();
+
+    await expect(form.getByRole("alert")).toContainText(
+      "Не успяхме да ви запишем",
+    );
+  });
+});

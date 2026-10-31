@@ -85,7 +85,7 @@ function createErrorStore(): ShopStore {
     async suppressNewsletterEmail() {
       throw new Error("Fixture Newsletter failure");
     },
-    async waitlistSku() {
+    async waitlistItem() {
       throw new Error("Fixture Waitlist failure");
     },
     async waitlistEntries() {

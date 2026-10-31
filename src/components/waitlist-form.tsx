@@ -1,23 +1,28 @@
 "use client";
 
 import { useActionState } from "react";
+import { joinWaitlist } from "@/app/waitlist/actions";
 import { FormField } from "@/components/form-field";
 import { FormStatus } from "@/components/form-status";
 import { Icon } from "@/components/icon";
-import type { EnquiryFormState, WaitlistField } from "@/utils/enquiry-forms";
-import { formatVolumeMl } from "@/utils/whisky-page-labels";
-import { joinWaitlist } from "../actions";
+import type { WaitlistTarget } from "@/shop/types";
+import {
+  type EnquiryFormState,
+  type WaitlistField,
+  waitlistTargetValue,
+} from "@/utils/enquiry-forms";
 
 const INITIAL_STATE: EnquiryFormState<WaitlistField> = { status: "idle" };
 
 type WaitlistFormProps = {
   id: string;
-  skuId: string;
-  volumeMl: number;
+  target: WaitlistTarget;
+  /** What the Customer waits for, e.g. "размерът 700 мл" or "сетът". */
+  subject: string;
 };
 
 /** Ask us: a Waitlist signup, never a reservation or Contact request. */
-export function WaitlistForm({ id, skuId, volumeMl }: WaitlistFormProps) {
+export function WaitlistForm({ id, target, subject }: WaitlistFormProps) {
   const [state, formAction, pending] = useActionState(
     joinWaitlist,
     INITIAL_STATE,
@@ -46,15 +51,16 @@ export function WaitlistForm({ id, skuId, volumeMl }: WaitlistFormProps) {
       noValidate
     >
       <p className="text-body-sm text-on-surface-variant">
-        Ще ви изпратим един имейл, когато размерът {formatVolumeMl(volumeMl)} е
-        отново в наличност. Записването не е резервация или поръчка и не изисква
-        плащане.
+        Ще ви изпратим един имейл, когато {subject} е отново в наличност.
+        Записването не е резервация или поръчка и не изисква плащане.
       </p>
       {state.status === "failed" ? (
         <FormStatus message={state.message} tone="error" />
       ) : null}
-      {errors.skuId ? <FormStatus message={errors.skuId} tone="error" /> : null}
-      <input name="skuId" type="hidden" value={skuId} />
+      {errors.target ? (
+        <FormStatus message={errors.target} tone="error" />
+      ) : null}
+      <input name="target" type="hidden" value={waitlistTargetValue(target)} />
       <FormField
         autoComplete="email"
         defaultValue={values?.email}

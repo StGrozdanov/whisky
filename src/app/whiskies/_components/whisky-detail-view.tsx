@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { buildCatalogueHref } from "@/app/catalogue/parse-catalogue-query";
 import { Icon } from "@/components/icon";
+import { WaitlistForm } from "@/components/waitlist-form";
 import type { WhiskyPage, WhiskyPageSku } from "@/shop/types";
 import { formatPriceEur } from "@/utils/format-price-eur";
 import {
@@ -17,7 +18,6 @@ import {
   skuIsInStock,
 } from "@/utils/whisky-page-labels";
 import { youtubeVideoId } from "@/utils/youtube-video-id";
-import { WaitlistForm } from "./waitlist-form";
 
 const WAITLIST_FORM_ID = "waitlist-form";
 
@@ -325,8 +325,8 @@ export function WhiskyDetailView({ page }: WhiskyDetailViewProps) {
                   <WaitlistForm
                     id={WAITLIST_FORM_ID}
                     key={selectedSku.id}
-                    skuId={selectedSku.id}
-                    volumeMl={selectedSku.volumeMl}
+                    subject={`размерът ${formatVolumeMl(selectedSku.volumeMl)}`}
+                    target={{ kind: "sku", skuId: selectedSku.id }}
                   />
                 ) : null}
 

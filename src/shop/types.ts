@@ -382,9 +382,9 @@ export type ShopStore = {
   suppressNewsletterEmail(
     suppression: StoredNewsletterSuppression,
   ): Promise<void>;
-  waitlistSku(skuId: string): Promise<StoredWaitlistSku | undefined>;
-  waitlistEntries(skuId: string): Promise<StoredWaitlistEntry[]>;
-  /** Returns "duplicate" when the email already has an entry for the SKU. */
+  waitlistItem(target: WaitlistTarget): Promise<StoredWaitlistItem | undefined>;
+  waitlistEntries(target: WaitlistTarget): Promise<StoredWaitlistEntry[]>;
+  /** Returns "duplicate" when the email already has an entry for the target. */
   addWaitlistEntry(
     entry: Omit<StoredWaitlistEntry, "id">,
   ): Promise<"added" | "duplicate">;
@@ -433,25 +433,33 @@ export type NewsletterSubscribeOutcome =
 
 export type NewsletterUnsubscribeOutcome = "unsubscribed" | "unknown-token";
 
-export type StoredWaitlistSku = {
-  skuId: string;
-  whiskyId: string;
-  whiskyName: string;
-  whiskyPublished: boolean;
-  volumeMl: number;
-  quantity: number;
-};
+/** What a Waitlist entry waits for: a Whisky SKU or a Pack (its own SKU). */
+export type WaitlistTarget =
+  | { kind: "sku"; skuId: string }
+  | { kind: "pack"; packId: string };
+
+export type StoredWaitlistItem =
+  | {
+      kind: "sku";
+      skuId: string;
+      whiskyId: string;
+      whiskyName: string;
+      whiskyPublished: boolean;
+      volumeMl: number;
+      quantity: number;
+    }
+  | { kind: "pack"; packId: string; title: string; quantity: number };
 
 export type StoredWaitlistEntry = {
   id: string;
-  skuId: string;
+  target: WaitlistTarget;
   email: string;
   phone: string | undefined;
   createdAt: Date;
 };
 
 export type WaitlistJoinInput = {
-  skuId: string;
+  target: WaitlistTarget;
   email: string;
   phone: string | undefined;
 };

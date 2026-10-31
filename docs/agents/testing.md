@@ -13,7 +13,7 @@ Three layers, three data sources. Do not leak concerns across them.
 
 - **Runner:** `npm run test:integration` (CI job “Integration Tests”, before nonprod deploy). Locally Playwright starts `next dev`, so a clean checkout needs no prior build. In CI the workflow builds first and Playwright starts `next start`.
 - **Scope:** Every catalogue (and similar) edge case that needs a rendered page: empty catalogue, no filter matches, Buy and Ask us, pagination, drafts hidden, retryable error page. The same applies to Promotions, Gifts, Discovery Packs, and the Award page.
-- **Enquiry forms:** Contact request, Newsletter, unsubscribe, and Ask us (Waitlist) validation, success, duplicate, and failure states. Server actions read `x-shop-fixture` too, so switch the header to `error` after the page loads to exercise a failed submit. Fixture shops keep state for the life of the dev server, so use a unique email per test.
+- **Enquiry forms:** Contact request, Newsletter, unsubscribe, and Ask us (Waitlist, on Whisky pages and Pack cards) validation, success, duplicate, and failure states. Server actions read `x-shop-fixture` too, so switch the header to `error` after the page loads to exercise a failed submit. Fixture shops keep state for the life of the dev server, so use a unique email per test.
 - **Data:** In-memory fixtures only. Never Supabase. The Next server starts with `SHOP_FIXTURE` set; `getShop` serves a fixture store. Per-test override via request header `x-shop-fixture` (`empty` | `mixed` | `error`) when fixtures are enabled.
 - **Config:** `playwright.integration.config.ts` — `testDir: ./integration`. Set `INTEGRATION_PORT` to run beside another checkout (default 3001).
 

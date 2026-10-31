@@ -13,9 +13,10 @@ import type {
   StoredNewsletterSubscription,
   StoredPromotion,
   StoredWaitlistEntry,
-  StoredWaitlistSku,
+  StoredWaitlistItem,
   StoredWhisky,
   StoredWhiskyRelatedSet,
+  WaitlistTarget,
 } from "./types";
 
 type WhiskyRow = {
@@ -664,13 +665,26 @@ type WaitlistSkuRow = {
   whiskies: { name: string; published: boolean } | null;
 };
 
+type WaitlistPackRow = {
+  id: string;
+  title: string;
+  quantity: number;
+};
+
 type WaitlistEntryRow = {
   id: string;
-  sku_id: string;
+  sku_id: string | null;
+  pack_id: string | null;
   email: string;
   phone: string | null;
   created_at: string;
 };
+
+function waitlistTargetColumn(target: WaitlistTarget) {
+  return target.kind === "sku"
+    ? { name: "sku_id", id: target.skuId }
+    : { name: "pack_id", id: target.packId };
+}
 
 const UNIQUE_VIOLATION = "23505";
 const UUID_PATTERN =
@@ -704,7 +718,7 @@ function createSupabaseEnquiryMethods(
   | "addNewsletterSubscription"
   | "newsletterSubscriptionByToken"
   | "suppressNewsletterEmail"
-  | "waitlistSku"
+  | "waitlistItem"
   | "waitlistEntries"
   | "addWaitlistEntry"
   | "removeWaitlistEntries"
@@ -811,14 +825,34 @@ function createSupabaseEnquiryMethods(
       throwOnError("Failed to remove Newsletter subscription", deleteError);
     },
 
-    async waitlistSku(skuId): Promise<StoredWaitlistSku | undefined> {
-      if (!UUID_PATTERN.test(skuId)) {
+    async waitlistItem(target): Promise<StoredWaitlistItem | undefined> {
+      const id = target.kind === "sku" ? target.skuId : target.packId;
+      if (!UUID_PATTERN.test(id)) {
         return undefined;
       }
+      if (target.kind === "pack") {
+        const { data, error } = await client
+          .from("discovery_packs")
+          .select("id, title, quantity")
+          .eq("id", id)
+          .maybeSingle();
+        throwOnError("Failed to load Waitlist Pack", error);
+        if (!data) {
+          return undefined;
+        }
+        const pack = data as WaitlistPackRow;
+        return {
+          kind: "pack",
+          packId: pack.id,
+          title: pack.title,
+          quantity: pack.quantity,
+        };
+      }
+
       const { data, error } = await client
         .from("skus")
         .select("id, whisky_id, quantity, volume_ml, whiskies(name, published)")
-        .eq("id", skuId)
+        .eq("id", id)
         .maybeSingle();
       throwOnError("Failed to load Waitlist SKU", error);
       if (!data) {
@@ -829,6 +863,7 @@ function createSupabaseEnquiryMethods(
         return undefined;
       }
       return {
+        kind: "sku",
         skuId: row.id,
         whiskyId: row.whisky_id,
         whiskyName: row.whiskies.name,
@@ -838,14 +873,15 @@ function createSupabaseEnquiryMethods(
       };
     },
 
-    async waitlistEntries(skuId): Promise<StoredWaitlistEntry[]> {
-      if (!UUID_PATTERN.test(skuId)) {
+    async waitlistEntries(target): Promise<StoredWaitlistEntry[]> {
+      const column = waitlistTargetColumn(target);
+      if (!UUID_PATTERN.test(column.id)) {
         return [];
       }
       const { data, error } = await client
         .from("waitlist_entries")
-        .select("id, sku_id, email, phone, created_at")
-        .eq("sku_id", skuId)
+        .select("id, sku_id, pack_id, email, phone, created_at")
+        .eq(column.name, column.id)
         .order("created_at", { ascending: true });
       const rows = listRows(
         "Failed to load Waitlist entries",
@@ -854,7 +890,9 @@ function createSupabaseEnquiryMethods(
       );
       return rows.map((row) => ({
         id: row.id,
-        skuId: row.sku_id,
+        target: row.pack_id
+          ? { kind: "pack", packId: row.pack_id }
+          : { kind: "sku", skuId: row.sku_id ? row.sku_id : "" },
         email: row.email,
         phone: row.phone ? row.phone : undefined,
         createdAt: new Date(row.created_at),
@@ -862,8 +900,9 @@ function createSupabaseEnquiryMethods(
     },
 
     async addWaitlistEntry(entry) {
+      const column = waitlistTargetColumn(entry.target);
       const { error } = await client.from("waitlist_entries").insert({
-        sku_id: entry.skuId,
+        [column.name]: column.id,
         email: entry.email,
         phone: entry.phone ? entry.phone : null,
         created_at: entry.createdAt.toISOString(),

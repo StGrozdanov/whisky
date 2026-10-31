@@ -27,12 +27,13 @@ import type {
   StoredHomeNewWhisky,
   StoredHousePick,
   StoredPromotion,
-  StoredWaitlistSku,
+  StoredWaitlistItem,
   StoredWhisky,
   StoredWhiskyPageExtras,
   WaitlistJoinInput,
   WaitlistJoinOutcome,
   WaitlistNotificationResult,
+  WaitlistTarget,
   WhiskyPage,
   WhiskyPageSku,
 } from "./types";
@@ -334,20 +335,20 @@ export function createShop(deps: ShopDeps) {
     },
 
     /**
-     * Ask us: a notification request for a SKU that is not In stock.
-     * Never a reservation, back-order, or Contact request.
+     * Ask us: a notification request for a Whisky SKU or Pack that is not In
+     * stock. Never a reservation, back-order, or Contact request.
      */
     async joinWaitlist(input: WaitlistJoinInput): Promise<WaitlistJoinOutcome> {
-      const sku = await deps.store.waitlistSku(input.skuId);
-      if (!sku?.whiskyPublished) {
+      const item = await deps.store.waitlistItem(input.target);
+      if (!item || !isPublicWaitlistItem(item)) {
         return "sku-not-found";
       }
-      if (sku.quantity > 0) {
+      if (item.quantity > 0) {
         return "sku-in-stock";
       }
 
       const added = await deps.store.addWaitlistEntry({
-        skuId: sku.skuId,
+        target: input.target,
         email: normalizeEmail(input.email),
         phone: optionalText(input.phone),
         createdAt: clock.now(),
@@ -356,25 +357,25 @@ export function createShop(deps: ShopDeps) {
     },
 
     /**
-     * Seam for the back office (#26): after a SKU returns In stock, email
-     * everyone on its Waitlist once and clear the entries that were sent.
+     * Seam for the back office (#26): after a Whisky SKU or Pack returns In
+     * stock, email everyone on its Waitlist once and clear the entries sent.
      */
-    async notifyRestockedSkuWaitlist(
-      skuId: string,
+    async notifyRestockedWaitlist(
+      target: WaitlistTarget,
     ): Promise<WaitlistNotificationResult> {
-      const sku = await deps.store.waitlistSku(skuId);
-      if (!sku?.whiskyPublished) {
+      const item = await deps.store.waitlistItem(target);
+      if (!item || !isPublicWaitlistItem(item)) {
         return { status: "sku-not-found" };
       }
-      if (sku.quantity <= 0) {
+      if (item.quantity <= 0) {
         return { status: "sku-not-in-stock" };
       }
 
-      const entries = await deps.store.waitlistEntries(skuId);
+      const entries = await deps.store.waitlistEntries(target);
       const sentIds: string[] = [];
       for (const entry of entries) {
         try {
-          await mailer.send(waitlistRestockEmail(sku, entry.email, siteUrl));
+          await mailer.send(waitlistRestockEmail(item, entry.email, siteUrl));
           sentIds.push(entry.id);
         } catch {
           // Keep the entry so a later run can retry it.
@@ -402,23 +403,43 @@ function optionalText(value: string | undefined): string | undefined {
   return trimmed === "" ? undefined : trimmed;
 }
 
+/** Packs have no draft state; a Whisky SKU is public only once published. */
+function isPublicWaitlistItem(item: StoredWaitlistItem): boolean {
+  return item.kind === "pack" || item.whiskyPublished;
+}
+
 function waitlistRestockEmail(
-  sku: StoredWaitlistSku,
+  item: StoredWaitlistItem,
   to: string,
   siteUrl: string,
 ) {
-  const whiskyUrl = `${siteUrl}/whiskies/${encodeURIComponent(sku.whiskyId)}`;
+  const copy =
+    item.kind === "sku"
+      ? {
+          name: `${item.whiskyName} (${item.volumeMl} мл)`,
+          asked: "за което ни попитахте",
+          url: `${siteUrl}/whiskies/${encodeURIComponent(item.whiskyId)}`,
+          notHeld: "бутилката не е запазена за вас",
+          listName: "този размер",
+        }
+      : {
+          name: item.title,
+          asked: "за който ни попитахте",
+          url: `${siteUrl}/packs`,
+          notHeld: "сетът не е запазен за вас",
+          listName: "този сет",
+        };
   return {
     to,
-    subject: `${sku.whiskyName} (${sku.volumeMl} мл) отново е в наличност`,
+    subject: `${copy.name} отново е в наличност`,
     text: [
       "Здравейте,",
       "",
-      `${sku.whiskyName} (${sku.volumeMl} мл), за което ни попитахте, отново е в наличност в Whisky Finder.`,
-      `Можете да го поръчате тук: ${whiskyUrl}`,
+      `${copy.name}, ${copy.asked}, отново е в наличност в Whisky Finder.`,
+      `Можете да го поръчате тук: ${copy.url}`,
       "",
-      "Това известие не е резервация — количеството е ограничено и бутилката не е запазена за вас.",
-      "Изпращаме го еднократно и премахнахме имейла ви от списъка за изчакване за този размер.",
+      `Това известие не е резервация — количеството е ограничено и ${copy.notHeld}.`,
+      `Изпращаме го еднократно и премахнахме имейла ви от списъка за изчакване за ${copy.listName}.`,
       "",
       "Whisky Finder",
       `${SHOP_CONTACT.email} · ${SHOP_CONTACT.phone}`,

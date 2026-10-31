@@ -6,9 +6,10 @@ import {
   type EnquiryFormState,
   parseWaitlistForm,
   type WaitlistField,
+  waitlistTargetValue,
 } from "@/utils/enquiry-forms";
 
-/** Ask us: join the Waitlist for a SKU that is not In stock. */
+/** Ask us: join the Waitlist for a Whisky SKU or Pack that is not In stock. */
 export async function joinWaitlist(
   _previous: EnquiryFormState<WaitlistField>,
   formData: FormData,
@@ -18,9 +19,13 @@ export async function joinWaitlist(
     return { status: "invalid", errors: parsed.errors, values: parsed.values };
   }
   const values = {
-    ...parsed.value,
+    target: waitlistTargetValue(parsed.value.target),
+    email: parsed.value.email,
     phone: parsed.value.phone ? parsed.value.phone : "",
   };
+  const subject =
+    parsed.value.target.kind === "pack" ? "този сет" : "този размер";
+  const subjectAtStart = subject.charAt(0).toUpperCase() + subject.slice(1);
 
   let outcome: WaitlistJoinOutcome;
   try {
@@ -38,29 +43,26 @@ export async function joinWaitlist(
   if (outcome === "sku-in-stock") {
     return {
       status: "failed",
-      message:
-        "Този размер вече е в наличност. Презаредете страницата, за да го поръчате.",
+      message: `${subjectAtStart} вече е в наличност. Презаредете страницата, за да го поръчате.`,
       values,
     };
   }
   if (outcome === "sku-not-found") {
     return {
       status: "failed",
-      message: "Този размер вече не се предлага.",
+      message: `${subjectAtStart} вече не се предлага.`,
       values,
     };
   }
   if (outcome === "already-joined") {
     return {
       status: "sent",
-      message:
-        "Този имейл вече е в списъка за изчакване за този размер. Ще ви пишем веднъж, когато е отново в наличност.",
+      message: `Този имейл вече е в списъка за изчакване за ${subject}. Ще ви пишем веднъж, когато е отново в наличност.`,
     };
   }
 
   return {
     status: "sent",
-    message:
-      "Записахме ви. Ще ви изпратим един имейл, когато този размер е отново в наличност. Това не е резервация или поръчка.",
+    message: `Записахме ви. Ще ви изпратим един имейл, когато ${subject} е отново в наличност. Това не е резервация или поръчка.`,
   };
 }
