@@ -1,6 +1,6 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const integrationPort = 3001;
+const integrationPort = Number(process.env.INTEGRATION_PORT ?? 3001);
 const localBaseURL = `http://127.0.0.1:${integrationPort}`;
 
 export default defineConfig({
