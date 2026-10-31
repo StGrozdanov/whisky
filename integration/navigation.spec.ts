@@ -40,6 +40,19 @@ test.describe("navigation, footer and Policy pages", () => {
     await expect(nav.getByRole("link", { name: "За нас" })).toHaveCount(0);
   });
 
+  test("every Main navigation destination has a page title", async ({
+    page,
+  }) => {
+    for (const link of MAIN_NAVIGATION) {
+      await page.goto(link.href);
+      await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
+    }
+    await page.goto("/catalogue");
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Селекция" }),
+    ).toBeAttached();
+  });
+
   test("Main navigation marks the current destination", async ({ page }) => {
     await page.goto("/promotions");
 
