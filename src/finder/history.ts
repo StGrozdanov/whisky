@@ -60,6 +60,7 @@ function toHistoryEntry(item: unknown): FinderHistoryEntry | undefined {
   const answers = parseFinderAnswers(record.answers);
   if (
     typeof record.ranAt !== "string" ||
+    Number.isNaN(Date.parse(record.ranAt)) ||
     !answers ||
     !Array.isArray(record.whiskies)
   ) {

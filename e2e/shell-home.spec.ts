@@ -66,8 +66,8 @@ test.describe("shell and home", () => {
       }),
     ).toBeVisible();
     await expect(
-      page.getByRole("button", { name: "открий вкусовия си профил" }),
-    ).toBeVisible();
+      page.getByRole("link", { name: "открий вкусовия си профил" }),
+    ).toHaveAttribute("href", "/finder");
 
     const footer = page.getByRole("contentinfo");
     await expect(

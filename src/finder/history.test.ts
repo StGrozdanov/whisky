@@ -94,6 +94,19 @@ describe("guest Finder history", () => {
     ).toEqual([entry("2026-10-31T10:00:00.000Z")]);
   });
 
+  it("drops a stored run whose time is not a date", () => {
+    expect(
+      readFinderHistory(
+        memoryStorage({
+          [FINDER_HISTORY_KEY]: JSON.stringify([
+            entry("not a date"),
+            entry("2026-10-31T10:00:00.000Z"),
+          ]),
+        }),
+      ),
+    ).toEqual([entry("2026-10-31T10:00:00.000Z")]);
+  });
+
   it("clears the history", () => {
     const storage = memoryStorage();
     recordFinderRun(storage, entry("2026-10-31T10:00:00.000Z"));
