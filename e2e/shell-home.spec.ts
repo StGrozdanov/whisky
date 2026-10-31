@@ -33,15 +33,15 @@ test.describe("shell and home", () => {
     const banner = page.getByRole("banner");
     await expect(banner.getByText("WHISKY FINDER")).toBeVisible();
     await expect(
-      banner.getByRole("link", { name: /0888888888/ }),
-    ).toHaveAttribute("href", "tel:0888888888");
+      banner.getByRole("link", { name: /0876473165/ }),
+    ).toHaveAttribute("href", "tel:0876473165");
     await expect(
       banner.getByText(
         "Безплатна доставка за цялата страна при поръчки над 50,00 €",
       ),
     ).toBeVisible();
     await expect(
-      banner.getByRole("link", { name: "Запитване за наличност" }),
+      banner.getByRole("link", { name: "Свържете се с нас" }),
     ).toHaveAttribute("href", "/contacts");
     await expect(
       banner.getByRole("combobox", { name: "Търсене" }),
@@ -73,8 +73,8 @@ test.describe("shell and home", () => {
 
     const footer = page.getByRole("contentinfo");
     await expect(
-      footer.getByRole("link", { name: /0888888888/ }),
-    ).toHaveAttribute("href", "tel:0888888888");
+      footer.getByRole("link", { name: /0876473165/ }),
+    ).toHaveAttribute("href", "tel:0876473165");
     await expect(footer.getByText("info@whiskyfinder.bg")).toBeVisible();
     await expect(
       footer.getByText("Доставка със Спиди в цялата страна"),

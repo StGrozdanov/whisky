@@ -4,15 +4,24 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Icon } from "@/components/icon";
+import {
+  isCurrentPath,
+  MAIN_NAVIGATION_LINKS,
+  SHOP_CONTACT,
+} from "@/components/site-links";
 import { SiteSearch } from "@/components/site-search";
 
 export function SiteHeader() {
   const pathname = usePathname();
-  const catalogueCurrent =
-    pathname === "/catalogue" || pathname.startsWith("/catalogue/");
 
   return (
     <header className="fixed top-0 z-50 w-full shadow-[0_4px_24px_rgba(0,0,0,0.6)]">
+      <a
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[60] focus:rounded-lg focus:bg-primary focus:px-space-md focus:py-2 focus:text-label-md focus:text-on-primary"
+        href="#main-content"
+      >
+        Към съдържанието
+      </a>
       <div className="border-b border-secondary/25 bg-surface-container-lowest">
         <div className="mx-auto flex max-w-[1440px] items-center justify-between gap-space-md px-gutter-mobile py-2.5 text-body-md text-on-surface-variant md:px-gutter">
           <div className="flex flex-wrap items-center gap-space-xs">
@@ -22,16 +31,16 @@ export function SiteHeader() {
               name="phone_in_talk"
             />
             <span>
-              Телефон за контакти:{" "}
+              <span className="hidden sm:inline">Телефон за контакти: </span>
               <a
                 className="cursor-pointer font-semibold hover:underline"
-                href="tel:0888888888"
+                href={`tel:${SHOP_CONTACT.phone}`}
               >
-                <span className="text-secondary">0888888888</span>
+                <span className="text-secondary">{SHOP_CONTACT.phone}</span>
               </a>
             </span>
-            <span className="mx-1 text-outline">•</span>
-            <span>
+            <span className="mx-1 hidden text-outline lg:inline">•</span>
+            <span className="hidden lg:inline">
               Безплатна доставка за цялата страна при поръчки над 50,00 €
             </span>
           </div>
@@ -41,7 +50,7 @@ export function SiteHeader() {
           >
             <span className="inline-flex items-center gap-1 text-secondary group-hover:text-primary">
               <Icon fontSize={20} name="mail" />
-              <span>Запитване за наличност</span>
+              <span>Свържете се с нас</span>
               <Icon fontSize={20} name="chevron_right" />
             </span>
           </Link>
@@ -50,9 +59,9 @@ export function SiteHeader() {
 
       <div className="bg-surface/90 backdrop-blur-xl">
         <div className="mx-auto flex max-w-[1440px] flex-wrap items-center justify-between gap-space-sm px-gutter-mobile py-space-sm md:gap-space-md md:px-gutter">
-          <div className="flex items-center gap-space-md">
+          <div className="flex min-w-0 items-center gap-space-md">
             <Link
-              className="group flex cursor-pointer items-center gap-space-sm"
+              className="group flex shrink-0 cursor-pointer items-center gap-space-sm"
               href="/"
             >
               <Image
@@ -68,23 +77,32 @@ export function SiteHeader() {
             </Link>
             <nav
               aria-label="Основна навигация"
-              className="ml-space-sm flex items-center gap-space-md sm:ml-space-md"
+              className="ml-space-sm min-w-0 overflow-x-auto sm:ml-space-md"
             >
-              <Link
-                aria-current={catalogueCurrent ? "page" : undefined}
-                className={
-                  catalogueCurrent
-                    ? "cursor-pointer text-label-md font-bold tracking-wider text-primary uppercase"
-                    : "cursor-pointer text-label-md tracking-wider text-on-surface-variant uppercase transition-colors hover:text-on-surface"
-                }
-                href="/catalogue"
-              >
-                Селекция
-              </Link>
+              <ul className="flex items-center gap-space-md whitespace-nowrap">
+                {MAIN_NAVIGATION_LINKS.map((link) => {
+                  const current = isCurrentPath(pathname, link.href);
+                  return (
+                    <li key={link.href}>
+                      <Link
+                        aria-current={current ? "page" : undefined}
+                        className={
+                          current
+                            ? "cursor-pointer text-label-md font-bold tracking-wider text-primary uppercase"
+                            : "cursor-pointer text-label-md tracking-wider text-on-surface-variant uppercase transition-colors hover:text-on-surface"
+                        }
+                        href={link.href}
+                      >
+                        {link.label}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
             </nav>
           </div>
 
-          <div className="flex w-full min-w-0 flex-1 items-center justify-end gap-space-sm sm:w-auto sm:max-w-md sm:gap-space-md">
+          <div className="flex w-full min-w-0 basis-full items-center justify-end gap-space-sm sm:gap-space-md lg:w-auto lg:max-w-md lg:flex-1">
             <div className="w-full min-w-0 max-w-xs">
               <SiteSearch />
             </div>

@@ -1,6 +1,9 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const integrationPort = 3001;
+// INTEGRATION_PORT lets parallel worktrees run the suite side by side.
+const integrationPort = process.env.INTEGRATION_PORT
+  ? Number(process.env.INTEGRATION_PORT)
+  : 3001;
 const localBaseURL = `http://127.0.0.1:${integrationPort}`;
 
 export default defineConfig({

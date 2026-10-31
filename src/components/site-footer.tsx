@@ -2,13 +2,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { BrandIcon } from "@/components/brand-icon";
 import { Icon } from "@/components/icon";
-
-const POLICY_LINKS = [
-  { href: "#", label: "Доставка и плащане" },
-  { href: "#", label: "Общи условия" },
-  { href: "#", label: "Защита на личните данни (GDPR)" },
-  { href: "#", label: "Често задавани въпроси (ЧЗВ)" },
-] as const;
+import { NewsletterSignup } from "@/components/newsletter-signup";
+import {
+  MAIN_NAVIGATION_LINKS,
+  POLICY_LINKS,
+  SHOP_CONTACT,
+} from "@/components/site-links";
 
 const SOCIAL_LINKS = [
   { label: "Facebook", icon: "facebook" },
@@ -17,12 +16,14 @@ const SOCIAL_LINKS = [
   { label: "YouTube", icon: "youtube" },
 ] as const;
 
+const FOOTER_LINK_CLASS = "cursor-pointer transition-colors hover:text-primary";
+
 export function SiteFooter() {
   return (
     <footer className="w-full bg-surface-container-lowest text-on-surface-variant">
       <div className="mx-auto max-w-[1440px] px-gutter-mobile pt-space-xl pb-space-lg md:px-gutter">
         <div className="mb-space-xl grid grid-cols-1 gap-space-xl md:grid-cols-2 lg:grid-cols-12">
-          <div className="flex flex-col justify-between space-y-space-md lg:col-span-4">
+          <div className="flex flex-col justify-between space-y-space-md lg:col-span-3">
             <div className="space-y-space-sm">
               <Link
                 className="group flex cursor-pointer items-center gap-space-sm"
@@ -42,13 +43,13 @@ export function SiteFooter() {
               <p className="max-w-sm pt-1 text-body-sm text-on-surface-variant">
                 Селекция от уискита с гарантиран автентичен произход.
               </p>
-              <button
+              <Link
                 className="inline-flex cursor-pointer items-center gap-1 pt-1 text-label-md text-secondary transition-colors hover:text-primary"
-                type="button"
+                href="/about"
               >
                 Повече за нас
                 <Icon fontSize={16} name="arrow_forward" />
-              </button>
+              </Link>
             </div>
             <div className="pt-space-xs">
               <span className="mb-2 block text-label-sm text-outline uppercase">
@@ -80,10 +81,10 @@ export function SiteFooter() {
                 </span>
                 <a
                   className="group mt-0.5 cursor-pointer font-semibold"
-                  href="tel:0888888888"
+                  href={`tel:${SHOP_CONTACT.phone}`}
                 >
                   <span className="text-on-surface group-hover:text-primary">
-                    0888888888
+                    {SHOP_CONTACT.phone}
                   </span>
                 </a>
               </div>
@@ -91,14 +92,14 @@ export function SiteFooter() {
                 <span className="text-technical-data text-outline">Имейл</span>
                 <a
                   className="group mt-0.5 cursor-pointer font-semibold"
-                  href="mailto:info@whiskyfinder.bg"
+                  href={`mailto:${SHOP_CONTACT.email}`}
                 >
                   <span className="text-on-surface group-hover:text-primary">
-                    info@whiskyfinder.bg
+                    {SHOP_CONTACT.email}
                   </span>
                 </a>
               </div>
-              <div className="flex flex-col gap-space-sm pt-2">
+              <div className="pt-2">
                 <Link
                   className="group inline-flex cursor-pointer items-center gap-2 text-body-sm text-on-surface-variant transition-colors hover:text-primary"
                   href="/contacts"
@@ -110,40 +111,53 @@ export function SiteFooter() {
                   />
                   Форма за контакти
                 </Link>
-                <Link
-                  className="group inline-flex cursor-pointer items-center gap-2 text-body-sm text-on-surface-variant transition-colors hover:text-primary"
-                  href="/contacts"
-                >
-                  <Icon
-                    className="text-secondary group-hover:text-primary"
-                    fontSize={18}
-                    name="mail"
-                  />
-                  Запитване за наличност
-                </Link>
               </div>
             </div>
           </div>
 
-          <div className="flex flex-col space-y-space-md lg:col-span-2">
-            <h2 className="mb-space-md text-label-md text-secondary uppercase">
+          <nav
+            aria-labelledby="footer-useful-links-heading"
+            className="flex flex-col space-y-space-md lg:col-span-2"
+          >
+            <h2
+              className="mb-space-md text-label-md text-secondary uppercase"
+              id="footer-useful-links-heading"
+            >
+              Полезни връзки
+            </h2>
+            <ul className="space-y-2 text-body-sm">
+              {MAIN_NAVIGATION_LINKS.map((link) => (
+                <li key={link.href}>
+                  <Link className={FOOTER_LINK_CLASS} href={link.href}>
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+
+          <nav
+            aria-labelledby="footer-policies-heading"
+            className="flex flex-col space-y-space-md lg:col-span-2"
+          >
+            <h2
+              className="mb-space-md text-label-md text-secondary uppercase"
+              id="footer-policies-heading"
+            >
               Информация и Политики
             </h2>
             <ul className="space-y-2 text-body-sm">
               {POLICY_LINKS.map((link) => (
-                <li key={link.label}>
-                  <a
-                    className="cursor-pointer transition-colors hover:text-primary"
-                    href={link.href}
-                  >
+                <li key={link.href}>
+                  <Link className={FOOTER_LINK_CLASS} href={link.href}>
                     {link.label}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
-          </div>
+          </nav>
 
-          <div className="flex flex-col space-y-space-sm lg:col-span-4">
+          <div className="flex flex-col space-y-space-sm lg:col-span-3">
             <h2 className="mb-space-md text-label-md text-secondary uppercase">
               Абонирай се за нашия бюлетин
             </h2>
@@ -151,21 +165,7 @@ export function SiteFooter() {
               Получавай първи достъп до лимитирани бъчви, отворени сесии и
               дегустационни вечери.
             </p>
-            <form className="flex flex-col gap-space-xs">
-              <input
-                className="rounded-lg border border-outline-variant/30 bg-surface-container-low px-space-sm py-2 text-body-sm text-on-surface placeholder:text-on-surface-variant/40 focus:ring-1 focus:ring-primary focus:outline-none"
-                placeholder="Въведете вашия имейл..."
-                readOnly
-                type="email"
-              />
-              <button
-                className="mt-2 flex cursor-pointer items-center justify-center gap-1 rounded-lg bg-primary px-space-md py-2.5 text-label-md font-bold tracking-wider text-on-primary uppercase shadow-sm transition-all hover:bg-primary-fixed"
-                type="button"
-              >
-                Абонирай се
-                <Icon fontSize={16} name="send" />
-              </button>
-            </form>
+            <NewsletterSignup />
           </div>
         </div>
 
