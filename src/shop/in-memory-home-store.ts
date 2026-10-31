@@ -5,16 +5,26 @@ import type {
   ShopStore,
   StoredAward,
   StoredCatalogueEntry,
+  StoredContactRequest,
   StoredDiscoveryPack,
   StoredDiscoveryPackItem,
   StoredGiftSelection,
   StoredHomeNewWhisky,
   StoredHousePick,
+  StoredNewsletterSubscription,
+  StoredNewsletterSuppression,
   StoredPromotion,
   StoredSku,
+  StoredWaitlistEntry,
   StoredWhisky,
   StoredWhiskyPageExtras,
 } from "./types";
+
+/** In-memory store plus test hooks the back office (#26) will own later. */
+type InMemoryShopStore = ShopStore & {
+  contactRequests(): StoredContactRequest[];
+  setSkuQuantity(skuId: string, quantity: number): void;
+};
 
 type SeedWhisky = {
   id: string;
@@ -127,7 +137,9 @@ export function createInMemoryHomeStore(seed?: {
   discoveryPacks?: SeedDiscoveryPack[];
   giftSelections?: StoredGiftSelection[];
   whiskyPages?: SeedWhiskyPageExtras[];
-}): ShopStore {
+  newsletterSubscriptions?: StoredNewsletterSubscription[];
+  newsletterSuppressions?: StoredNewsletterSuppression[];
+}): InMemoryShopStore {
   const whiskyPagesById = new Map<string, StoredWhiskyPageExtras>();
   if (seed?.whiskyPages) {
     for (const page of seed.whiskyPages) {
@@ -247,6 +259,25 @@ export function createInMemoryHomeStore(seed?: {
     page.awards.map((award) => ({ ...award, whiskyId: page.whiskyId })),
   );
 
+  const contactRequests: StoredContactRequest[] = [];
+  const newsletterSubscriptions = new Map<
+    string,
+    StoredNewsletterSubscription
+  >();
+  for (const subscription of seed?.newsletterSubscriptions
+    ? seed.newsletterSubscriptions
+    : []) {
+    newsletterSubscriptions.set(subscription.email, subscription);
+  }
+  const newsletterSuppressions = new Map<string, StoredNewsletterSuppression>();
+  for (const suppression of seed?.newsletterSuppressions
+    ? seed.newsletterSuppressions
+    : []) {
+    newsletterSuppressions.set(suppression.email, suppression);
+  }
+  const waitlistEntries: StoredWaitlistEntry[] = [];
+  let nextWaitlistEntryId = 1;
+
   return {
     async allWhiskies() {
       return whiskies;
@@ -297,6 +328,79 @@ export function createInMemoryHomeStore(seed?: {
     },
     async awards() {
       return awards;
+    },
+
+    // Enquiries: Contact requests, Newsletter subscriptions, and Waitlists.
+    async saveContactRequest(request) {
+      contactRequests.push(request);
+    },
+    contactRequests() {
+      return [...contactRequests];
+    },
+    async newsletterSubscriptions() {
+      return [...newsletterSubscriptions.values()];
+    },
+    async newsletterSuppressions() {
+      return [...newsletterSuppressions.values()];
+    },
+    async saveNewsletterSubscription(subscription) {
+      newsletterSubscriptions.set(subscription.email, subscription);
+      newsletterSuppressions.delete(subscription.email);
+    },
+    async newsletterSubscriptionByToken(unsubscribeToken) {
+      return [...newsletterSubscriptions.values()].find(
+        (subscription) => subscription.unsubscribeToken === unsubscribeToken,
+      );
+    },
+    async suppressNewsletterEmail(suppression) {
+      newsletterSuppressions.set(suppression.email, suppression);
+      newsletterSubscriptions.delete(suppression.email);
+    },
+    async waitlistSku(skuId) {
+      const sku = skus.find((item) => item.id === skuId);
+      const whisky = sku
+        ? whiskies.find((item) => item.id === sku.whiskyId)
+        : undefined;
+      if (!sku || !whisky) {
+        return undefined;
+      }
+      return {
+        skuId: sku.id,
+        whiskyId: whisky.id,
+        whiskyName: whisky.name,
+        whiskyPublished: whisky.published,
+        volumeMl: sku.volumeMl,
+        quantity: sku.quantity,
+      };
+    },
+    async waitlistEntries(skuId) {
+      return waitlistEntries.filter((entry) => entry.skuId === skuId);
+    },
+    async addWaitlistEntry(entry) {
+      const duplicate = waitlistEntries.some(
+        (existing) =>
+          existing.skuId === entry.skuId && existing.email === entry.email,
+      );
+      if (duplicate) {
+        return "duplicate";
+      }
+      waitlistEntries.push({
+        ...entry,
+        id: `waitlist-${nextWaitlistEntryId}`,
+      });
+      nextWaitlistEntryId += 1;
+      return "added";
+    },
+    async removeWaitlistEntries(ids) {
+      const removed = new Set(ids);
+      const kept = waitlistEntries.filter((entry) => !removed.has(entry.id));
+      waitlistEntries.splice(0, waitlistEntries.length, ...kept);
+    },
+    setSkuQuantity(skuId, quantity) {
+      const index = skus.findIndex((sku) => sku.id === skuId);
+      if (index >= 0) {
+        skus[index] = { ...skus[index], quantity };
+      }
     },
   };
 }
