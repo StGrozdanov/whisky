@@ -3,7 +3,7 @@ export const MAIN_NAVIGATION_LINKS = [
   { href: "/catalogue", label: "Селекция" },
   { href: "/gifts", label: "Подаръци" },
   { href: "/promotions", label: "Промоции" },
-  { href: "/awards", label: "Награди" },
+  { href: "/awards", label: "Награждавани" },
   { href: "/club", label: "Клуб" },
   { href: "/finder", label: "Finder" },
 ] as const;

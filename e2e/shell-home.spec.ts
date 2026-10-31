@@ -33,8 +33,8 @@ test.describe("shell and home", () => {
     const banner = page.getByRole("banner");
     await expect(banner.getByText("WHISKY FINDER")).toBeVisible();
     await expect(
-      banner.getByRole("link", { name: /0876473165/ }),
-    ).toHaveAttribute("href", "tel:0876473165");
+      banner.getByRole("link", { name: /0888888888/ }),
+    ).toHaveAttribute("href", "tel:0888888888");
     await expect(
       banner.getByText("Доставка със Спиди до адрес или офис в цялата страна"),
     ).toBeVisible();
@@ -71,8 +71,8 @@ test.describe("shell and home", () => {
 
     const footer = page.getByRole("contentinfo");
     await expect(
-      footer.getByRole("link", { name: /0876473165/ }),
-    ).toHaveAttribute("href", "tel:0876473165");
+      footer.getByRole("link", { name: /0888888888/ }),
+    ).toHaveAttribute("href", "tel:0888888888");
     await expect(footer.getByText("info@whiskyfinder.bg")).toBeVisible();
     await expect(
       footer.getByText("Доставка със Спиди в цялата страна"),

@@ -16,6 +16,13 @@ export const metadata: Metadata = {
 export default async function GiftsPage() {
   const shop = await getShop();
   const gifts = await shop.giftPageEntries();
+  // Grouped by type so a tall Pack card never sits beside a Whisky card.
+  const whiskies = gifts.flatMap((gift) =>
+    gift.kind === "whisky" ? [gift.whisky] : [],
+  );
+  const packs = gifts.flatMap((gift) =>
+    gift.kind === "pack" ? [gift.pack] : [],
+  );
 
   return (
     <DiscoveryPageLayout
@@ -29,19 +36,31 @@ export default async function GiftsPage() {
           title="Подборката от подаръци се обновява"
         />
       ) : (
-        <div className="grid grid-cols-1 gap-space-md sm:grid-cols-2 lg:grid-cols-4">
-          {gifts.map((gift) =>
-            gift.kind === "whisky" ? (
-              <CatalogueWhiskyCard
-                card={gift.whisky}
-                key={`whisky-${gift.whisky.id}`}
-              />
-            ) : (
-              <div className="sm:col-span-2" key={`pack-${gift.pack.id}`}>
-                <DiscoveryPackCard headingLevel={2} pack={gift.pack} />
-              </div>
-            ),
-          )}
+        <div className="flex flex-col gap-space-xl">
+          {whiskies.length > 0 ? (
+            <ul
+              aria-label="Уиски за подарък"
+              className="grid grid-cols-1 gap-space-md sm:grid-cols-2 lg:grid-cols-4"
+            >
+              {whiskies.map((whisky) => (
+                <li key={whisky.id}>
+                  <CatalogueWhiskyCard card={whisky} />
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          {packs.length > 0 ? (
+            <ul
+              aria-label="Сетове за подарък"
+              className="grid grid-cols-1 gap-space-xl lg:grid-cols-2"
+            >
+              {packs.map((pack) => (
+                <li key={pack.id}>
+                  <DiscoveryPackCard headingLevel={2} pack={pack} />
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </div>
       )}
     </DiscoveryPageLayout>

@@ -9,7 +9,7 @@ const MAIN_NAVIGATION = [
   { name: "Селекция", path: "/catalogue" },
   { name: "Подаръци", path: "/gifts" },
   { name: "Промоции", path: "/promotions" },
-  { name: "Награди", path: "/awards" },
+  { name: "Награждавани", path: "/awards" },
   { name: "Клуб", path: "/club" },
 ];
 

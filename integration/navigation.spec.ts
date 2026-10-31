@@ -4,7 +4,7 @@ const MAIN_NAVIGATION = [
   { name: "Селекция", href: "/catalogue" },
   { name: "Подаръци", href: "/gifts" },
   { name: "Промоции", href: "/promotions" },
-  { name: "Награди", href: "/awards" },
+  { name: "Награждавани", href: "/awards" },
   { name: "Клуб", href: "/club" },
   { name: "Finder", href: "/finder" },
 ];
@@ -91,14 +91,14 @@ test.describe("navigation, footer and Policy pages", () => {
 
     const banner = page.getByRole("banner");
     await expect(
-      banner.getByRole("link", { name: /0876473165/ }),
-    ).toHaveAttribute("href", "tel:0876473165");
+      banner.getByRole("link", { name: /0888888888/ }),
+    ).toHaveAttribute("href", "tel:0888888888");
     await expect(
       banner.getByRole("link", { name: "Свържете се с нас" }),
     ).toHaveAttribute("href", "/contacts");
     await expect(
-      page.getByRole("contentinfo").getByRole("link", { name: /0876473165/ }),
-    ).toHaveAttribute("href", "tel:0876473165");
+      page.getByRole("contentinfo").getByRole("link", { name: /0888888888/ }),
+    ).toHaveAttribute("href", "tel:0888888888");
 
     await page.keyboard.press("Tab");
     const skip = page.getByRole("link", { name: "Към съдържанието" });
@@ -158,8 +158,8 @@ test.describe("navigation, footer and Policy pages", () => {
       page.getByRole("heading", { level: 1, name: "За нас" }),
     ).toBeVisible();
     await expect(
-      page.getByRole("main").getByRole("link", { name: "0876473165" }),
-    ).toHaveAttribute("href", "tel:0876473165");
+      page.getByRole("main").getByRole("link", { name: "0888888888" }),
+    ).toHaveAttribute("href", "tel:0888888888");
     await expect(
       page
         .getByRole("main")

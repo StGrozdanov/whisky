@@ -60,11 +60,6 @@ export default function ContactsPage() {
             </a>
           </p>
           <p className="text-body-sm text-on-surface-variant">
-            Търсите размер, който не е в наличност? Използвайте „Попитай ни“ на
-            страницата на уискито — ще ви пишем веднъж, когато е отново в
-            наличност.
-          </p>
-          <p className="text-body-sm text-on-surface-variant">
             За отказ от поръчка вижте{" "}
             <Link
               className="text-secondary underline hover:text-primary"
