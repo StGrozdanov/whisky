@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { buildCatalogueHref } from "@/app/catalogue/parse-catalogue-query";
 import { Icon } from "@/components/icon";
+import { WaitlistForm } from "@/components/waitlist-form";
 import type { WhiskyPage, WhiskyPageSku } from "@/shop/types";
 import { formatPriceEur } from "@/utils/format-price-eur";
 import {
@@ -18,6 +19,8 @@ import {
 } from "@/utils/whisky-page-labels";
 import { youtubeVideoId } from "@/utils/youtube-video-id";
 
+const WAITLIST_FORM_ID = "waitlist-form";
+
 type WhiskyDetailViewProps = {
   page: WhiskyPage;
 };
@@ -27,6 +30,7 @@ export function WhiskyDetailView({ page }: WhiskyDetailViewProps) {
   const [selectedSkuId, setSelectedSkuId] = useState(page.defaultSkuId);
   const [quantity, setQuantity] = useState(1);
   const [videoPlaying, setVideoPlaying] = useState(false);
+  const [waitlistOpen, setWaitlistOpen] = useState(false);
 
   const selectedSku = useMemo(() => {
     const found = page.skus.find((sku) => sku.id === selectedSkuId);
@@ -303,7 +307,12 @@ export function WhiskyDetailView({ page }: WhiskyDetailViewProps) {
                     </>
                   ) : (
                     <button
+                      aria-controls={
+                        waitlistOpen ? WAITLIST_FORM_ID : undefined
+                      }
+                      aria-expanded={waitlistOpen}
                       className="flex w-full flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border border-outline-variant bg-transparent px-space-md py-3 text-label-lg uppercase tracking-wider text-on-surface transition-colors hover:border-secondary hover:bg-surface-container"
+                      onClick={() => setWaitlistOpen((open) => !open)}
                       type="button"
                     >
                       <Icon fontSize={20} name="mail" />
@@ -311,6 +320,15 @@ export function WhiskyDetailView({ page }: WhiskyDetailViewProps) {
                     </button>
                   )}
                 </div>
+
+                {!inStock && waitlistOpen ? (
+                  <WaitlistForm
+                    id={WAITLIST_FORM_ID}
+                    key={selectedSku.id}
+                    subject={`размерът ${formatVolumeMl(selectedSku.volumeMl)}`}
+                    target={{ kind: "sku", skuId: selectedSku.id }}
+                  />
+                ) : null}
 
                 <div className="flex flex-wrap items-center justify-between gap-space-sm pt-space-xs text-technical-data text-on-surface-variant">
                   <div className="flex items-center gap-2">

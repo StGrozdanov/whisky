@@ -25,6 +25,7 @@
   --color-tertiary: #f9bb63;
   --color-tertiary-container: #bd8634;
   --color-on-tertiary-container: #3c2500;
+  --color-error: #ffb4ab;
 
   --spacing-gutter: 1.5rem;
   --spacing-gutter-mobile: 1rem;
@@ -124,5 +125,11 @@
   img {
     max-width: 100%;
     display: block;
+  }
+
+  /* Accessibility baseline: keyboard focus is always visible. */
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
   }
 }

@@ -76,6 +76,14 @@ export const SEARCH_HIT_FILTER = {
   "name" | "distillery" | "country" | "region"
 >;
 
+/** A published Catalogue Whisky offered to the Finder's live research. */
+export type FinderCandidate = {
+  whisky: CatalogueCard;
+  distillery: string;
+  country: string;
+  region: string | undefined;
+};
+
 export type HomeWhisky = {
   id: string;
   name: string;
@@ -354,8 +362,119 @@ export type ShopStore = {
   discoveryPacks(): Promise<StoredDiscoveryPack[]>;
   giftSelections(): Promise<StoredGiftSelection[]>;
   awards(): Promise<StoredAward[]>;
+
+  // Enquiries: Contact requests, Newsletter subscriptions, and Waitlists.
+  saveContactRequest(request: StoredContactRequest): Promise<void>;
+  newsletterSubscriptions(): Promise<StoredNewsletterSubscription[]>;
+  newsletterSuppressions(): Promise<StoredNewsletterSuppression[]>;
+  isNewsletterEmailSuppressed(email: string): Promise<boolean>;
+  /**
+   * Returns "duplicate" and leaves the stored consent evidence and
+   * unsubscribe token untouched when the email is already subscribed.
+   */
+  addNewsletterSubscription(
+    subscription: StoredNewsletterSubscription,
+  ): Promise<"added" | "duplicate">;
+  newsletterSubscriptionByToken(
+    unsubscribeToken: string,
+  ): Promise<StoredNewsletterSubscription | undefined>;
+  /** Adds the email to the suppression list and removes its subscription. */
+  suppressNewsletterEmail(
+    suppression: StoredNewsletterSuppression,
+  ): Promise<void>;
+  waitlistItem(target: WaitlistTarget): Promise<StoredWaitlistItem | undefined>;
+  waitlistEntries(target: WaitlistTarget): Promise<StoredWaitlistEntry[]>;
+  /** Returns "duplicate" when the email already has an entry for the target. */
+  addWaitlistEntry(
+    entry: Omit<StoredWaitlistEntry, "id">,
+  ): Promise<"added" | "duplicate">;
+  /**
+   * Atomically removes and returns the target's entries, oldest first, so
+   * overlapping restock runs never receive the same entry.
+   */
+  claimWaitlistEntries(target: WaitlistTarget): Promise<StoredWaitlistEntry[]>;
 };
 
 export type Clock = {
   now(): Date;
 };
+
+// Enquiries: Contact requests, Newsletter subscriptions, and Waitlists.
+
+export type ContactRequestInput = {
+  name: string;
+  email: string;
+  phone: string | undefined;
+  subject: string;
+  message: string;
+};
+
+export type StoredContactRequest = ContactRequestInput & {
+  receivedAt: Date;
+};
+
+export type StoredNewsletterSubscription = {
+  email: string;
+  consentedAt: Date;
+  policyVersion: string;
+  unsubscribeToken: string;
+};
+
+export type StoredNewsletterSuppression = {
+  email: string;
+  suppressedAt: Date;
+};
+
+export type NewsletterRecipient = {
+  email: string;
+  unsubscribeUrl: string;
+};
+
+export type NewsletterSubscribeOutcome =
+  | "subscribed"
+  | "already-subscribed"
+  | "suppressed";
+
+export type NewsletterUnsubscribeOutcome = "unsubscribed" | "unknown-token";
+
+/** What a Waitlist entry waits for: a Whisky SKU or a Pack (its own SKU). */
+export type WaitlistTarget =
+  | { kind: "sku"; skuId: string }
+  | { kind: "pack"; packId: string };
+
+export type StoredWaitlistItem =
+  | {
+      kind: "sku";
+      skuId: string;
+      whiskyId: string;
+      whiskyName: string;
+      whiskyPublished: boolean;
+      volumeMl: number;
+      quantity: number;
+    }
+  | { kind: "pack"; packId: string; title: string; quantity: number };
+
+export type StoredWaitlistEntry = {
+  id: string;
+  target: WaitlistTarget;
+  email: string;
+  phone: string | undefined;
+  createdAt: Date;
+};
+
+export type WaitlistJoinInput = {
+  target: WaitlistTarget;
+  email: string;
+  phone: string | undefined;
+};
+
+export type WaitlistJoinOutcome =
+  | "joined"
+  | "already-joined"
+  | "sku-not-found"
+  | "sku-in-stock";
+
+export type WaitlistNotificationResult =
+  | { status: "sku-not-found" }
+  | { status: "sku-not-in-stock" }
+  | { status: "notified"; sent: number; failed: number };

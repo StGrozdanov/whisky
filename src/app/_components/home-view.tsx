@@ -320,13 +320,13 @@ function FinderCta() {
           <p className="mb-space-xl max-w-2xl text-body-lg text-on-surface-variant">
             Трябват ни 5 кратки въпроса, относно вкусовия ви профил
           </p>
-          <button
+          <Link
             className="flex cursor-pointer items-center gap-2 rounded-xl bg-primary-container px-8 py-4 text-label-lg font-bold text-on-primary uppercase tracking-wider shadow-lg transition-all hover:scale-105 hover:bg-primary"
-            type="button"
+            href="/finder"
           >
             <span>открий вкусовия си профил</span>
             <Icon fontSize={18} name="arrow_forward" />
-          </button>
+          </Link>
         </div>
       </div>
     </section>

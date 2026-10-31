@@ -36,7 +36,10 @@ export default function RootLayout({
       <body className="bg-surface font-body text-body-md text-on-surface antialiased">
         <AgeGate />
         <SiteHeader />
-        <main className="min-h-[calc(100vh-112px)] w-full bg-surface pt-28">
+        <main
+          className="min-h-[calc(100vh-112px)] w-full bg-surface pt-44 lg:pt-28"
+          id="main-content"
+        >
           {children}
         </main>
         <SiteFooter />

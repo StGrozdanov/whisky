@@ -85,6 +85,25 @@ test.describe("guest discovery pages", () => {
     await expect(page).toHaveURL(/\/promotions$/);
   });
 
+  test("Gifts group Whiskies and Packs so card heights stay even", async ({
+    page,
+  }) => {
+    await page.goto("/gifts");
+
+    const whiskies = page.getByRole("list", { name: "Уиски за подарък" });
+    const packs = page.getByRole("list", { name: "Сетове за подарък" });
+    await expect(
+      whiskies.getByRole("heading", { name: "Fixture Buy Bottle" }),
+    ).toBeVisible();
+    await expect(whiskies.getByRole("button", { name: /Сет/ })).toHaveCount(0);
+    await expect(
+      packs.getByRole("heading", { name: "Fixture Pack In Stock" }),
+    ).toBeVisible();
+    await expect(
+      packs.getByRole("heading", { name: "Fixture Buy Bottle" }),
+    ).toHaveCount(0);
+  });
+
   test("Gifts list selected Whiskies and Packs and hide drafts", async ({
     page,
   }) => {

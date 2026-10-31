@@ -10,9 +10,13 @@ import type {
   StoredGiftSelection,
   StoredHomeNewWhisky,
   StoredHousePick,
+  StoredNewsletterSubscription,
   StoredPromotion,
+  StoredWaitlistEntry,
+  StoredWaitlistItem,
   StoredWhisky,
   StoredWhiskyRelatedSet,
+  WaitlistTarget,
 } from "./types";
 
 type WhiskyRow = {
@@ -634,6 +638,308 @@ export function createSupabaseHomeStore(client: SupabaseClient): ShopStore {
     discoveryPacks: loadDiscoveryPacks,
     giftSelections: loadGiftSelections,
     awards: loadAwards,
+    ...createSupabaseEnquiryMethods(client),
+  };
+}
+
+// Enquiries: Contact requests, Newsletter subscriptions, and Waitlists.
+// Never cached: each call reads or writes the current rows.
+
+type NewsletterSubscriptionRow = {
+  email: string;
+  consented_at: string;
+  policy_version: string;
+  unsubscribe_token: string;
+};
+
+type NewsletterSuppressionRow = {
+  email: string;
+  suppressed_at: string;
+};
+
+type WaitlistSkuRow = {
+  id: string;
+  whisky_id: string;
+  quantity: number;
+  volume_ml: number;
+  whiskies: { name: string; published: boolean } | null;
+};
+
+type WaitlistPackRow = {
+  id: string;
+  title: string;
+  quantity: number;
+};
+
+type WaitlistEntryRow = {
+  id: string;
+  sku_id: string | null;
+  pack_id: string | null;
+  email: string;
+  phone: string | null;
+  created_at: string;
+};
+
+function toWaitlistEntry(row: WaitlistEntryRow): StoredWaitlistEntry {
+  return {
+    id: row.id,
+    target: row.pack_id
+      ? { kind: "pack", packId: row.pack_id }
+      : { kind: "sku", skuId: row.sku_id ? row.sku_id : "" },
+    email: row.email,
+    phone: row.phone ? row.phone : undefined,
+    createdAt: new Date(row.created_at),
+  };
+}
+
+function waitlistTargetColumn(target: WaitlistTarget) {
+  return target.kind === "sku"
+    ? { name: "sku_id", id: target.skuId }
+    : { name: "pack_id", id: target.packId };
+}
+
+const UNIQUE_VIOLATION = "23505";
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function throwOnError(label: string, error: { message: string } | null) {
+  if (error) {
+    throw new Error(`${label}: ${error.message}`);
+  }
+}
+
+function toNewsletterSubscription(
+  row: NewsletterSubscriptionRow,
+): StoredNewsletterSubscription {
+  return {
+    email: row.email,
+    consentedAt: new Date(row.consented_at),
+    policyVersion: row.policy_version,
+    unsubscribeToken: row.unsubscribe_token,
+  };
+}
+
+function createSupabaseEnquiryMethods(
+  client: SupabaseClient,
+): Pick<
+  ShopStore,
+  | "saveContactRequest"
+  | "newsletterSubscriptions"
+  | "newsletterSuppressions"
+  | "isNewsletterEmailSuppressed"
+  | "addNewsletterSubscription"
+  | "newsletterSubscriptionByToken"
+  | "suppressNewsletterEmail"
+  | "waitlistItem"
+  | "waitlistEntries"
+  | "addWaitlistEntry"
+  | "claimWaitlistEntries"
+> {
+  return {
+    async saveContactRequest(request) {
+      const { error } = await client.from("contact_requests").insert({
+        name: request.name,
+        email: request.email,
+        phone: request.phone ? request.phone : null,
+        subject: request.subject,
+        message: request.message,
+        received_at: request.receivedAt.toISOString(),
+      });
+      throwOnError("Failed to save Contact request", error);
+    },
+
+    async newsletterSubscriptions() {
+      const { data, error } = await client
+        .from("newsletter_subscriptions")
+        .select("email, consented_at, policy_version, unsubscribe_token")
+        .order("consented_at", { ascending: true });
+      const rows = listRows(
+        "Failed to load Newsletter subscriptions",
+        error,
+        data as NewsletterSubscriptionRow[] | null,
+      );
+      return rows.map(toNewsletterSubscription);
+    },
+
+    async newsletterSuppressions() {
+      const { data, error } = await client
+        .from("newsletter_suppressions")
+        .select("email, suppressed_at");
+      const rows = listRows(
+        "Failed to load Newsletter suppressions",
+        error,
+        data as NewsletterSuppressionRow[] | null,
+      );
+      return rows.map((row) => ({
+        email: row.email,
+        suppressedAt: new Date(row.suppressed_at),
+      }));
+    },
+
+    async isNewsletterEmailSuppressed(email) {
+      const { data, error } = await client
+        .from("newsletter_suppressions")
+        .select("email")
+        .eq("email", email)
+        .maybeSingle();
+      throwOnError("Failed to check Newsletter suppression", error);
+      return data !== null;
+    },
+
+    // Insert only: a repeat sign-up must not rotate the unsubscribe token
+    // already sent in earlier emails or overwrite the first consent evidence.
+    async addNewsletterSubscription(subscription) {
+      const { error } = await client.from("newsletter_subscriptions").insert({
+        email: subscription.email,
+        consented_at: subscription.consentedAt.toISOString(),
+        policy_version: subscription.policyVersion,
+        unsubscribe_token: subscription.unsubscribeToken,
+      });
+      if (error && error.code === UNIQUE_VIOLATION) {
+        return "duplicate";
+      }
+      throwOnError("Failed to save Newsletter subscription", error);
+      return "added";
+    },
+
+    async newsletterSubscriptionByToken(unsubscribeToken) {
+      if (!UUID_PATTERN.test(unsubscribeToken)) {
+        return undefined;
+      }
+      const { data, error } = await client
+        .from("newsletter_subscriptions")
+        .select("email, consented_at, policy_version, unsubscribe_token")
+        .eq("unsubscribe_token", unsubscribeToken)
+        .maybeSingle();
+      throwOnError("Failed to load Newsletter subscription", error);
+      if (!data) {
+        return undefined;
+      }
+      return toNewsletterSubscription(data as NewsletterSubscriptionRow);
+    },
+
+    // Suppress first, then drop the consent record: a partial failure still
+    // keeps the address off every future send.
+    async suppressNewsletterEmail(suppression) {
+      const { error } = await client.from("newsletter_suppressions").upsert(
+        {
+          email: suppression.email,
+          suppressed_at: suppression.suppressedAt.toISOString(),
+        },
+        { onConflict: "email" },
+      );
+      throwOnError("Failed to suppress Newsletter email", error);
+
+      const { error: deleteError } = await client
+        .from("newsletter_subscriptions")
+        .delete()
+        .eq("email", suppression.email);
+      throwOnError("Failed to remove Newsletter subscription", deleteError);
+    },
+
+    async waitlistItem(target): Promise<StoredWaitlistItem | undefined> {
+      const id = target.kind === "sku" ? target.skuId : target.packId;
+      if (!UUID_PATTERN.test(id)) {
+        return undefined;
+      }
+      if (target.kind === "pack") {
+        const { data, error } = await client
+          .from("discovery_packs")
+          .select("id, title, quantity")
+          .eq("id", id)
+          .maybeSingle();
+        throwOnError("Failed to load Waitlist Pack", error);
+        if (!data) {
+          return undefined;
+        }
+        const pack = data as WaitlistPackRow;
+        return {
+          kind: "pack",
+          packId: pack.id,
+          title: pack.title,
+          quantity: pack.quantity,
+        };
+      }
+
+      const { data, error } = await client
+        .from("skus")
+        .select("id, whisky_id, quantity, volume_ml, whiskies(name, published)")
+        .eq("id", id)
+        .maybeSingle();
+      throwOnError("Failed to load Waitlist SKU", error);
+      if (!data) {
+        return undefined;
+      }
+      const row = data as unknown as WaitlistSkuRow;
+      if (!row.whiskies) {
+        return undefined;
+      }
+      return {
+        kind: "sku",
+        skuId: row.id,
+        whiskyId: row.whisky_id,
+        whiskyName: row.whiskies.name,
+        whiskyPublished: row.whiskies.published,
+        volumeMl: Number(row.volume_ml),
+        quantity: row.quantity,
+      };
+    },
+
+    async waitlistEntries(target): Promise<StoredWaitlistEntry[]> {
+      const column = waitlistTargetColumn(target);
+      if (!UUID_PATTERN.test(column.id)) {
+        return [];
+      }
+      const { data, error } = await client
+        .from("waitlist_entries")
+        .select("id, sku_id, pack_id, email, phone, created_at")
+        .eq(column.name, column.id)
+        .order("created_at", { ascending: true });
+      const rows = listRows(
+        "Failed to load Waitlist entries",
+        error,
+        data as WaitlistEntryRow[] | null,
+      );
+      return rows.map(toWaitlistEntry);
+    },
+
+    async addWaitlistEntry(entry) {
+      const column = waitlistTargetColumn(entry.target);
+      const { error } = await client.from("waitlist_entries").insert({
+        [column.name]: column.id,
+        email: entry.email,
+        phone: entry.phone ? entry.phone : null,
+        created_at: entry.createdAt.toISOString(),
+      });
+      if (error && error.code === UNIQUE_VIOLATION) {
+        return "duplicate";
+      }
+      throwOnError("Failed to add Waitlist entry", error);
+      return "added";
+    },
+
+    // One DELETE … RETURNING statement, so concurrent claims get disjoint rows.
+    async claimWaitlistEntries(target): Promise<StoredWaitlistEntry[]> {
+      const column = waitlistTargetColumn(target);
+      if (!UUID_PATTERN.test(column.id)) {
+        return [];
+      }
+      const { data, error } = await client
+        .from("waitlist_entries")
+        .delete()
+        .eq(column.name, column.id)
+        .select("id, sku_id, pack_id, email, phone, created_at");
+      const rows = listRows(
+        "Failed to claim Waitlist entries",
+        error,
+        data as WaitlistEntryRow[] | null,
+      );
+      return rows
+        .map(toWaitlistEntry)
+        .sort(
+          (left, right) => left.createdAt.getTime() - right.createdAt.getTime(),
+        );
+    },
   };
 }
 

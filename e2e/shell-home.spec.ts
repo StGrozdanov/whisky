@@ -36,12 +36,10 @@ test.describe("shell and home", () => {
       banner.getByRole("link", { name: /0888888888/ }),
     ).toHaveAttribute("href", "tel:0888888888");
     await expect(
-      banner.getByText(
-        "Безплатна доставка за цялата страна при поръчки над 50,00 €",
-      ),
+      banner.getByText("Доставка със Спиди до адрес или офис в цялата страна"),
     ).toBeVisible();
     await expect(
-      banner.getByRole("link", { name: "Запитване за наличност" }),
+      banner.getByRole("link", { name: "Свържете се с нас" }),
     ).toHaveAttribute("href", "/contacts");
     await expect(
       banner.getByRole("combobox", { name: "Търсене" }),
@@ -68,8 +66,8 @@ test.describe("shell and home", () => {
       }),
     ).toBeVisible();
     await expect(
-      page.getByRole("button", { name: "открий вкусовия си профил" }),
-    ).toBeVisible();
+      page.getByRole("link", { name: "открий вкусовия си профил" }),
+    ).toHaveAttribute("href", "/finder");
 
     const footer = page.getByRole("contentinfo");
     await expect(

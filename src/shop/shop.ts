@@ -1,16 +1,23 @@
+import { createUnconfiguredMailer, type Mailer } from "./mailer";
+import { SHOP_CONTACT } from "./shop-contact";
 import type {
   AwardedWhisky,
   CatalogueCard,
   CataloguePage,
   CatalogueQuery,
   Clock,
+  ContactRequestInput,
   DiscoveryPack,
+  FinderCandidate,
   GiftPageEntry,
   HomeNewWhisky,
   HomePage,
   HomeWhisky,
   HousePick,
   HousePickNote,
+  NewsletterRecipient,
+  NewsletterSubscribeOutcome,
+  NewsletterUnsubscribeOutcome,
   PriceTier,
   Promotion,
   SearchHit,
@@ -20,8 +27,14 @@ import type {
   StoredHomeNewWhisky,
   StoredHousePick,
   StoredPromotion,
+  StoredWaitlistEntry,
+  StoredWaitlistItem,
   StoredWhisky,
   StoredWhiskyPageExtras,
+  WaitlistJoinInput,
+  WaitlistJoinOutcome,
+  WaitlistNotificationResult,
+  WaitlistTarget,
   WhiskyPage,
   WhiskyPageSku,
 } from "./types";
@@ -30,7 +43,12 @@ import { SEARCH_HIT_FILTER, SEARCH_HIT_KINDS } from "./types";
 type ShopDeps = {
   store: ShopStore;
   clock?: Clock;
+  mailer?: Mailer;
+  /** Public origin used in outbound links, e.g. https://whiskyfinder.bg */
+  siteUrl?: string;
 };
+
+const DEFAULT_SITE_URL = "https://whiskyfinder.bg";
 
 const wallClock: Clock = {
   now() {
@@ -43,6 +61,11 @@ const SEARCH_MIN_QUERY_LENGTH = 2;
 
 export function createShop(deps: ShopDeps) {
   const clock = deps.clock ? deps.clock : wallClock;
+  const mailer = deps.mailer ? deps.mailer : createUnconfiguredMailer();
+  const siteUrl = (deps.siteUrl ? deps.siteUrl : DEFAULT_SITE_URL).replace(
+    /\/+$/,
+    "",
+  );
 
   return {
     async home(): Promise<HomePage> {
@@ -196,6 +219,23 @@ export function createShop(deps: ShopDeps) {
       return toWhiskyPage(entry, extras, promotions);
     },
 
+    async finderCandidates(): Promise<FinderCandidate[]> {
+      const [entries, storedPromotions] = await Promise.all([
+        deps.store.catalogueEntries(),
+        deps.store.promotions(),
+      ]);
+      const promotions = toPromotions(storedPromotions, entries, clock.now());
+
+      return entries
+        .map((entry) => ({
+          whisky: toCatalogueCard(entry, promotions),
+          distillery: entry.whisky.distillery,
+          country: entry.whisky.country,
+          region: entry.whisky.region,
+        }))
+        .sort((a, b) => a.whisky.name.localeCompare(b.whisky.name, "en"));
+    },
+
     async search(query: string): Promise<SearchHit[]> {
       const trimmed = query.trim();
       if (trimmed.length < SEARCH_MIN_QUERY_LENGTH) {
@@ -226,6 +266,191 @@ export function createShop(deps: ShopDeps) {
         return namedHits(kind, names);
       });
     },
+
+    // Enquiries: Contact requests, Newsletter subscriptions, and Waitlists.
+
+    /** Stores the request for the Shopkeeper. The Customer gets no copy. */
+    async submitContactRequest(input: ContactRequestInput): Promise<void> {
+      await deps.store.saveContactRequest({
+        name: input.name.trim(),
+        email: normalizeEmail(input.email),
+        phone: optionalText(input.phone),
+        subject: input.subject.trim(),
+        message: input.message.trim(),
+        receivedAt: clock.now(),
+      });
+    },
+
+    /**
+     * Single opt-in: the subscription is active as soon as it is stored.
+     * A repeat sign-up keeps the first consent evidence and unsubscribe link,
+     * and an unsubscribed email stays only on the suppression list.
+     */
+    async subscribeToNewsletter(input: {
+      email: string;
+      policyVersion: string;
+    }): Promise<NewsletterSubscribeOutcome> {
+      const email = normalizeEmail(input.email);
+      if (await deps.store.isNewsletterEmailSuppressed(email)) {
+        return "suppressed";
+      }
+
+      const added = await deps.store.addNewsletterSubscription({
+        email,
+        consentedAt: clock.now(),
+        policyVersion: input.policyVersion,
+        unsubscribeToken: crypto.randomUUID(),
+      });
+      return added === "added" ? "subscribed" : "already-subscribed";
+    },
+
+    async newsletterRecipients(): Promise<NewsletterRecipient[]> {
+      const [subscriptions, suppressions] = await Promise.all([
+        deps.store.newsletterSubscriptions(),
+        deps.store.newsletterSuppressions(),
+      ]);
+      const suppressed = new Set(suppressions.map((entry) => entry.email));
+
+      return subscriptions
+        .filter((subscription) => !suppressed.has(subscription.email))
+        .map((subscription) => ({
+          email: subscription.email,
+          unsubscribeUrl: `${siteUrl}/newsletter/unsubscribe?token=${encodeURIComponent(subscription.unsubscribeToken)}`,
+        }));
+    },
+
+    async unsubscribeFromNewsletter(
+      unsubscribeToken: string,
+    ): Promise<NewsletterUnsubscribeOutcome> {
+      const subscription =
+        await deps.store.newsletterSubscriptionByToken(unsubscribeToken);
+      if (!subscription) {
+        return "unknown-token";
+      }
+
+      await deps.store.suppressNewsletterEmail({
+        email: subscription.email,
+        suppressedAt: clock.now(),
+      });
+      return "unsubscribed";
+    },
+
+    /**
+     * Ask us: a notification request for a Whisky SKU or Pack that is not In
+     * stock. Never a reservation, back-order, or Contact request.
+     */
+    async joinWaitlist(input: WaitlistJoinInput): Promise<WaitlistJoinOutcome> {
+      const item = await deps.store.waitlistItem(input.target);
+      if (!item || !isPublicWaitlistItem(item)) {
+        return "sku-not-found";
+      }
+      if (item.quantity > 0) {
+        return "sku-in-stock";
+      }
+
+      const added = await deps.store.addWaitlistEntry({
+        target: input.target,
+        email: normalizeEmail(input.email),
+        phone: optionalText(input.phone),
+        createdAt: clock.now(),
+      });
+      return added === "added" ? "joined" : "already-joined";
+    },
+
+    /**
+     * Seam for the back office (#26): after a Whisky SKU or Pack returns In
+     * stock, email everyone on its Waitlist once and clear the entries sent.
+     */
+    async notifyRestockedWaitlist(
+      target: WaitlistTarget,
+    ): Promise<WaitlistNotificationResult> {
+      const item = await deps.store.waitlistItem(target);
+      if (!item || !isPublicWaitlistItem(item)) {
+        return { status: "sku-not-found" };
+      }
+      if (item.quantity <= 0) {
+        return { status: "sku-not-in-stock" };
+      }
+
+      // Claim before sending: a concurrent run or a retry can never email the
+      // same entry twice. Only entries whose email failed go back on the list.
+      const entries = await deps.store.claimWaitlistEntries(target);
+      const unsent: StoredWaitlistEntry[] = [];
+      for (const entry of entries) {
+        try {
+          await mailer.send(waitlistRestockEmail(item, entry.email, siteUrl));
+        } catch {
+          unsent.push(entry);
+        }
+      }
+      for (const entry of unsent) {
+        await deps.store.addWaitlistEntry({
+          target: entry.target,
+          email: entry.email,
+          phone: entry.phone,
+          createdAt: entry.createdAt,
+        });
+      }
+
+      return {
+        status: "notified",
+        sent: entries.length - unsent.length,
+        failed: unsent.length,
+      };
+    },
+  };
+}
+
+function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
+function optionalText(value: string | undefined): string | undefined {
+  const trimmed = value ? value.trim() : "";
+  return trimmed === "" ? undefined : trimmed;
+}
+
+/** Packs have no draft state; a Whisky SKU is public only once published. */
+function isPublicWaitlistItem(item: StoredWaitlistItem): boolean {
+  return item.kind === "pack" || item.whiskyPublished;
+}
+
+function waitlistRestockEmail(
+  item: StoredWaitlistItem,
+  to: string,
+  siteUrl: string,
+) {
+  const copy =
+    item.kind === "sku"
+      ? {
+          name: `${item.whiskyName} (${item.volumeMl} мл)`,
+          asked: "за което ни попитахте",
+          url: `${siteUrl}/whiskies/${encodeURIComponent(item.whiskyId)}`,
+          notHeld: "бутилката не е запазена за вас",
+          listName: "този размер",
+        }
+      : {
+          name: item.title,
+          asked: "за който ни попитахте",
+          url: `${siteUrl}/packs`,
+          notHeld: "сетът не е запазен за вас",
+          listName: "този сет",
+        };
+  return {
+    to,
+    subject: `${copy.name} отново е в наличност`,
+    text: [
+      "Здравейте,",
+      "",
+      `${copy.name}, ${copy.asked}, отново е в наличност в Whisky Finder.`,
+      `Можете да го поръчате тук: ${copy.url}`,
+      "",
+      `Това известие не е резервация — количеството е ограничено и ${copy.notHeld}.`,
+      `Изпращаме го еднократно и премахнахме имейла ви от списъка за изчакване за ${copy.listName}.`,
+      "",
+      "Whisky Finder",
+      `${SHOP_CONTACT.email} · ${SHOP_CONTACT.phone}`,
+    ].join("\n"),
   };
 }
 
