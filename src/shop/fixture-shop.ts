@@ -8,6 +8,10 @@ export type ShopFixtureName = (typeof SHOP_FIXTURE_NAMES)[number];
 
 const shops = new Map<ShopFixtureName, Shop>();
 
+/** Seeded in the `mixed` fixture so integration can open an unsubscribe link. */
+const FIXTURE_NEWSLETTER_UNSUBSCRIBE_TOKEN =
+  "0f1e2d3c-4b5a-4987-8776-655443322110";
+
 export function isShopFixtureName(value: string): value is ShopFixtureName {
   return (SHOP_FIXTURE_NAMES as readonly string[]).includes(value);
 }
@@ -57,6 +61,38 @@ function createErrorStore(): ShopStore {
     },
     async whiskyPageExtras(whiskyId: string) {
       return emptyWhiskyPageExtras(whiskyId);
+    },
+
+    // Enquiries: every write fails so forms can show their retryable error.
+    async saveContactRequest() {
+      throw new Error("Fixture Contact request failure");
+    },
+    async newsletterSubscriptions() {
+      throw new Error("Fixture Newsletter failure");
+    },
+    async newsletterSuppressions() {
+      throw new Error("Fixture Newsletter failure");
+    },
+    async saveNewsletterSubscription() {
+      throw new Error("Fixture Newsletter failure");
+    },
+    async newsletterSubscriptionByToken() {
+      throw new Error("Fixture Newsletter failure");
+    },
+    async suppressNewsletterEmail() {
+      throw new Error("Fixture Newsletter failure");
+    },
+    async waitlistSku() {
+      throw new Error("Fixture Waitlist failure");
+    },
+    async waitlistEntries() {
+      throw new Error("Fixture Waitlist failure");
+    },
+    async addWaitlistEntry() {
+      throw new Error("Fixture Waitlist failure");
+    },
+    async removeWaitlistEntries() {
+      throw new Error("Fixture Waitlist failure");
     },
   };
 }
@@ -278,6 +314,14 @@ function createMixedStore(): ShopStore {
         badge: "Ново",
         note: "Fixture rail",
         sortOrder: 0,
+      },
+    ],
+    newsletterSubscriptions: [
+      {
+        email: "fixture-subscriber@example.com",
+        consentedAt: new Date("2026-10-01T09:00:00.000Z"),
+        policyVersion: "2026-10-31",
+        unsubscribeToken: FIXTURE_NEWSLETTER_UNSUBSCRIBE_TOKEN,
       },
     ],
     primarySkus: [

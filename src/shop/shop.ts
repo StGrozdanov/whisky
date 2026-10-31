@@ -1,9 +1,11 @@
+import { createUnconfiguredMailer, type Mailer } from "./mailer";
 import type {
   AwardedWhisky,
   CatalogueCard,
   CataloguePage,
   CatalogueQuery,
   Clock,
+  ContactRequestInput,
   DiscoveryPack,
   GiftPageEntry,
   HomeNewWhisky,
@@ -11,6 +13,8 @@ import type {
   HomeWhisky,
   HousePick,
   HousePickNote,
+  NewsletterRecipient,
+  NewsletterUnsubscribeOutcome,
   PriceTier,
   Promotion,
   SearchHit,
@@ -20,8 +24,12 @@ import type {
   StoredHomeNewWhisky,
   StoredHousePick,
   StoredPromotion,
+  StoredWaitlistSku,
   StoredWhisky,
   StoredWhiskyPageExtras,
+  WaitlistJoinInput,
+  WaitlistJoinOutcome,
+  WaitlistNotificationResult,
   WhiskyPage,
   WhiskyPageSku,
 } from "./types";
@@ -30,7 +38,12 @@ import { SEARCH_HIT_FILTER, SEARCH_HIT_KINDS } from "./types";
 type ShopDeps = {
   store: ShopStore;
   clock?: Clock;
+  mailer?: Mailer;
+  /** Public origin used in outbound links, e.g. https://whiskyfinder.bg */
+  siteUrl?: string;
 };
+
+const DEFAULT_SITE_URL = "https://whiskyfinder.bg";
 
 const wallClock: Clock = {
   now() {
@@ -43,6 +56,11 @@ const SEARCH_MIN_QUERY_LENGTH = 2;
 
 export function createShop(deps: ShopDeps) {
   const clock = deps.clock ? deps.clock : wallClock;
+  const mailer = deps.mailer ? deps.mailer : createUnconfiguredMailer();
+  const siteUrl = (deps.siteUrl ? deps.siteUrl : DEFAULT_SITE_URL).replace(
+    /\/+$/,
+    "",
+  );
 
   return {
     async home(): Promise<HomePage> {
@@ -226,6 +244,155 @@ export function createShop(deps: ShopDeps) {
         return namedHits(kind, names);
       });
     },
+
+    // Enquiries: Contact requests, Newsletter subscriptions, and Waitlists.
+
+    /** Stores the request for the Shopkeeper. The Customer gets no copy. */
+    async submitContactRequest(input: ContactRequestInput): Promise<void> {
+      await deps.store.saveContactRequest({
+        name: input.name.trim(),
+        email: normalizeEmail(input.email),
+        phone: optionalText(input.phone),
+        subject: input.subject.trim(),
+        message: input.message.trim(),
+        receivedAt: clock.now(),
+      });
+    },
+
+    /** Single opt-in: the subscription is active as soon as it is stored. */
+    async subscribeToNewsletter(input: {
+      email: string;
+      policyVersion: string;
+    }): Promise<void> {
+      await deps.store.saveNewsletterSubscription({
+        email: normalizeEmail(input.email),
+        consentedAt: clock.now(),
+        policyVersion: input.policyVersion,
+        unsubscribeToken: crypto.randomUUID(),
+      });
+    },
+
+    async newsletterRecipients(): Promise<NewsletterRecipient[]> {
+      const [subscriptions, suppressions] = await Promise.all([
+        deps.store.newsletterSubscriptions(),
+        deps.store.newsletterSuppressions(),
+      ]);
+      const suppressed = new Set(suppressions.map((entry) => entry.email));
+
+      return subscriptions
+        .filter((subscription) => !suppressed.has(subscription.email))
+        .map((subscription) => ({
+          email: subscription.email,
+          unsubscribeUrl: `${siteUrl}/newsletter/unsubscribe?token=${encodeURIComponent(subscription.unsubscribeToken)}`,
+        }));
+    },
+
+    async unsubscribeFromNewsletter(
+      unsubscribeToken: string,
+    ): Promise<NewsletterUnsubscribeOutcome> {
+      const subscription =
+        await deps.store.newsletterSubscriptionByToken(unsubscribeToken);
+      if (!subscription) {
+        return "unknown-token";
+      }
+
+      await deps.store.suppressNewsletterEmail({
+        email: subscription.email,
+        suppressedAt: clock.now(),
+      });
+      return "unsubscribed";
+    },
+
+    /**
+     * Ask us: a notification request for a SKU that is not In stock.
+     * Never a reservation, back-order, or Contact request.
+     */
+    async joinWaitlist(input: WaitlistJoinInput): Promise<WaitlistJoinOutcome> {
+      const sku = await deps.store.waitlistSku(input.skuId);
+      if (!sku?.whiskyPublished) {
+        return "sku-not-found";
+      }
+      if (sku.quantity > 0) {
+        return "sku-in-stock";
+      }
+
+      const added = await deps.store.addWaitlistEntry({
+        skuId: sku.skuId,
+        email: normalizeEmail(input.email),
+        phone: optionalText(input.phone),
+        createdAt: clock.now(),
+      });
+      return added === "added" ? "joined" : "already-joined";
+    },
+
+    /**
+     * Seam for the back office (#26): after a SKU returns In stock, email
+     * everyone on its Waitlist once and clear the entries that were sent.
+     */
+    async notifyRestockedSkuWaitlist(
+      skuId: string,
+    ): Promise<WaitlistNotificationResult> {
+      const sku = await deps.store.waitlistSku(skuId);
+      if (!sku?.whiskyPublished) {
+        return { status: "sku-not-found" };
+      }
+      if (sku.quantity <= 0) {
+        return { status: "sku-not-in-stock" };
+      }
+
+      const entries = await deps.store.waitlistEntries(skuId);
+      const sentIds: string[] = [];
+      for (const entry of entries) {
+        try {
+          await mailer.send(waitlistRestockEmail(sku, entry.email, siteUrl));
+          sentIds.push(entry.id);
+        } catch {
+          // Keep the entry so a later run can retry it.
+        }
+      }
+
+      if (sentIds.length > 0) {
+        await deps.store.removeWaitlistEntries(sentIds);
+      }
+      return {
+        status: "notified",
+        sent: sentIds.length,
+        failed: entries.length - sentIds.length,
+      };
+    },
+  };
+}
+
+function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
+function optionalText(value: string | undefined): string | undefined {
+  const trimmed = value ? value.trim() : "";
+  return trimmed === "" ? undefined : trimmed;
+}
+
+function waitlistRestockEmail(
+  sku: StoredWaitlistSku,
+  to: string,
+  siteUrl: string,
+) {
+  const whiskyUrl = `${siteUrl}/whiskies/${encodeURIComponent(sku.whiskyId)}`;
+  return {
+    to,
+    subject: `${sku.whiskyName} (${sku.volumeMl} мл) отново е в наличност`,
+    text: [
+      "Здравейте,",
+      "",
+      `${sku.whiskyName} (${sku.volumeMl} мл), за което ни попитахте, отново е в наличност в Whisky Finder.`,
+      `Можете да го поръчате тук: ${whiskyUrl}`,
+      "",
+      "Това известие не е резервация — количеството е ограничено и бутилката не е запазена за вас.",
+      "Изпращаме го еднократно и премахнахме имейла ви от списъка за изчакване за този размер.",
+      "",
+      "Whisky Finder",
+      "info@whiskyfinder.bg · 0876473165",
+    ].join("\n"),
   };
 }
 

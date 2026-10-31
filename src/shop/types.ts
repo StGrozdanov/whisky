@@ -354,8 +354,98 @@ export type ShopStore = {
   discoveryPacks(): Promise<StoredDiscoveryPack[]>;
   giftSelections(): Promise<StoredGiftSelection[]>;
   awards(): Promise<StoredAward[]>;
+
+  // Enquiries: Contact requests, Newsletter subscriptions, and Waitlists.
+  saveContactRequest(request: StoredContactRequest): Promise<void>;
+  newsletterSubscriptions(): Promise<StoredNewsletterSubscription[]>;
+  newsletterSuppressions(): Promise<StoredNewsletterSuppression[]>;
+  /** Upserts by email and lifts any suppression for that email. */
+  saveNewsletterSubscription(
+    subscription: StoredNewsletterSubscription,
+  ): Promise<void>;
+  newsletterSubscriptionByToken(
+    unsubscribeToken: string,
+  ): Promise<StoredNewsletterSubscription | undefined>;
+  /** Adds the email to the suppression list and removes its subscription. */
+  suppressNewsletterEmail(
+    suppression: StoredNewsletterSuppression,
+  ): Promise<void>;
+  waitlistSku(skuId: string): Promise<StoredWaitlistSku | undefined>;
+  waitlistEntries(skuId: string): Promise<StoredWaitlistEntry[]>;
+  /** Returns "duplicate" when the email already has an entry for the SKU. */
+  addWaitlistEntry(
+    entry: Omit<StoredWaitlistEntry, "id">,
+  ): Promise<"added" | "duplicate">;
+  removeWaitlistEntries(ids: string[]): Promise<void>;
 };
 
 export type Clock = {
   now(): Date;
 };
+
+// Enquiries: Contact requests, Newsletter subscriptions, and Waitlists.
+
+export type ContactRequestInput = {
+  name: string;
+  email: string;
+  phone: string | undefined;
+  subject: string;
+  message: string;
+};
+
+export type StoredContactRequest = ContactRequestInput & {
+  receivedAt: Date;
+};
+
+export type StoredNewsletterSubscription = {
+  email: string;
+  consentedAt: Date;
+  policyVersion: string;
+  unsubscribeToken: string;
+};
+
+export type StoredNewsletterSuppression = {
+  email: string;
+  suppressedAt: Date;
+};
+
+export type NewsletterRecipient = {
+  email: string;
+  unsubscribeUrl: string;
+};
+
+export type NewsletterUnsubscribeOutcome = "unsubscribed" | "unknown-token";
+
+export type StoredWaitlistSku = {
+  skuId: string;
+  whiskyId: string;
+  whiskyName: string;
+  whiskyPublished: boolean;
+  volumeMl: number;
+  quantity: number;
+};
+
+export type StoredWaitlistEntry = {
+  id: string;
+  skuId: string;
+  email: string;
+  phone: string | undefined;
+  createdAt: Date;
+};
+
+export type WaitlistJoinInput = {
+  skuId: string;
+  email: string;
+  phone: string | undefined;
+};
+
+export type WaitlistJoinOutcome =
+  | "joined"
+  | "already-joined"
+  | "sku-not-found"
+  | "sku-in-stock";
+
+export type WaitlistNotificationResult =
+  | { status: "sku-not-found" }
+  | { status: "sku-not-in-stock" }
+  | { status: "notified"; sent: number; failed: number };
