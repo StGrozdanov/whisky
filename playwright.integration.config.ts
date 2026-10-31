@@ -32,6 +32,7 @@ export default defineConfig({
     env: {
       ...process.env,
       SHOP_FIXTURE: "mixed",
+      FINDER_FIXTURE: "ranked",
     },
   },
 });

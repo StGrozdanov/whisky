@@ -44,3 +44,17 @@ Three layers, three data sources. Do not leak concerns across them.
 | `error` | Catalogue, Discovery Pack, Gift, and Award loads throw so each route's `error.tsx` can render. Contact request, Newsletter, and Waitlist reads and writes throw so each form shows its retryable error |
 
 Unset `SHOP_FIXTURE` in production and e2e: `getShop` always uses Supabase.
+
+## Finder fixture names (`FINDER_FIXTURE` / `x-finder-fixture`)
+
+Integration never calls OpenRouter. With `FINDER_FIXTURE` set, `getFinder` swaps only the network for canned OpenRouter replies, so request building, response parsing, and Catalogue enforcement still run. Whisky IDs match the `mixed` Shop fixture. Unit contract tests for the request (no cache, provider `data_collection: "deny"`, `zdr: true`, approved domains, no Customer identity), parsing, and enforcement live in `src/finder/*.test.ts`. The e2e Finder spec runs live research and accepts results, an honest empty state, or the honest retryable error.
+
+| Name | Behaviour |
+| --- | --- |
+| `ranked` | Ask us above Buy in CORE; an unknown ID and the draft (dropped); four ENTRY Whiskies (trimmed to three); a reason with a URL (stripped) |
+| `empty` | Valid reply with no recommendations: honest empty state |
+| `invalid-ids` | Only IDs outside the published Catalogue: retryable error |
+| `http-error` | OpenRouter answers 503: retryable error |
+| `malformed` | Message content is not JSON: retryable error |
+
+Unset `FINDER_FIXTURE` in production and e2e: `getFinder` calls OpenRouter with `OPENROUTER_API_KEY` and `OPENROUTER_MODEL`.

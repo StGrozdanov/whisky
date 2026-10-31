@@ -7,6 +7,7 @@ import type {
   Clock,
   ContactRequestInput,
   DiscoveryPack,
+  FinderCandidate,
   GiftPageEntry,
   HomeNewWhisky,
   HomePage,
@@ -212,6 +213,23 @@ export function createShop(deps: ShopDeps) {
       ]);
       const promotions = toPromotions(storedPromotions, [entry], clock.now());
       return toWhiskyPage(entry, extras, promotions);
+    },
+
+    async finderCandidates(): Promise<FinderCandidate[]> {
+      const [entries, storedPromotions] = await Promise.all([
+        deps.store.catalogueEntries(),
+        deps.store.promotions(),
+      ]);
+      const promotions = toPromotions(storedPromotions, entries, clock.now());
+
+      return entries
+        .map((entry) => ({
+          whisky: toCatalogueCard(entry, promotions),
+          distillery: entry.whisky.distillery,
+          country: entry.whisky.country,
+          region: entry.whisky.region,
+        }))
+        .sort((a, b) => a.whisky.name.localeCompare(b.whisky.name, "en"));
     },
 
     async search(query: string): Promise<SearchHit[]> {
