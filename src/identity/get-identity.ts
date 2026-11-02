@@ -52,9 +52,14 @@ async function requestOrigin(): Promise<string> {
   const host = headerStore.get("x-forwarded-host")
     ? headerStore.get("x-forwarded-host")
     : headerStore.get("host");
+  if (!host) {
+    throw new Error("Cannot build Account email links without a Host header");
+  }
+  const defaultProtocol =
+    process.env.NODE_ENV === "production" ? "https" : "http";
   const protocol = headerStore.get("x-forwarded-proto")
     ? headerStore.get("x-forwarded-proto")
-    : "https";
+    : defaultProtocol;
   return `${protocol}://${host}`;
 }
 

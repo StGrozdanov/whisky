@@ -21,7 +21,8 @@ const MESSAGES = {
   lastName: "Моля, въведете фамилия.",
   passwordMissing: "Моля, въведете парола.",
   passwordShort: `Паролата трябва да е поне ${PASSWORD_LIMITS.min} знака.`,
-  passwordLong: `Паролата може да е до ${PASSWORD_LIMITS.max} знака.`,
+  // The limit is in UTF-8 bytes; a Cyrillic letter takes two.
+  passwordLong: `Паролата е твърде дълга: до ${PASSWORD_LIMITS.max} знака на латиница или до ${PASSWORD_LIMITS.max / 2} на кирилица.`,
 } as const;
 
 /** Passwords are kept exactly as typed: spaces count. */

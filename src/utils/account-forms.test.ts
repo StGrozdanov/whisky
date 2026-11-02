@@ -58,14 +58,23 @@ describe("parseRegistrationForm", () => {
     const tooLong = parseRegistrationForm(
       form({ ...VALID_REGISTRATION, password: "a".repeat(73) }),
     );
+    const cyrillicTooLong = parseRegistrationForm(
+      form({ ...VALID_REGISTRATION, password: "я".repeat(37) }),
+    );
 
     expect(spaced).toMatchObject({
       ok: true,
       value: { password: "  spaced  " },
     });
+    const longMessage =
+      "Паролата е твърде дълга: до 72 знака на латиница или до 36 на кирилица.";
     expect(tooLong).toMatchObject({
       ok: false,
-      errors: { password: "Паролата може да е до 72 знака." },
+      errors: { password: longMessage },
+    });
+    expect(cyrillicTooLong).toMatchObject({
+      ok: false,
+      errors: { password: longMessage },
     });
   });
 });
