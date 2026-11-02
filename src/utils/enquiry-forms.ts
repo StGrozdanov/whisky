@@ -4,7 +4,7 @@ import type {
   WaitlistTarget,
 } from "@/shop/types";
 
-type Parsed<Field extends string, Value> =
+export type Parsed<Field extends string, Value> =
   | { ok: true; value: Value }
   | {
       ok: false;
@@ -46,7 +46,7 @@ const MESSAGES = {
   target: "Не разпознахме продукта. Моля, презаредете страницата.",
 } as const;
 
-function text(form: FormData, name: string): string {
+export function text(form: FormData, name: string): string {
   const value = form.get(name);
   return typeof value === "string" ? value.trim() : "";
 }
@@ -55,7 +55,7 @@ function tooLong(limit: number): string {
   return `Текстът е твърде дълъг (до ${limit} знака).`;
 }
 
-function requiredText(
+export function requiredText(
   value: string,
   missing: string,
   limit: number,
@@ -69,7 +69,7 @@ function requiredText(
   return undefined;
 }
 
-function emailError(value: string): string | undefined {
+export function emailError(value: string): string | undefined {
   if (value === "") {
     return MESSAGES.emailMissing;
   }
@@ -86,7 +86,7 @@ function phoneError(value: string): string | undefined {
   return MESSAGES.phone;
 }
 
-function withoutUndefined<Field extends string>(
+export function withoutUndefined<Field extends string>(
   errors: Record<Field, string | undefined>,
 ): Partial<Record<Field, string>> {
   const result: Partial<Record<Field, string>> = {};
@@ -101,7 +101,7 @@ function withoutUndefined<Field extends string>(
   return result;
 }
 
-function hasErrors(errors: object): boolean {
+export function hasErrors(errors: object): boolean {
   return Object.keys(errors).length > 0;
 }
 

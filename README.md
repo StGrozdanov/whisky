@@ -22,6 +22,16 @@ npm run dev
 
 Other useful scripts: `npm run type-check`, `npm run check` (Biome), `npm test` (Vitest), `npm run knip` (unused code), `npm run test:integration` (Playwright fixtures, no DB), `npm run test:e2e` (Playwright against live nonprod). See [docs/agents/testing.md](./docs/agents/testing.md).
 
+## Accounts and the back office
+
+Customer Accounts and the single Shopkeeper sign in with email and password through Supabase Auth; the app then keeps its own signed session in an httpOnly cookie (separate cookies for Customers and the Shopkeeper). Each environment needs, outside this repo:
+
+- **`SESSION_SECRET`**: a long random string in Vercel, different per environment (`openssl rand -base64 48`). Changing it signs everyone out.
+- **Supabase Auth → URL Configuration**: add each site origin's `/account/**` to Redirect URLs (for example `https://whisky-finder-non-prod.vercel.app/account/**`), so emailed links return to the site the Customer used.
+- **Supabase Auth → Email Templates**: link to the app instead of `{{ .ConfirmationURL }}`, so the link is verified by the server. "Confirm signup": `{{ .RedirectTo }}?token_hash={{ .TokenHash }}`. "Reset password": `{{ .RedirectTo }}?token_hash={{ .TokenHash }}`. Keep "Confirm email" switched on.
+- **SMTP**: Supabase's built-in sender only delivers to team members and is heavily rate-limited; real Customers need a custom SMTP provider (see the outbound email provider issue).
+- **The Shopkeeper**: create the login in Supabase Auth → Users → Add user (auto-confirm), then run `insert into shopkeepers (user_id) values ('<that user id>');`. Only one Shopkeeper can exist, and a login cannot be both the Shopkeeper and a Customer Account. The back office is at `/back-office`.
+
 ## Workflow
 
 This repo follows a spec-driven, agent-friendly workflow (Matt Pocock's "skills", see [skills-lock.json](./skills-lock.json) and [.agents/skills](./.agents/skills)):

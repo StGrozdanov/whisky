@@ -13,6 +13,7 @@ Three layers, three data sources. Do not leak concerns across them.
 
 - **Runner:** `npm run test:integration` (CI job “Integration Tests”, before nonprod deploy). Locally Playwright starts `next dev`, so a clean checkout needs no prior build. In CI the workflow builds first and Playwright starts `next start`.
 - **Scope:** Every catalogue (and similar) edge case that needs a rendered page: empty catalogue, no filter matches, Buy and Ask us, pagination, drafts hidden, retryable error page. The same applies to Promotions, Gifts, Discovery Packs, and the Award page.
+- **Accounts and Shopkeeper access:** registration, email verification, sign-in, password recovery, logout, and the boundary between Customer Accounts and the back office, through the `IDENTITY_FIXTURE` logins below. Fixture Identity keeps state for the life of the dev server, so register with a unique email per test.
 - **Enquiry forms:** Contact request, Newsletter, unsubscribe, and Ask us (Waitlist, on Whisky pages and Pack cards) validation, success, duplicate, and failure states. Server actions read `x-shop-fixture` too, so switch the header to `error` after the page loads to exercise a failed submit. Fixture shops keep state for the life of the dev server, so use a unique email per test.
 - **Data:** In-memory fixtures only. Never Supabase. The Next server starts with `SHOP_FIXTURE` set; `getShop` serves a fixture store. Per-test override via request header `x-shop-fixture` (`empty` | `mixed` | `error`) when fixtures are enabled.
 - **Config:** `playwright.integration.config.ts` — `testDir: ./integration`. Set `INTEGRATION_PORT` to run beside another checkout (default 3001).
@@ -21,6 +22,7 @@ Three layers, three data sources. Do not leak concerns across them.
 
 - **Runner:** `npm run test:e2e` (CI job “E2E Tests”, against the shared nonprod URL after deploy).
 - **Scope:** Main customer flows only: age gate, shell, Home renders (content present or omitted), Catalogue opens and a filter updates the URL, and each discovery page (Promotions, Gifts, Discovery Packs, Award page, Club) renders live entries or its empty state. Expired and unavailable entries are covered in integration, not e2e.
+- **Accounts:** sign-in pages, registration validation, refused sign-in for an email without a login, made-up verification and recovery links, and the back office closed to guests. Never register, request a recovery email, or sign in successfully on nonprod.
 - **Enquiries:** Main navigation, footer Policy pages and About, and the Contact, Newsletter, and unsubscribe forms through their validation and unknown-token paths. Do not submit enquiries that write rows to nonprod.
 - **Data:** Live nonprod database. No named bottles, stock levels, page counts, rail sizes, or “this tier is empty” assumptions.
 - **Config:** `playwright.e2e.config.ts` — `testDir: ./e2e`.
@@ -58,3 +60,14 @@ Integration never calls OpenRouter. With `FINDER_FIXTURE` set, `getFinder` swaps
 | `malformed` | Message content is not JSON: retryable error |
 
 Unset `FINDER_FIXTURE` in production and e2e: `getFinder` calls OpenRouter with `OPENROUTER_API_KEY` and `OPENROUTER_MODEL`.
+
+## Identity fixture names (`IDENTITY_FIXTURE` / `x-identity-fixture`)
+
+Integration never calls Supabase Auth. With `IDENTITY_FIXTURE` set, `getIdentity` uses an in-memory auth provider, so the Identity rules, signed session cookies, and pages still run. Emailed links use predictable tokens: open `/account/verify-email?token_hash=verify-email:<email>` or `/account/reset-password?token_hash=reset-password:<email>` instead of reading an inbox. Unit tests for the Identity rules live in `src/identity/identity.test.ts`.
+
+| Name | Behaviour |
+| --- | --- |
+| `accounts` | Verified Member `member@fixture.test` (Иван Петров), unverified Member `unverified@fixture.test`, both with password `fixture-member-password`; Shopkeeper `shopkeeper@fixture.test` with `fixture-shopkeeper-password` |
+| `error` | Every auth provider call throws, so each form shows its retryable error |
+
+Unset `IDENTITY_FIXTURE` in production and e2e: `getIdentity` uses Supabase Auth with `SESSION_SECRET`.

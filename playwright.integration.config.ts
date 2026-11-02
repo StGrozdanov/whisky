@@ -33,6 +33,7 @@ export default defineConfig({
       ...process.env,
       SHOP_FIXTURE: "mixed",
       FINDER_FIXTURE: "ranked",
+      IDENTITY_FIXTURE: "accounts",
     },
   },
 });
