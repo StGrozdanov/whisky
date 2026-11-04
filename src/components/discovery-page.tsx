@@ -4,7 +4,7 @@ import { Icon, type IconName } from "@/components/icon";
 
 type DiscoveryPageLayoutProps = {
   title: string;
-  intro: string;
+  intro?: string;
   children: ReactNode;
 };
 
@@ -34,7 +34,9 @@ export function DiscoveryPageLayout({
           <h1 className="font-headline text-headline-lg text-on-surface">
             {title}
           </h1>
-          <p className="text-body-lg text-on-surface-variant">{intro}</p>
+          {intro ? (
+            <p className="text-body-lg text-on-surface-variant">{intro}</p>
+          ) : null}
         </header>
 
         {children}

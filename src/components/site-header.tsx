@@ -119,13 +119,13 @@ export function SiteHeader() {
               >
                 <Icon fontSize={24} name="shopping_bag" />
               </button>
-              <button
+              <Link
                 aria-label="Акаунт"
                 className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-primary text-on-primary"
-                type="button"
+                href="/account"
               >
                 <Icon fontSize={22} name="person" />
-              </button>
+              </Link>
             </div>
           </div>
         </div>

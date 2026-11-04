@@ -5,7 +5,11 @@ import { useActionState } from "react";
 import { subscribeToNewsletter } from "@/app/newsletter/actions";
 import { FormStatus } from "@/components/form-status";
 import { Icon } from "@/components/icon";
-import type { EnquiryFormState } from "@/utils/enquiry-forms";
+import { useFormFeedback } from "@/components/use-form-feedback";
+import {
+  type EnquiryFormState,
+  parseNewsletterForm,
+} from "@/utils/enquiry-forms";
 
 const INITIAL_STATE: EnquiryFormState<"email"> = { status: "idle" };
 
@@ -14,13 +18,16 @@ export function NewsletterSignup() {
     subscribeToNewsletter,
     INITIAL_STATE,
   );
+  const { errors, failure, formProps } = useFormFeedback(
+    state,
+    parseNewsletterForm,
+  );
 
   if (state.status === "sent") {
     return <FormStatus message={state.message} tone="success" />;
   }
 
-  const emailError =
-    state.status === "invalid" ? state.errors.email : undefined;
+  const emailError = errors.email;
   const defaultEmail =
     state.status === "invalid" || state.status === "failed"
       ? state.values.email
@@ -28,6 +35,7 @@ export function NewsletterSignup() {
 
   return (
     <form
+      {...formProps}
       action={formAction}
       aria-label="Абонамент за бюлетина"
       className="flex flex-col gap-space-xs"
@@ -54,9 +62,7 @@ export function NewsletterSignup() {
           {emailError}
         </p>
       ) : null}
-      {state.status === "failed" ? (
-        <FormStatus message={state.message} tone="error" />
-      ) : null}
+      {failure ? <FormStatus message={failure} tone="error" /> : null}
       <button
         className="mt-2 flex cursor-pointer items-center justify-center gap-1 rounded-lg bg-primary px-space-md py-2.5 text-label-md font-bold tracking-wider text-on-primary uppercase shadow-sm transition-all hover:bg-primary-fixed disabled:cursor-wait disabled:opacity-70"
         disabled={pending}
