@@ -16,10 +16,7 @@ export default async function BackOfficePage() {
   }
 
   return (
-    <DiscoveryPageLayout
-      intro="Вход само за управителя на магазина."
-      title="Бек офис"
-    >
+    <DiscoveryPageLayout intro="" title="Бек офис">
       <FormCard>
         <p className="text-body-md text-on-surface-variant">
           Влезли сте като{" "}

@@ -45,6 +45,15 @@ async function register(
   return form;
 }
 
+async function verifyFromLink(page: Page, email: string, password: string) {
+  await page.goto(`/account/verify-email?token_hash=verify-email:${email}`);
+  const form = page.getByRole("form", { name: "Потвърждение на имейл" });
+  await form.getByLabel("Имейл").fill(email);
+  await form.getByLabel("Парола").fill(password);
+  await form.getByRole("button", { name: "Потвърди имейла" }).click();
+  return form;
+}
+
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
     window.localStorage.setItem("whiskyfinder.ageConfirmed", "true");
@@ -104,8 +113,7 @@ test.describe("Customer Account", () => {
       form.getByRole("alert").filter({ hasText: "не сте потвърдили" }),
     ).toBeVisible();
 
-    await page.goto(`/account/verify-email?token_hash=verify-email:${email}`);
-    await page.getByRole("button", { name: "Потвърди имейла" }).click();
+    await verifyFromLink(page, email, password);
 
     await expect(page).toHaveURL(/\/account$/);
     await expect(page.getByText("Мария Иванова")).toBeVisible();
@@ -115,16 +123,29 @@ test.describe("Customer Account", () => {
   test("a used verification link is refused", async ({ page }) => {
     const email = uniqueEmail("reused-link");
     await register(page, { email, password: "glenfarclas-15" });
-    await page.goto(`/account/verify-email?token_hash=verify-email:${email}`);
-    await page.getByRole("button", { name: "Потвърди имейла" }).click();
+    await verifyFromLink(page, email, "glenfarclas-15");
     await expect(page).toHaveURL(/\/account$/);
 
-    await page.goto(`/account/verify-email?token_hash=verify-email:${email}`);
-    await page.getByRole("button", { name: "Потвърди имейла" }).click();
+    await verifyFromLink(page, email, "glenfarclas-15");
 
     await expect(
       page.getByRole("alert").filter({ hasText: "невалиден" }),
     ).toBeVisible();
+  });
+
+  test("the verification link needs the Account's password", async ({
+    page,
+  }) => {
+    const email = uniqueEmail("verify-password");
+    await register(page, { email, password: "glenfarclas-15" });
+
+    const form = await verifyFromLink(page, email, "someone-elses-guess");
+
+    await expect(
+      form.getByRole("alert").filter({ hasText: "Грешен имейл или парола." }),
+    ).toBeVisible();
+    await verifyFromLink(page, email, "glenfarclas-15");
+    await expect(page).toHaveURL(/\/account$/);
   });
 
   test("an unverified Account is told to verify its email", async ({
@@ -263,8 +284,8 @@ test.describe("password recovery", () => {
   }) => {
     const email = uniqueEmail("recover");
     await register(page, { email, password: "old-password-1" });
-    await page.goto(`/account/verify-email?token_hash=verify-email:${email}`);
-    await page.getByRole("button", { name: "Потвърди имейла" }).click();
+    await verifyFromLink(page, email, "old-password-1");
+    await expect(page).toHaveURL(/\/account$/);
     await page.getByRole("button", { name: "Изход" }).click();
     await expect(page).toHaveURL(/\/$/);
 

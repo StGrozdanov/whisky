@@ -53,13 +53,16 @@ test.describe("Accounts and Shopkeeper access", () => {
     await expect(form.getByText("Моля, въведете имейл.")).toBeVisible();
   });
 
-  test("made-up verification and recovery links are refused", async ({
+  test("verification refuses an unknown login and a made-up recovery link is refused", async ({
     page,
   }) => {
     await page.goto(`/account/verify-email?token_hash=${randomUUID()}`);
-    await page.getByRole("button", { name: "Потвърди имейла" }).click();
+    const verify = page.getByRole("form", { name: "Потвърждение на имейл" });
+    await verify.getByLabel("Имейл").fill(unknownEmail());
+    await verify.getByLabel("Парола").fill("not-a-real-password");
+    await verify.getByRole("button", { name: "Потвърди имейла" }).click();
     await expect(
-      page.getByRole("alert").filter({ hasText: "невалиден" }),
+      verify.getByRole("alert").filter({ hasText: "Грешен имейл или парола" }),
     ).toBeVisible();
 
     await page.goto(`/account/reset-password?token_hash=${randomUUID()}`);

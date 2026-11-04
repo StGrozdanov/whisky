@@ -12,9 +12,9 @@ export type SignInResult =
   | { ok: true; session: string }
   | { ok: false; reason: "invalid-credentials" | "email-not-verified" };
 
-export type LinkResult =
+export type VerificationResult =
   | { ok: true; session: string }
-  | { ok: false; reason: "invalid-link" };
+  | { ok: false; reason: "invalid-link" | "invalid-credentials" };
 
 export type Identity = ReturnType<typeof createIdentity>;
 
@@ -112,9 +112,28 @@ export function createIdentity({
       return gateway.registerCustomer(input);
     },
 
-    async verifyEmail(tokenHash: string): Promise<LinkResult> {
+    /**
+     * Verifying takes the emailed link and the Account's password, checked
+     * before the link is used. Whoever set the password must also hold the
+     * inbox, so nobody can register someone else's email and wait for its
+     * owner to verify it for them.
+     */
+    async verifyEmail({
+      tokenHash,
+      email,
+      password,
+    }: {
+      tokenHash: string;
+      email: string;
+      password: string;
+    }): Promise<VerificationResult> {
+      const check = await gateway.checkPassword(email, password);
+      if (!check.ok && check.reason === "invalid-credentials") {
+        return { ok: false, reason: "invalid-credentials" };
+      }
       const userId = await gateway.verifyEmail(tokenHash);
-      if (!userId) {
+      const member = userId ? await gateway.findMember(userId) : null;
+      if (!userId || !member || !sameEmail(member.email, email)) {
         return { ok: false, reason: "invalid-link" };
       }
       return { ok: true, session: issueSession(userId, "member") };
@@ -166,4 +185,8 @@ export function createIdentity({
       return userId ? gateway.findShopkeeper(userId) : null;
     },
   };
+}
+
+function sameEmail(a: string, b: string): boolean {
+  return a.trim().toLowerCase() === b.trim().toLowerCase();
 }

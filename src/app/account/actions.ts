@@ -4,7 +4,9 @@ import { redirect } from "next/navigation";
 import { getIdentity } from "@/identity/get-identity";
 import { endMemberSession, startMemberSession } from "@/identity/sessions";
 import {
+  type EmailVerificationField,
   type PasswordResetField,
+  parseEmailVerificationForm,
   parsePasswordResetForm,
   parseRecoveryRequestForm,
   parseRegistrationForm,
@@ -54,19 +56,29 @@ export async function registerAccount(
 }
 
 export async function verifyEmail(
-  _previous: EnquiryFormState<"token">,
+  _previous: EnquiryFormState<EmailVerificationField>,
   formData: FormData,
-): Promise<EnquiryFormState<"token">> {
-  const token = formData.get("token");
-  const values = { token: typeof token === "string" ? token : "" };
+): Promise<EnquiryFormState<EmailVerificationField>> {
+  const parsed = parseEmailVerificationForm(formData);
+  if (!parsed.ok) {
+    return { status: "invalid", errors: parsed.errors, values: parsed.values };
+  }
+  const values = { ...parsed.value, password: "" };
 
   try {
     const identity = await getIdentity();
-    const verified = await identity.verifyEmail(values.token);
+    const verified = await identity.verifyEmail({
+      tokenHash: parsed.value.token,
+      email: parsed.value.email,
+      password: parsed.value.password,
+    });
     if (!verified.ok) {
       return {
         status: "failed",
-        message: `${INVALID_LINK_MESSAGE} Ако вече сте потвърдили имейла си, просто влезте. Иначе се регистрирайте отново, за да получите нов линк.`,
+        message:
+          verified.reason === "invalid-credentials"
+            ? "Грешен имейл или парола. Ако не помните паролата, сменете я през „Забравена парола“: това също потвърждава имейла."
+            : `${INVALID_LINK_MESSAGE} Ако вече сте потвърдили имейла си, просто влезте. Иначе се регистрирайте отново, за да получите нов линк.`,
         values,
       };
     }

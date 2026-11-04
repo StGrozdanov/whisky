@@ -12,6 +12,7 @@ export type RegistrationField =
   | keyof RegistrationInput
   | "passwordConfirmation";
 export type SignInField = "email" | "password";
+export type EmailVerificationField = "token" | SignInField;
 export type PasswordResetField = "token" | "password" | "passwordConfirmation";
 
 /** Bcrypt, behind Supabase Auth, ignores anything past 72 bytes. */
@@ -131,4 +132,22 @@ export function parseRecoveryRequestForm(
     return { ok: false, errors, values };
   }
   return { ok: true, value: values };
+}
+
+export function parseEmailVerificationForm(
+  form: FormData,
+): Parsed<
+  EmailVerificationField,
+  { token: string; email: string; password: string }
+> {
+  const signIn = parseSignInForm(form);
+  const token = text(form, "token");
+  if (!signIn.ok) {
+    return {
+      ok: false,
+      errors: signIn.errors,
+      values: { token, ...signIn.values },
+    };
+  }
+  return { ok: true, value: { token, ...signIn.value } };
 }

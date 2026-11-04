@@ -35,7 +35,11 @@ async function verifiedMemberSession(
   gateway: ReturnType<typeof setup>["gateway"],
 ): Promise<string> {
   await identity.register(MARIA);
-  const verified = await identity.verifyEmail(gateway.sentLinks[0].tokenHash);
+  const verified = await identity.verifyEmail({
+    tokenHash: gateway.sentLinks[0].tokenHash,
+    email: MARIA.email,
+    password: MARIA.password,
+  });
   if (!verified.ok) {
     throw new Error("Expected the verification link to work");
   }
@@ -54,12 +58,16 @@ describe("Identity Customer Accounts", () => {
     });
   });
 
-  it("signs the Member in from the emailed verification link", async () => {
+  it("signs the Member in from the emailed link and their password", async () => {
     const { gateway, identity } = setup();
     await identity.register(MARIA);
     const [link] = gateway.sentLinks;
 
-    const verified = await identity.verifyEmail(link.tokenHash);
+    const verified = await identity.verifyEmail({
+      tokenHash: link.tokenHash,
+      email: "Maria@Example.com",
+      password: MARIA.password,
+    });
 
     expect(link).toMatchObject({ to: MARIA.email, kind: "verify-email" });
     expect(verified.ok).toBe(true);
@@ -119,33 +127,70 @@ describe("Identity Customer Accounts", () => {
     await identity.register(MARIA);
     const [link] = gateway.sentLinks;
 
-    expect((await identity.verifyEmail(link.tokenHash)).ok).toBe(true);
-    expect(await identity.verifyEmail(link.tokenHash)).toEqual({
-      ok: false,
-      reason: "invalid-link",
-    });
-    expect(await identity.verifyEmail("made-up")).toEqual({
-      ok: false,
-      reason: "invalid-link",
-    });
+    const credentials = { email: MARIA.email, password: MARIA.password };
+
+    expect(
+      (
+        await identity.verifyEmail({
+          tokenHash: link.tokenHash,
+          ...credentials,
+        })
+      ).ok,
+    ).toBe(true);
+    expect(
+      await identity.verifyEmail({ tokenHash: link.tokenHash, ...credentials }),
+    ).toEqual({ ok: false, reason: "invalid-link" });
+    expect(
+      await identity.verifyEmail({ tokenHash: "made-up", ...credentials }),
+    ).toEqual({ ok: false, reason: "invalid-link" });
   });
 
-  it("lets an unverified Account register again with a new password", async () => {
+  it("does not verify the email for someone without the Account's password", async () => {
     const { gateway, identity } = setup();
-    expect(await identity.register(MARIA)).toBe("verification-sent");
-    expect(
-      await identity.register({ ...MARIA, password: "remembered-this-one" }),
-    ).toBe("verification-sent");
-    const latest = gateway.sentLinks.at(-1);
-    await identity.verifyEmail(latest ? latest.tokenHash : "");
+    await identity.register(MARIA);
+    const [link] = gateway.sentLinks;
 
     expect(
-      (await identity.signInMember(MARIA.email, "remembered-this-one")).ok,
-    ).toBe(true);
+      await identity.verifyEmail({
+        tokenHash: link.tokenHash,
+        email: MARIA.email,
+        password: "a-guess",
+      }),
+    ).toEqual({ ok: false, reason: "invalid-credentials" });
     expect(await identity.signInMember(MARIA.email, MARIA.password)).toEqual({
       ok: false,
-      reason: "invalid-credentials",
+      reason: "email-not-verified",
     });
+    expect(
+      (
+        await identity.verifyEmail({
+          tokenHash: link.tokenHash,
+          email: MARIA.email,
+          password: MARIA.password,
+        })
+      ).ok,
+    ).toBe(true);
+  });
+
+  it("keeps the first password and name when an unverified email registers again", async () => {
+    const { gateway, identity } = setup();
+    const squatter = {
+      ...MARIA,
+      firstName: "Чужд",
+      password: "squatters-password",
+    };
+    await identity.register(squatter);
+
+    expect(await identity.register(MARIA)).toBe("verification-sent");
+    const latest = gateway.sentLinks.at(-1);
+    expect(latest).toMatchObject({ to: MARIA.email, kind: "verify-email" });
+    expect(
+      await identity.verifyEmail({
+        tokenHash: latest ? latest.tokenHash : "",
+        email: MARIA.email,
+        password: MARIA.password,
+      }),
+    ).toEqual({ ok: false, reason: "invalid-credentials" });
   });
 
   it("tells a verified email it is already registered and leaves it untouched", async () => {
@@ -217,10 +262,29 @@ describe("Identity password recovery", () => {
       (link) => link.kind === "reset-password",
     );
 
-    expect(await identity.verifyEmail(reset ? reset.tokenHash : "")).toEqual({
-      ok: false,
-      reason: "invalid-link",
-    });
+    expect(
+      await identity.verifyEmail({
+        tokenHash: reset ? reset.tokenHash : "",
+        email: MARIA.email,
+        password: MARIA.password,
+      }),
+    ).toEqual({ ok: false, reason: "invalid-link" });
+  });
+
+  it("verifies an unverified email through password recovery", async () => {
+    const { gateway, identity } = setup();
+    await identity.register(MARIA);
+    await identity.requestPasswordReset(MARIA.email);
+    const reset = gateway.sentLinks.at(-1);
+
+    await identity.resetPassword(
+      reset ? reset.tokenHash : "",
+      "new-password-1",
+    );
+
+    expect(
+      (await identity.signInMember(MARIA.email, "new-password-1")).ok,
+    ).toBe(true);
   });
 
   it("refuses a used or unknown recovery link", async () => {

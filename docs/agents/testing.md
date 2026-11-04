@@ -63,7 +63,7 @@ Unset `FINDER_FIXTURE` in production and e2e: `getFinder` calls OpenRouter with 
 
 ## Identity fixture names (`IDENTITY_FIXTURE` / `x-identity-fixture`)
 
-Integration never calls Supabase Auth. With `IDENTITY_FIXTURE` set, `getIdentity` uses an in-memory auth provider, so the Identity rules, signed session cookies, and pages still run. Emailed links use predictable tokens: open `/account/verify-email?token_hash=verify-email:<email>` or `/account/reset-password?token_hash=reset-password:<email>` instead of reading an inbox. Unit tests for the Identity rules live in `src/identity/identity.test.ts`.
+Integration never calls Supabase Auth. With `IDENTITY_FIXTURE` set, `getIdentity` uses an in-memory auth provider, so the Identity rules, signed session cookies, and pages still run. Emailed links use predictable tokens: open `/account/verify-email?token_hash=verify-email:<email>` (verifying also asks for that Account's email and password) or `/account/reset-password?token_hash=reset-password:<email>` instead of reading an inbox. Unit tests for the Identity rules live in `src/identity/identity.test.ts`.
 
 | Name | Behaviour |
 | --- | --- |

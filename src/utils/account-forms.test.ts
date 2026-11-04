@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  parseEmailVerificationForm,
   parsePasswordResetForm,
   parseRecoveryRequestForm,
   parseRegistrationForm,
@@ -174,6 +175,31 @@ describe("parseRecoveryRequestForm", () => {
       ok: false,
       errors: { email: "Моля, въведете валиден имейл адрес." },
       values: { email: "maria@" },
+    });
+  });
+});
+
+describe("parseEmailVerificationForm", () => {
+  it("carries the verification link token with the sign-in details", () => {
+    expect(
+      parseEmailVerificationForm(
+        form({ token: "abc", email: " maria@example.com ", password: "pw" }),
+      ),
+    ).toEqual({
+      ok: true,
+      value: { token: "abc", email: "maria@example.com", password: "pw" },
+    });
+    expect(
+      parseEmailVerificationForm(
+        form({ token: "abc", email: "", password: "" }),
+      ),
+    ).toEqual({
+      ok: false,
+      errors: {
+        email: "Моля, въведете имейл.",
+        password: "Моля, въведете парола.",
+      },
+      values: { token: "abc", email: "", password: "" },
     });
   });
 });

@@ -96,12 +96,9 @@ export function createInMemoryIdentityGateway(options?: {
       if (existing?.verified) {
         return "already-registered";
       }
+      // Like Supabase: an unverified login keeps its first password and
+      // name, and only gets a fresh link.
       if (existing) {
-        existing.password = input.password;
-        existing.account = {
-          firstName: input.firstName,
-          lastName: input.lastName,
-        };
         sendLink("verify-email", email);
         return "verification-sent";
       }
@@ -148,7 +145,9 @@ export function createInMemoryIdentityGateway(options?: {
       if (!login) {
         return false;
       }
+      // Opening a recovery link proves the inbox, as in Supabase.
       login.password = password;
+      login.verified = true;
       login.passwordChangedAt = clock.now();
       return true;
     },

@@ -33,13 +33,17 @@ export type PasswordCheck =
 export type IdentityGateway = {
   /**
    * Creates an unverified Customer Account and sends its verification link.
-   * Registering an unverified email again takes the new name and password and
-   * sends a fresh link. A verified login, Customer or Shopkeeper, is left
+   * Registering an unverified email again keeps the first name and password
+   * and sends a fresh link. A verified login, Customer or Shopkeeper, is left
    * untouched and reported as already registered.
    */
   registerCustomer(input: RegistrationInput): Promise<RegistrationOutcome>;
   /** Marks the email verified; returns the login id, or null for a bad link. */
   verifyEmail(tokenHash: string): Promise<string | null>;
+  /**
+   * Checks the password before the verification state, so
+   * `email-not-verified` also proves the password was right.
+   */
   checkPassword(email: string, password: string): Promise<PasswordCheck>;
   /** Emails a recovery link; an email without a login is silently ignored. */
   sendPasswordReset(email: string): Promise<void>;

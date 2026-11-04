@@ -20,7 +20,7 @@ export default async function VerifyEmailPage({
 
   return (
     <DiscoveryPageLayout
-      intro="Потвърдете имейла си, за да активирате акаунта."
+      intro="Влезте с имейла и паролата от регистрацията, за да активирате акаунта."
       title="Потвърждение на имейл"
     >
       <FormCard>

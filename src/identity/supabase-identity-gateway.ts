@@ -107,25 +107,18 @@ export function createSupabaseIdentityGateway({
         return "already-registered";
       }
 
-      // For an email still awaiting verification Supabase resends the link
-      // but keeps the first password; the latest registration wins instead.
-      if (!user.email_confirmed_at) {
-        const { error: passwordError } = await admin.auth.admin.updateUserById(
-          user.id,
-          { password: input.password },
-        );
-        if (passwordError) {
-          throw passwordError;
-        }
-      }
-
+      // An email still awaiting verification only gets a fresh link: Supabase
+      // keeps its first password, and the first name stays too.
       const { error: accountError } = await admin
         .from("customer_accounts")
-        .upsert({
-          user_id: user.id,
-          first_name: input.firstName,
-          last_name: input.lastName,
-        });
+        .upsert(
+          {
+            user_id: user.id,
+            first_name: input.firstName,
+            last_name: input.lastName,
+          },
+          { onConflict: "user_id", ignoreDuplicates: true },
+        );
       if (accountError) {
         throw accountError;
       }

@@ -16,10 +16,7 @@ export default async function BackOfficeSignInPage() {
   }
 
   return (
-    <DiscoveryPageLayout
-      intro="Само за управителя на магазина. Клиентските акаунти не дават достъп тук."
-      title="Вход в бек офиса"
-    >
+    <DiscoveryPageLayout intro="" title="Вход в бек офиса">
       <FormCard>
         <SignInForm action={signInShopkeeper} label="Вход в бек офиса" />
       </FormCard>
