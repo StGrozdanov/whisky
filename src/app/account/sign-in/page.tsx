@@ -17,7 +17,7 @@ export default async function SignInPage() {
   }
 
   return (
-    <DiscoveryPageLayout title="Вход" intro="">
+    <DiscoveryPageLayout title="Вход">
       <FormCard>
         <SignInForm action={signIn} label="Вход в акаунта" />
         <p className="flex flex-wrap gap-x-space-md gap-y-space-xs text-body-sm">

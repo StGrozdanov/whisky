@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function RegisterPage() {
   return (
-    <DiscoveryPageLayout title="Регистрация" intro="">
+    <DiscoveryPageLayout title="Регистрация">
       <FormCard>
         <RegistrationForm />
         <p className="text-body-sm">

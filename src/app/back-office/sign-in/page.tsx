@@ -16,7 +16,7 @@ export default async function BackOfficeSignInPage() {
   }
 
   return (
-    <DiscoveryPageLayout intro="" title="Вход в бек офиса">
+    <DiscoveryPageLayout title="Вход в бек офиса">
       <FormCard>
         <SignInForm action={signInShopkeeper} label="Вход в бек офиса" />
       </FormCard>

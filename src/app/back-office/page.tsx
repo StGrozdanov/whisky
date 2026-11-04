@@ -16,7 +16,7 @@ export default async function BackOfficePage() {
   }
 
   return (
-    <DiscoveryPageLayout intro="" title="Бек офис">
+    <DiscoveryPageLayout title="Бек офис">
       <FormCard>
         <p className="text-body-md text-on-surface-variant">
           Влезли сте като{" "}
