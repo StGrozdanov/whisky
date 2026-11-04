@@ -5,7 +5,9 @@ import { useActionState } from "react";
 import { FormField } from "@/components/form-field";
 import { FormStatus } from "@/components/form-status";
 import { SubmitButton } from "@/components/submit-button";
+import { useFormFeedback } from "@/components/use-form-feedback";
 import type { RegistrationField } from "@/utils/account-forms";
+import { parseRegistrationForm } from "@/utils/account-forms";
 import type { EnquiryFormState } from "@/utils/enquiry-forms";
 import { registerAccount } from "../actions";
 
@@ -16,6 +18,10 @@ export function RegistrationForm() {
     registerAccount,
     INITIAL_STATE,
   );
+  const { errors, hasErrors, failure, formProps } = useFormFeedback(
+    state,
+    parseRegistrationForm,
+  );
 
   if (state.status === "sent") {
     return <FormStatus message={state.message} tone="success" />;
@@ -25,24 +31,22 @@ export function RegistrationForm() {
     state.status === "invalid" || state.status === "failed"
       ? state.values
       : undefined;
-  const errors = state.status === "invalid" ? state.errors : {};
 
   return (
     <form
+      {...formProps}
       action={formAction}
       aria-label="Регистрация"
       className="flex flex-col gap-space-md"
       noValidate
     >
-      {state.status === "invalid" ? (
+      {hasErrors ? (
         <FormStatus
           message="Моля, поправете отбелязаните полета."
           tone="error"
         />
       ) : null}
-      {state.status === "failed" ? (
-        <FormStatus message={state.message} tone="error" />
-      ) : null}
+      {failure ? <FormStatus message={failure} tone="error" /> : null}
       <div className="grid grid-cols-1 gap-space-md sm:grid-cols-2">
         <FormField
           autoComplete="given-name"
@@ -85,9 +89,18 @@ export function RegistrationForm() {
         required
         type="password"
       />
+      <FormField
+        autoComplete="new-password"
+        error={errors.passwordConfirmation}
+        id="register-password-confirmation"
+        label="Повторете паролата"
+        name="passwordConfirmation"
+        required
+        type="password"
+      />
       <p className="text-body-sm text-on-surface-variant">
-        Паролата трябва да е поне 8 знака. Ще ви изпратим линк за потвърждение
-        на имейла. Как пазим данните ви вижте в{" "}
+        Ще ви изпратим линк за потвърждение на имейла. Как пазим данните ви,
+        можете да разгледате в{" "}
         <Link
           className="text-secondary underline hover:text-primary"
           href="/privacy"

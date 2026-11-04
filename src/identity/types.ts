@@ -6,6 +6,8 @@ export type RegistrationInput = {
   password: string;
 };
 
+export type RegistrationOutcome = "verification-sent" | "already-registered";
+
 /** A signed-in Customer with an Account. */
 export type Member = {
   id: string;
@@ -32,10 +34,10 @@ export type IdentityGateway = {
   /**
    * Creates an unverified Customer Account and sends its verification link.
    * Registering an unverified email again takes the new name and password and
-   * sends a fresh link. A verified login is left untouched without an error,
-   * so registration never reveals who has an Account.
+   * sends a fresh link. A verified login, Customer or Shopkeeper, is left
+   * untouched and reported as already registered.
    */
-  registerCustomer(input: RegistrationInput): Promise<void>;
+  registerCustomer(input: RegistrationInput): Promise<RegistrationOutcome>;
   /** Marks the email verified; returns the login id, or null for a bad link. */
   verifyEmail(tokenHash: string): Promise<string | null>;
   checkPassword(email: string, password: string): Promise<PasswordCheck>;

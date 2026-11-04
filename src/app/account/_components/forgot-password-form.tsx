@@ -4,6 +4,8 @@ import { useActionState } from "react";
 import { FormField } from "@/components/form-field";
 import { FormStatus } from "@/components/form-status";
 import { SubmitButton } from "@/components/submit-button";
+import { useFormFeedback } from "@/components/use-form-feedback";
+import { parseRecoveryRequestForm } from "@/utils/account-forms";
 import type { EnquiryFormState } from "@/utils/enquiry-forms";
 import { requestPasswordReset } from "../actions";
 
@@ -14,6 +16,10 @@ export function ForgotPasswordForm() {
     requestPasswordReset,
     INITIAL_STATE,
   );
+  const { errors, failure, formProps } = useFormFeedback(
+    state,
+    parseRecoveryRequestForm,
+  );
 
   if (state.status === "sent") {
     return <FormStatus message={state.message} tone="success" />;
@@ -23,18 +29,16 @@ export function ForgotPasswordForm() {
     state.status === "invalid" || state.status === "failed"
       ? state.values
       : undefined;
-  const errors = state.status === "invalid" ? state.errors : {};
 
   return (
     <form
+      {...formProps}
       action={formAction}
       aria-label="Забравена парола"
       className="flex flex-col gap-space-md"
       noValidate
     >
-      {state.status === "failed" ? (
-        <FormStatus message={state.message} tone="error" />
-      ) : null}
+      {failure ? <FormStatus message={failure} tone="error" /> : null}
       <FormField
         autoComplete="email"
         defaultValue={values?.email}

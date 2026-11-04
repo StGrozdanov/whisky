@@ -5,9 +5,11 @@ import { joinWaitlist } from "@/app/waitlist/actions";
 import { FormField } from "@/components/form-field";
 import { FormStatus } from "@/components/form-status";
 import { Icon } from "@/components/icon";
+import { useFormFeedback } from "@/components/use-form-feedback";
 import type { WaitlistTarget } from "@/shop/types";
 import {
   type EnquiryFormState,
+  parseWaitlistForm,
   type WaitlistField,
   waitlistTargetValue,
 } from "@/utils/enquiry-forms";
@@ -27,6 +29,10 @@ export function WaitlistForm({ id, target, subject }: WaitlistFormProps) {
     joinWaitlist,
     INITIAL_STATE,
   );
+  const { errors, failure, formProps } = useFormFeedback(
+    state,
+    parseWaitlistForm,
+  );
 
   if (state.status === "sent") {
     return (
@@ -40,10 +46,10 @@ export function WaitlistForm({ id, target, subject }: WaitlistFormProps) {
     state.status === "invalid" || state.status === "failed"
       ? state.values
       : undefined;
-  const errors = state.status === "invalid" ? state.errors : {};
 
   return (
     <form
+      {...formProps}
       action={formAction}
       aria-label="Списък за изчакване"
       className="flex flex-col gap-space-sm rounded-lg border border-outline-variant/40 bg-surface-container-lowest p-space-md"
@@ -54,9 +60,7 @@ export function WaitlistForm({ id, target, subject }: WaitlistFormProps) {
         Ще ви изпратим един имейл, когато {subject} е отново в наличност.
         Записването не е резервация или поръчка и не изисква плащане.
       </p>
-      {state.status === "failed" ? (
-        <FormStatus message={state.message} tone="error" />
-      ) : null}
+      {failure ? <FormStatus message={failure} tone="error" /> : null}
       {errors.target ? (
         <FormStatus message={errors.target} tone="error" />
       ) : null}

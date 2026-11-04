@@ -132,8 +132,10 @@ describe("Identity Customer Accounts", () => {
 
   it("lets an unverified Account register again with a new password", async () => {
     const { gateway, identity } = setup();
-    await identity.register(MARIA);
-    await identity.register({ ...MARIA, password: "remembered-this-one" });
+    expect(await identity.register(MARIA)).toBe("verification-sent");
+    expect(
+      await identity.register({ ...MARIA, password: "remembered-this-one" }),
+    ).toBe("verification-sent");
     const latest = gateway.sentLinks.at(-1);
     await identity.verifyEmail(latest ? latest.tokenHash : "");
 
@@ -146,16 +148,17 @@ describe("Identity Customer Accounts", () => {
     });
   });
 
-  it("leaves an existing Account untouched when its email registers again", async () => {
+  it("tells a verified email it is already registered and leaves it untouched", async () => {
     const { gateway, identity } = setup();
     await verifiedMemberSession(identity, gateway);
 
-    await identity.register({
+    const outcome = await identity.register({
       ...MARIA,
       firstName: "Друга",
       password: "someone-elses-password",
     });
 
+    expect(outcome).toBe("already-registered");
     const signedIn = await identity.signInMember(MARIA.email, MARIA.password);
     expect(signedIn.ok).toBe(true);
     expect(
@@ -269,6 +272,22 @@ describe("Identity Shopkeeper access", () => {
       await identity.signInShopkeeper(MARIA.email, MARIA.password),
     ).toEqual({ ok: false, reason: "invalid-credentials" });
     expect(await identity.shopkeeperFromSession(memberSession)).toBeNull();
+  });
+
+  it("does not register the Shopkeeper's email as a Customer Account", async () => {
+    const { identity } = setup();
+
+    expect(
+      await identity.register({
+        ...MARIA,
+        email: SHOPKEEPER.email,
+        password: "someone-elses-password",
+      }),
+    ).toBe("already-registered");
+    expect(
+      (await identity.signInShopkeeper(SHOPKEEPER.email, SHOPKEEPER.password))
+        .ok,
+    ).toBe(true);
   });
 
   it("does not give the Shopkeeper a Customer Account", async () => {

@@ -4,7 +4,9 @@ import { useActionState } from "react";
 import { FormField } from "@/components/form-field";
 import { FormStatus } from "@/components/form-status";
 import { Icon } from "@/components/icon";
+import { useFormFeedback } from "@/components/use-form-feedback";
 import type { ContactField, EnquiryFormState } from "@/utils/enquiry-forms";
+import { parseContactForm } from "@/utils/enquiry-forms";
 import { submitContactRequest } from "../actions";
 
 const INITIAL_STATE: EnquiryFormState<ContactField> = { status: "idle" };
@@ -13,6 +15,10 @@ export function ContactForm() {
   const [state, formAction, pending] = useActionState(
     submitContactRequest,
     INITIAL_STATE,
+  );
+  const { errors, hasErrors, failure, formProps } = useFormFeedback(
+    state,
+    parseContactForm,
   );
 
   if (state.status === "sent") {
@@ -23,24 +29,22 @@ export function ContactForm() {
     state.status === "invalid" || state.status === "failed"
       ? state.values
       : undefined;
-  const errors = state.status === "invalid" ? state.errors : {};
 
   return (
     <form
+      {...formProps}
       action={formAction}
       aria-label="Форма за контакти"
       className="flex flex-col gap-space-md"
       noValidate
     >
-      {state.status === "invalid" ? (
+      {hasErrors ? (
         <FormStatus
           message="Моля, поправете отбелязаните полета."
           tone="error"
         />
       ) : null}
-      {state.status === "failed" ? (
-        <FormStatus message={state.message} tone="error" />
-      ) : null}
+      {failure ? <FormStatus message={failure} tone="error" /> : null}
 
       <div className="grid grid-cols-1 gap-space-md sm:grid-cols-2">
         <FormField

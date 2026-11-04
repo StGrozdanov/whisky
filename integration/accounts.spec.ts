@@ -39,7 +39,8 @@ async function register(
   await form.getByRole("textbox", { name: "Име", exact: true }).fill("Мария");
   await form.getByLabel("Фамилия").fill("Иванова");
   await form.getByLabel("Имейл").fill(fields.email);
-  await form.getByLabel("Парола").fill(fields.password);
+  await form.getByLabel(/^Парола/).fill(fields.password);
+  await form.getByLabel("Повторете паролата").fill(fields.password);
   await form.getByRole("button", { name: "Създай акаунт" }).click();
   return form;
 }
@@ -71,16 +72,17 @@ test.describe("Customer Account", () => {
   }) => {
     await page.goto("/account/register");
     const form = page.getByRole("form", { name: "Регистрация" });
-    await form.getByLabel("Парола").fill("short");
+    await form.getByLabel(/^Парола/).fill("short");
+    await form.getByLabel("Повторете паролата").fill("shorter");
     await form.getByRole("button", { name: "Създай акаунт" }).click();
 
+    await expect(form.getByText("Паролите не съвпадат.")).toBeVisible();
     await expect(form.getByText("Моля, въведете име.")).toBeVisible();
     await expect(form.getByText("Моля, въведете фамилия.")).toBeVisible();
     await expect(form.getByText("Моля, въведете имейл.")).toBeVisible();
     await expect(
       form.getByText("Паролата трябва да е поне 8 знака.", { exact: true }),
     ).toBeVisible();
-    await expect(form.getByLabel("Парола")).toHaveValue("");
   });
 
   test("a new Account signs in only after its email is verified", async ({
@@ -168,6 +170,69 @@ test.describe("Customer Account", () => {
     await expect(page).toHaveURL(/\/account\/sign-in$/);
   });
 
+  test("an email with a verified Account cannot register again", async ({
+    page,
+  }) => {
+    const form = await register(page, {
+      email: MEMBER.email,
+      password: "another-password-1",
+    });
+
+    await expect(
+      form.getByText("Вече има акаунт с този имейл.", { exact: false }),
+    ).toBeVisible();
+    await expect(form.getByLabel("Имейл")).toHaveAttribute(
+      "aria-invalid",
+      "true",
+    );
+  });
+
+  test("an invalid form is checked in the browser without a request", async ({
+    page,
+  }) => {
+    await page.goto("/account/sign-in");
+    const posts: string[] = [];
+    page.on("request", (request) => {
+      if (request.method() === "POST") {
+        posts.push(request.url());
+      }
+    });
+    const form = page.getByRole("form", { name: "Вход в акаунта" });
+    await form.getByLabel("Имейл").fill("member@");
+    await form.getByRole("button", { name: "Вход" }).click();
+
+    await expect(
+      form.getByText("Моля, въведете валиден имейл адрес."),
+    ).toBeVisible();
+    await expect(form.getByText("Моля, въведете парола.")).toBeVisible();
+    await expect(form.getByLabel("Имейл")).toBeFocused();
+    expect(posts).toEqual([]);
+  });
+
+  test("typing into a field clears its error and the sign-in failure", async ({
+    page,
+  }) => {
+    const form = await signIn(page, "/account/sign-in", "Вход в акаунта", {
+      email: MEMBER.email,
+      password: "not-the-password",
+    });
+    const failure = form
+      .getByRole("alert")
+      .filter({ hasText: "Грешен имейл или парола." });
+    await expect(failure).toBeVisible();
+
+    await form.getByLabel("Парола").fill("x");
+    await expect(failure).toHaveCount(0);
+
+    await form.getByLabel("Имейл").fill("");
+    await form.getByLabel("Парола").fill("");
+    await form.getByRole("button", { name: "Вход" }).click();
+    await expect(form.getByText("Моля, въведете имейл.")).toBeVisible();
+    await form.getByLabel("Имейл").fill("m");
+    await expect(form.getByText("Моля, въведете имейл.")).toHaveCount(0);
+    await expect(form.getByText("Моля, въведете парола.")).toBeVisible();
+  });
+
   test("the Account pages are not indexable", async ({ page }) => {
     for (const path of ["/account/sign-in", "/account/register"]) {
       await page.goto(path);
@@ -209,14 +274,15 @@ test.describe("password recovery", () => {
     await request.getByLabel("Имейл").fill(email);
     await request.getByRole("button", { name: "Изпрати линк" }).click();
     await expect(
-      page.getByRole("status").filter({ hasText: "линк за нова парола" }),
+      page.getByRole("status").filter({ hasText: "смените паролата си" }),
     ).toBeVisible();
 
     await page.goto(
       `/account/reset-password?token_hash=reset-password:${email}`,
     );
     const reset = page.getByRole("form", { name: "Нова парола" });
-    await reset.getByLabel("Нова парола").fill("new-password-1");
+    await reset.getByLabel(/^Нова парола/).fill("new-password-1");
+    await reset.getByLabel("Повторете новата парола").fill("new-password-1");
     await reset.getByRole("button", { name: "Запази паролата" }).click();
     await expect(
       page.getByRole("status").filter({ hasText: "Паролата е сменена" }),
@@ -232,7 +298,8 @@ test.describe("password recovery", () => {
   test("an unknown recovery link is refused", async ({ page }) => {
     await page.goto("/account/reset-password?token_hash=made-up");
     const reset = page.getByRole("form", { name: "Нова парола" });
-    await reset.getByLabel("Нова парола").fill("new-password-1");
+    await reset.getByLabel(/^Нова парола/).fill("new-password-1");
+    await reset.getByLabel("Повторете новата парола").fill("new-password-1");
     await reset.getByRole("button", { name: "Запази паролата" }).click();
 
     await expect(

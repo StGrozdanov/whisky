@@ -8,9 +8,11 @@ import {
   withoutUndefined,
 } from "./enquiry-forms";
 
-export type RegistrationField = keyof RegistrationInput;
+export type RegistrationField =
+  | keyof RegistrationInput
+  | "passwordConfirmation";
 export type SignInField = "email" | "password";
-export type PasswordResetField = "token" | "password";
+export type PasswordResetField = "token" | "password" | "passwordConfirmation";
 
 /** Bcrypt, behind Supabase Auth, ignores anything past 72 bytes. */
 const PASSWORD_LIMITS = { min: 8, max: 72 } as const;
@@ -20,15 +22,27 @@ const MESSAGES = {
   firstName: "Моля, въведете име.",
   lastName: "Моля, въведете фамилия.",
   passwordMissing: "Моля, въведете парола.",
+  confirmationMissing: "Моля, повторете паролата.",
+  confirmationMismatch: "Паролите не съвпадат.",
   passwordShort: `Паролата трябва да е поне ${PASSWORD_LIMITS.min} знака.`,
   // The limit is in UTF-8 bytes; a Cyrillic letter takes two.
   passwordLong: `Паролата е твърде дълга: до ${PASSWORD_LIMITS.max} знака на латиница или до ${PASSWORD_LIMITS.max / 2} на кирилица.`,
 } as const;
 
 /** Passwords are kept exactly as typed: spaces count. */
-function password(form: FormData): string {
-  const value = form.get("password");
+function password(form: FormData, name = "password"): string {
+  const value = form.get(name);
   return typeof value === "string" ? value : "";
+}
+
+function confirmationError(
+  value: string,
+  confirmation: string,
+): string | undefined {
+  if (confirmation === "") {
+    return MESSAGES.confirmationMissing;
+  }
+  return confirmation === value ? undefined : MESSAGES.confirmationMismatch;
 }
 
 function newPasswordError(value: string): string | undefined {
@@ -50,15 +64,21 @@ export function parseRegistrationForm(
     email: text(form, "email"),
     password: password(form),
   };
+  const confirmation = password(form, "passwordConfirmation");
   const errors = withoutUndefined<RegistrationField>({
     firstName: requiredText(value.firstName, MESSAGES.firstName, NAME_LIMIT),
     lastName: requiredText(value.lastName, MESSAGES.lastName, NAME_LIMIT),
     email: emailError(value.email),
     password: newPasswordError(value.password),
+    passwordConfirmation: confirmationError(value.password, confirmation),
   });
 
   if (hasErrors(errors)) {
-    return { ok: false, errors, values: { ...value, password: "" } };
+    return {
+      ok: false,
+      errors,
+      values: { ...value, password: "", passwordConfirmation: "" },
+    };
   }
   return { ok: true, value };
 }
@@ -82,13 +102,19 @@ export function parsePasswordResetForm(
   form: FormData,
 ): Parsed<PasswordResetField, { token: string; password: string }> {
   const value = { token: text(form, "token"), password: password(form) };
+  const confirmation = password(form, "passwordConfirmation");
   const errors = withoutUndefined<PasswordResetField>({
     token: undefined,
     password: newPasswordError(value.password),
+    passwordConfirmation: confirmationError(value.password, confirmation),
   });
 
   if (hasErrors(errors)) {
-    return { ok: false, errors, values: { ...value, password: "" } };
+    return {
+      ok: false,
+      errors,
+      values: { ...value, password: "", passwordConfirmation: "" },
+    };
   }
   return { ok: true, value };
 }

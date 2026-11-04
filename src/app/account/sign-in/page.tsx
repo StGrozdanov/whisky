@@ -17,10 +17,7 @@ export default async function SignInPage() {
   }
 
   return (
-    <DiscoveryPageLayout
-      intro="Влезте с имейл и парола. За покупка не е нужен акаунт."
-      title="Вход"
-    >
+    <DiscoveryPageLayout title="Вход" intro="">
       <FormCard>
         <SignInForm action={signIn} label="Вход в акаунта" />
         <p className="flex flex-wrap gap-x-space-md gap-y-space-xs text-body-sm">

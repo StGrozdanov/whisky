@@ -64,7 +64,10 @@ test.describe("Accounts and Shopkeeper access", () => {
 
     await page.goto(`/account/reset-password?token_hash=${randomUUID()}`);
     const reset = page.getByRole("form", { name: "Нова парола" });
-    await reset.getByLabel("Нова парола").fill("not-a-real-password");
+    await reset.getByLabel(/^Нова парола/).fill("not-a-real-password");
+    await reset
+      .getByLabel("Повторете новата парола")
+      .fill("not-a-real-password");
     await reset.getByRole("button", { name: "Запази паролата" }).click();
     await expect(
       reset.getByRole("alert").filter({ hasText: "Поискайте нов линк" }),

@@ -4,6 +4,7 @@ import type {
   Member,
   PasswordCheck,
   RegistrationInput,
+  RegistrationOutcome,
   Shopkeeper,
 } from "./types";
 
@@ -87,11 +88,13 @@ export function createInMemoryIdentityGateway(options?: {
   return {
     sentLinks,
 
-    async registerCustomer(input: RegistrationInput) {
+    async registerCustomer(
+      input: RegistrationInput,
+    ): Promise<RegistrationOutcome> {
       const email = normaliseEmail(input.email);
       const existing = logins.get(email);
       if (existing?.verified) {
-        return;
+        return "already-registered";
       }
       if (existing) {
         existing.password = input.password;
@@ -100,7 +103,7 @@ export function createInMemoryIdentityGateway(options?: {
           lastName: input.lastName,
         };
         sendLink("verify-email", email);
-        return;
+        return "verification-sent";
       }
       logins.set(email, {
         id: `member-${logins.size + 1}`,
@@ -110,6 +113,7 @@ export function createInMemoryIdentityGateway(options?: {
         account: { firstName: input.firstName, lastName: input.lastName },
       });
       sendLink("verify-email", email);
+      return "verification-sent";
     },
 
     async verifyEmail(tokenHash) {

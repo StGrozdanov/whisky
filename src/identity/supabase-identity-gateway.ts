@@ -8,6 +8,7 @@ import type {
   IdentityGateway,
   Member,
   PasswordCheck,
+  RegistrationOutcome,
   Shopkeeper,
 } from "./types";
 
@@ -86,7 +87,7 @@ export function createSupabaseIdentityGateway({
   }
 
   return {
-    async registerCustomer(input) {
+    async registerCustomer(input): Promise<RegistrationOutcome> {
       const { data, error } = await authFlow().auth.signUp({
         email: input.email,
         password: input.password,
@@ -94,7 +95,7 @@ export function createSupabaseIdentityGateway({
       });
       if (error) {
         if (error.code === "user_already_exists") {
-          return;
+          return "already-registered";
         }
         throw error;
       }
@@ -103,7 +104,7 @@ export function createSupabaseIdentityGateway({
       // identities and sends nothing; that login keeps whatever it had.
       const user = data.user;
       if (!user?.identities || user.identities.length === 0) {
-        return;
+        return "already-registered";
       }
 
       // For an email still awaiting verification Supabase resends the link
@@ -128,6 +129,7 @@ export function createSupabaseIdentityGateway({
       if (accountError) {
         throw accountError;
       }
+      return "verification-sent";
     },
 
     async verifyEmail(tokenHash) {

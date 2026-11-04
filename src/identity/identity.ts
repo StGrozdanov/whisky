@@ -4,6 +4,7 @@ import type {
   IdentityGateway,
   Member,
   RegistrationInput,
+  RegistrationOutcome,
   Shopkeeper,
 } from "./types";
 
@@ -107,8 +108,8 @@ export function createIdentity({
   }
 
   return {
-    async register(input: RegistrationInput): Promise<void> {
-      await gateway.registerCustomer(input);
+    async register(input: RegistrationInput): Promise<RegistrationOutcome> {
+      return gateway.registerCustomer(input);
     },
 
     async verifyEmail(tokenHash: string): Promise<LinkResult> {

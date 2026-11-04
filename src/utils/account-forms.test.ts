@@ -19,6 +19,7 @@ const VALID_REGISTRATION = {
   lastName: "Иванова",
   email: " maria@example.com ",
   password: "dalmore-12",
+  passwordConfirmation: "dalmore-12",
 };
 
 describe("parseRegistrationForm", () => {
@@ -37,7 +38,13 @@ describe("parseRegistrationForm", () => {
   it("requires every field and never echoes the password back", () => {
     expect(
       parseRegistrationForm(
-        form({ firstName: "", lastName: " ", email: "", password: "x" }),
+        form({
+          firstName: "",
+          lastName: " ",
+          email: "",
+          password: "x",
+          passwordConfirmation: "",
+        }),
       ),
     ).toEqual({
       ok: false,
@@ -46,20 +53,50 @@ describe("parseRegistrationForm", () => {
         lastName: "Моля, въведете фамилия.",
         email: "Моля, въведете имейл.",
         password: "Паролата трябва да е поне 8 знака.",
+        passwordConfirmation: "Моля, повторете паролата.",
       },
-      values: { firstName: "", lastName: "", email: "", password: "" },
+      values: {
+        firstName: "",
+        lastName: "",
+        email: "",
+        password: "",
+        passwordConfirmation: "",
+      },
+    });
+  });
+
+  it("needs the password typed twice the same way", () => {
+    expect(
+      parseRegistrationForm(
+        form({ ...VALID_REGISTRATION, passwordConfirmation: "dalmore-21" }),
+      ),
+    ).toMatchObject({
+      ok: false,
+      errors: { passwordConfirmation: "Паролите не съвпадат." },
     });
   });
 
   it("keeps the password exactly as typed and caps its length", () => {
     const spaced = parseRegistrationForm(
-      form({ ...VALID_REGISTRATION, password: "  spaced  " }),
+      form({
+        ...VALID_REGISTRATION,
+        password: "  spaced  ",
+        passwordConfirmation: "  spaced  ",
+      }),
     );
     const tooLong = parseRegistrationForm(
-      form({ ...VALID_REGISTRATION, password: "a".repeat(73) }),
+      form({
+        ...VALID_REGISTRATION,
+        password: "a".repeat(73),
+        passwordConfirmation: "a".repeat(73),
+      }),
     );
     const cyrillicTooLong = parseRegistrationForm(
-      form({ ...VALID_REGISTRATION, password: "я".repeat(37) }),
+      form({
+        ...VALID_REGISTRATION,
+        password: "я".repeat(37),
+        passwordConfirmation: "я".repeat(37),
+      }),
     );
 
     expect(spaced).toMatchObject({
@@ -99,16 +136,31 @@ describe("parseSignInForm", () => {
 });
 
 describe("parsePasswordResetForm", () => {
-  it("carries the recovery link token with the new password", () => {
+  it("carries the recovery link token with the new password typed twice", () => {
     expect(
-      parsePasswordResetForm(form({ token: "abc", password: "new-password" })),
+      parsePasswordResetForm(
+        form({
+          token: "abc",
+          password: "new-password",
+          passwordConfirmation: "new-password",
+        }),
+      ),
     ).toEqual({ ok: true, value: { token: "abc", password: "new-password" } });
     expect(
-      parsePasswordResetForm(form({ token: "abc", password: "short" })),
+      parsePasswordResetForm(
+        form({
+          token: "abc",
+          password: "short",
+          passwordConfirmation: "other",
+        }),
+      ),
     ).toEqual({
       ok: false,
-      errors: { password: "Паролата трябва да е поне 8 знака." },
-      values: { token: "abc", password: "" },
+      errors: {
+        password: "Паролата трябва да е поне 8 знака.",
+        passwordConfirmation: "Паролите не съвпадат.",
+      },
+      values: { token: "abc", password: "", passwordConfirmation: "" },
     });
   });
 });

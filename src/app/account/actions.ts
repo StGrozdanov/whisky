@@ -28,16 +28,23 @@ export async function registerAccount(
     return { status: "invalid", errors: parsed.errors, values: parsed.values };
   }
 
+  const values = { ...parsed.value, password: "", passwordConfirmation: "" };
   try {
     const identity = await getIdentity();
-    await identity.register(parsed.value);
+    const outcome = await identity.register(parsed.value);
+    if (outcome === "already-registered") {
+      return {
+        status: "invalid",
+        errors: {
+          email:
+            "Вече има акаунт с този имейл. Влезте или сменете паролата си през „Забравена парола“.",
+        },
+        values,
+      };
+    }
   } catch (error) {
     console.error("Account registration failed", error);
-    return {
-      status: "failed",
-      message: RETRY_MESSAGE,
-      values: { ...parsed.value, password: "" },
-    };
+    return { status: "failed", message: RETRY_MESSAGE, values };
   }
 
   return {
@@ -126,7 +133,7 @@ export async function requestPasswordReset(
 
   return {
     status: "sent",
-    message: `Ако има акаунт с ${parsed.value.email}, изпратихме му линк за нова парола.`,
+    message: `Изпратихме линк на имейла ${parsed.value.email}, за да смените паролата си.`,
   };
 }
 
@@ -138,7 +145,11 @@ export async function resetPassword(
   if (!parsed.ok) {
     return { status: "invalid", errors: parsed.errors, values: parsed.values };
   }
-  const values = { token: parsed.value.token, password: "" };
+  const values = {
+    token: parsed.value.token,
+    password: "",
+    passwordConfirmation: "",
+  };
 
   try {
     const identity = await getIdentity();

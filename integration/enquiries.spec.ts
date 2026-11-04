@@ -57,6 +57,27 @@ test.describe("Contact request", () => {
     );
   });
 
+  test("checks the form in the browser and clears an error as the Customer types", async ({
+    page,
+  }) => {
+    await page.goto("/contacts");
+    const posts: string[] = [];
+    page.on("request", (request) => {
+      if (request.method() === "POST") {
+        posts.push(request.url());
+      }
+    });
+
+    const form = page.getByRole("form", { name: "Форма за контакти" });
+    await form.getByRole("button", { name: "Изпрати съобщението" }).click();
+    await expect(form.getByText("Моля, въведете тема.")).toBeVisible();
+    expect(posts).toEqual([]);
+
+    await form.getByLabel("Тема").fill("Д");
+    await expect(form.getByText("Моля, въведете тема.")).toHaveCount(0);
+    await expect(form.getByText("Моля, въведете име.")).toBeVisible();
+  });
+
   test("rejects an invalid email and keeps what the Customer typed", async ({
     page,
   }) => {
